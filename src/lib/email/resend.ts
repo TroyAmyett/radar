@@ -11,7 +11,7 @@ export interface DigestEmailData {
 export async function sendDigestEmail(data: DigestEmailData): Promise<string | null> {
   try {
     const result = await resend.emails.send({
-      from: 'Radar <digest@radar.app>',
+      from: 'Radar <digest@go.funnelists.com>',
       to: data.to,
       subject: data.subject,
       html: data.html,

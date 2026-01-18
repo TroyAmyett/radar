@@ -143,7 +143,7 @@ async function sendConfirmationEmail(
   const confirmUrl = `${baseUrl}/api/subscribers/confirm?token=${token}`;
 
   await resend.emails.send({
-    from: 'Radar <noreply@resend.dev>',
+    from: 'Radar <noreply@go.funnelists.com>',
     to: email,
     subject: 'Confirm your subscription to Radar',
     html: `
