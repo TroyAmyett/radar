@@ -55,6 +55,9 @@ export async function POST(request: NextRequest) {
 
         if (existing) continue;
 
+        // Extract thumbnail from various RSS formats
+        const thumbnailUrl = extractThumbnail(item);
+
         // Insert new item
         const { error: insertError } = await supabase
           .from('content_items')
@@ -67,7 +70,7 @@ export async function POST(request: NextRequest) {
             summary: item.contentSnippet || item.content?.substring(0, 300),
             content: item.content,
             url: item.link || '',
-            thumbnail_url: item.enclosure?.url || extractImageFromContent(item.content),
+            thumbnail_url: thumbnailUrl,
             author: item.creator || item.author,
             published_at: item.pubDate ? new Date(item.pubDate).toISOString() : null,
             external_id: externalId,
@@ -99,19 +102,48 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(results);
 }
 
-function extractImageFromContent(content?: string): string | null {
-  if (!content) return null;
-
-  // Try to extract image from content
-  const imgMatch = content.match(/<img[^>]+src="([^">]+)"/);
-  if (imgMatch) {
-    return imgMatch[1];
+function extractThumbnail(item: any): string | null {
+  // 1. Check enclosure (podcast/media RSS)
+  if (item.enclosure?.url) {
+    const url = item.enclosure.url;
+    if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+      return url;
+    }
   }
 
-  // Try to extract from media:content
-  const mediaMatch = content.match(/url="([^"]+\.(jpg|jpeg|png|gif|webp)[^"]*)"/i);
-  if (mediaMatch) {
-    return mediaMatch[1];
+  // 2. Check media:thumbnail (Media RSS)
+  if (item['media:thumbnail']?.['$']?.url) {
+    return item['media:thumbnail']['$'].url;
+  }
+
+  // 3. Check media:content (Media RSS)
+  if (item['media:content']) {
+    const mediaContent = Array.isArray(item['media:content'])
+      ? item['media:content'][0]
+      : item['media:content'];
+    if (mediaContent?.['$']?.url) {
+      const url = mediaContent['$'].url;
+      if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+        return url;
+      }
+    }
+  }
+
+  // 4. Check content:encoded or description for <img> tags
+  const contentToCheck = item['content:encoded'] || item.content || item.description;
+  if (contentToCheck) {
+    const imgMatch = contentToCheck.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (imgMatch) {
+      return imgMatch[1];
+    }
+  }
+
+  // 5. Check for og:image in content
+  if (contentToCheck) {
+    const ogMatch = contentToCheck.match(/property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
+    if (ogMatch) {
+      return ogMatch[1];
+    }
   }
 
   return null;
