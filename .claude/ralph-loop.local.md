@@ -3,7 +3,7 @@ active: true
 iteration: 1
 max_iterations: 25
 completion_promise: "COMPLETE"
-started_at: "2026-01-18T14:08:23Z"
+started_at: "2026-01-18T17:00:02Z"
 ---
 
 Add Auth and Dual Mode to Radar. No billing.
@@ -41,7 +41,7 @@ RENAME ADVISORS → EXPERTS:
 * Update page titles
 * Rename route /advisors to /experts
 * Add redirect from /advisors to /experts for any old links
-* Keep database table name as 'advisors' (no migration needed)
+* Keep database table name as 'advisors'
 
 DO NOT INCLUDE:
 * Subscriptions table
@@ -56,8 +56,8 @@ Success criteria:
 * Password reset works
 * Dashboard protected - redirects to login if not authenticated
 * Dual mode switches layout based on RADAR_MODE env
-* Create Task opens AgentPM with prefilled data
-* Save to Notes opens NoteTaker with prefilled data
+* Create Task opens AgentPM in new tab
+* Save to Notes opens NoteTaker in new tab
 * All UI says 'Experts' not 'Advisors'
 * /experts route works
 * /advisors redirects to /experts

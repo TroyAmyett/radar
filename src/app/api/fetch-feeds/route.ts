@@ -102,11 +102,12 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(results);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractThumbnail(item: any): string | null {
   // 1. Check enclosure (podcast/media RSS)
   if (item.enclosure?.url) {
     const url = item.enclosure.url;
-    if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+    if (typeof url === 'string' && url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
       return url;
     }
   }
@@ -123,7 +124,7 @@ function extractThumbnail(item: any): string | null {
       : item['media:content'];
     if (mediaContent?.['$']?.url) {
       const url = mediaContent['$'].url;
-      if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+      if (typeof url === 'string' && url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
         return url;
       }
     }
@@ -131,7 +132,7 @@ function extractThumbnail(item: any): string | null {
 
   // 4. Check content:encoded or description for <img> tags
   const contentToCheck = item['content:encoded'] || item.content || item.description;
-  if (contentToCheck) {
+  if (typeof contentToCheck === 'string') {
     const imgMatch = contentToCheck.match(/<img[^>]+src=["']([^"']+)["']/i);
     if (imgMatch) {
       return imgMatch[1];
@@ -139,7 +140,7 @@ function extractThumbnail(item: any): string | null {
   }
 
   // 5. Check for og:image in content
-  if (contentToCheck) {
+  if (typeof contentToCheck === 'string') {
     const ogMatch = contentToCheck.match(/property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
     if (ogMatch) {
       return ogMatch[1];

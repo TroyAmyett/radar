@@ -15,7 +15,7 @@ export async function getVideoTranscript(videoId: string): Promise<string | null
     }
 
     // Combine all transcript segments into a single text
-    const fullText = transcript.map((segment: any) => segment.text).join(' ');
+    const fullText = transcript.map((segment: { text: string; duration: number; offset: number }) => segment.text).join(' ');
 
     return fullText;
   } catch (error) {
