@@ -173,8 +173,8 @@ INSERT INTO topics (account_id, name, slug, color, icon, is_default) VALUES
   ('default-account', 'Agentforce', 'agentforce', '#0ea5e9', 'bot', true),
   ('default-account', 'AI Tools', 'ai-tools', '#8b5cf6', 'sparkles', true),
   ('default-account', 'Blockchain AI', 'blockchain-ai', '#f59e0b', 'link', true),
-  ('default-account', 'Advisors', 'advisors', '#10b981', 'users', true),
-  ('default-account', 'Video', 'video', '#ef4444', 'play', true)
+  ('default-account', 'Competitors', 'competitors', '#ef4444', 'target', true),
+  ('default-account', 'Partners', 'partners', '#10b981', 'handshake', true)
 ON CONFLICT (account_id, slug) DO NOTHING;
 
 -- Function to update updated_at timestamp
