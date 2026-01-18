@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, getAccountId } from '@/lib/supabase';
+import { getVideoTranscript } from '@/lib/youtube-transcript';
+import { summarizeTranscript } from '@/lib/gemini';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
@@ -159,6 +161,27 @@ export async function POST(request: NextRequest) {
         const decodedDescription = decodeHtmlEntities(video.snippet.description);
         const decodedAuthor = decodeHtmlEntities(video.snippet.channelTitle);
 
+        // Try to fetch transcript and generate AI summary
+        let summary = decodedDescription?.substring(0, 300);
+        let fullContent = decodedDescription;
+
+        try {
+          const transcript = await getVideoTranscript(externalId);
+          if (transcript) {
+            // Store full transcript in content field
+            fullContent = transcript;
+
+            // Generate AI summary from transcript
+            const aiSummary = await summarizeTranscript(transcript, decodedTitle);
+            if (aiSummary) {
+              summary = aiSummary;
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to process transcript for ${externalId}:`, error);
+          // Fall back to YouTube description - already set above
+        }
+
         const { error: insertError } = await supabase
           .from('content_items')
           .insert({
@@ -167,8 +190,8 @@ export async function POST(request: NextRequest) {
             topic_id: source.topic_id,
             type: 'video',
             title: decodedTitle,
-            summary: decodedDescription?.substring(0, 300),
-            content: decodedDescription,
+            summary: summary,
+            content: fullContent,
             url: `https://www.youtube.com/watch?v=${externalId}`,
             thumbnail_url:
               video.snippet.thumbnails.high?.url ||

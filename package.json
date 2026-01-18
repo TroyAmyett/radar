@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
+    "@google/generative-ai": "^0.24.1",
     "@react-email/components": "^1.0.4",
     "@supabase/supabase-js": "^2.90.1",
     "date-fns": "^4.1.0",
@@ -19,7 +20,8 @@
     "react-dom": "^18",
     "resend": "^6.7.0",
     "rss-parser": "^3.13.0",
-    "twitter-api-v2": "^1.29.0"
+    "twitter-api-v2": "^1.29.0",
+    "youtube-transcript": "^1.2.1"
   },
   "devDependencies": {
     "@types/node": "^20",
