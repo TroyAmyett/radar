@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
+// CORS headers
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 interface SourceInfo {
   type: 'youtube' | 'rss' | 'twitter';
   name: string;
@@ -45,7 +52,7 @@ export async function POST(request: NextRequest) {
   const { url } = await request.json();
 
   if (!url) {
-    return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+    return NextResponse.json({ error: 'URL is required' }, { status: 400, headers: CORS_HEADERS });
   }
 
   try {
@@ -66,9 +73,17 @@ export async function POST(request: NextRequest) {
     console.error('Source lookup error:', error);
     return NextResponse.json(
       { error: 'Failed to lookup source' },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
+}
+
+// Handle OPTIONS for CORS preflight
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: CORS_HEADERS,
+  });
 }
 
 async function lookupYouTube(url: string): Promise<NextResponse> {
@@ -167,7 +182,7 @@ async function lookupYouTube(url: string): Promise<NextResponse> {
     subscriberCount: parseInt(channel.statistics?.subscriberCount || '0'),
   };
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: CORS_HEADERS });
 }
 
 async function lookupTwitter(url: string): Promise<NextResponse> {
@@ -193,7 +208,7 @@ async function lookupTwitter(url: string): Promise<NextResponse> {
     description: 'Twitter/X profile - name will be updated when content is fetched',
   };
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: CORS_HEADERS });
 }
 
 async function lookupRSS(url: string): Promise<NextResponse> {
@@ -225,7 +240,7 @@ async function lookupRSS(url: string): Promise<NextResponse> {
           url: url,
           feedUrl: url,
         };
-        return NextResponse.json(result);
+        return NextResponse.json(result, { headers: CORS_HEADERS });
       }
     } catch {
       // Not a valid feed
@@ -245,5 +260,5 @@ async function lookupRSS(url: string): Promise<NextResponse> {
     feedUrl: feed.url,
   };
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: CORS_HEADERS });
 }
