@@ -1,0 +1,86 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabase, getAccountId } from '@/lib/supabase';
+
+export async function GET() {
+  const accountId = getAccountId();
+
+  const { data, error } = await supabase
+    .from('user_preferences')
+    .select('*')
+    .eq('account_id', accountId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Return default preferences if none exist
+  if (!data) {
+    return NextResponse.json({
+      digest_enabled: true,
+      digest_frequency: 'daily',
+      digest_time: '06:00:00',
+      digest_timezone: 'America/New_York',
+      digest_topics: [],
+      email_address: null,
+    });
+  }
+
+  return NextResponse.json(data);
+}
+
+export async function POST(request: NextRequest) {
+  const accountId = getAccountId();
+  const body = await request.json();
+
+  // Check if preferences exist
+  const { data: existing } = await supabase
+    .from('user_preferences')
+    .select('id')
+    .eq('account_id', accountId)
+    .single();
+
+  if (existing) {
+    // Update existing
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .update({
+        digest_enabled: body.digest_enabled,
+        digest_frequency: body.digest_frequency,
+        digest_time: body.digest_time,
+        digest_timezone: body.digest_timezone,
+        digest_topics: body.digest_topics,
+        email_address: body.email_address,
+      })
+      .eq('id', existing.id)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } else {
+    // Insert new
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .insert({
+        account_id: accountId,
+        digest_enabled: body.digest_enabled,
+        digest_frequency: body.digest_frequency,
+        digest_time: body.digest_time,
+        digest_timezone: body.digest_timezone,
+        digest_topics: body.digest_topics,
+        email_address: body.email_address,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  }
+}
