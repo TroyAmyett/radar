@@ -9,10 +9,12 @@ import {
   Bookmark,
   Settings,
   Radio,
+  Flame,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/whats-hot', label: "What's Hot", icon: Flame },
   { href: '/sources', label: 'Sources', icon: Rss },
   { href: '/advisors', label: 'Advisors', icon: Users },
   { href: '/saved', label: 'Saved', icon: Bookmark },

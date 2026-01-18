@@ -2,7 +2,7 @@
 
 import { ContentItemWithInteraction } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
-import { Heart, Bookmark, MessageSquare, ExternalLink, Play, Sparkles } from 'lucide-react';
+import { Heart, Bookmark, MessageSquare, ExternalLink, Play, Sparkles, Send } from 'lucide-react';
 import { useState } from 'react';
 
 interface VideoCardProps {
@@ -11,6 +11,7 @@ interface VideoCardProps {
   onSave?: (id: string) => void;
   onAddNote?: (id: string, note: string) => void;
   onDeepDive?: (id: string) => void;
+  onPublish?: (id: string) => void;
 }
 
 function formatDuration(seconds: number | null): string {
@@ -31,6 +32,7 @@ export default function VideoCard({
   onSave,
   onAddNote,
   onDeepDive,
+  onPublish,
 }: VideoCardProps) {
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [note, setNote] = useState(item.interaction?.notes || '');
@@ -150,6 +152,14 @@ export default function VideoCard({
             title="Deep Dive Analysis"
           >
             <Sparkles className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => onPublish?.(item.id)}
+            className="p-2 rounded-lg hover:bg-green-500/20 text-white/50 hover:text-green-400 transition-all"
+            title="Publish to What's Hot"
+          >
+            <Send className="w-4 h-4" />
           </button>
 
           <a

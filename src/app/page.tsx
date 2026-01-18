@@ -5,6 +5,7 @@ import Header from '@/components/layout/Header';
 import TopicFilter from '@/components/TopicFilter';
 import CardStream from '@/components/CardStream';
 import DeepDiveModal from '@/components/modals/DeepDiveModal';
+import PublishModal, { PublishData } from '@/components/modals/PublishModal';
 import { Topic, ContentItemWithInteraction, Advisor } from '@/types/database';
 import { RefreshCw } from 'lucide-react';
 
@@ -33,6 +34,10 @@ export default function Dashboard() {
   const [deepDiveLoading, setDeepDiveLoading] = useState(false);
   const [deepDiveItem, setDeepDiveItem] = useState<ContentItemWithInteraction | null>(null);
   const [deepDiveAnalysis, setDeepDiveAnalysis] = useState<DeepDiveAnalysis | null>(null);
+
+  // Publish modal state
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [publishItem, setPublishItem] = useState<ContentItemWithInteraction | null>(null);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -216,6 +221,27 @@ export default function Dashboard() {
     }
   };
 
+  const handlePublish = (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    setPublishItem(item);
+    setPublishOpen(true);
+  };
+
+  const handlePublishSubmit = async (data: PublishData) => {
+    const res = await fetch('/api/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      throw new Error('Failed to publish');
+    }
+
+    return res.json();
+  };
+
   return (
     <div className="flex flex-col h-screen">
       <Header onSearch={setSearchQuery} />
@@ -248,6 +274,7 @@ export default function Dashboard() {
           onSave={handleSave}
           onAddNote={handleAddNote}
           onDeepDive={handleDeepDive}
+          onPublish={handlePublish}
         />
       </div>
 
@@ -257,6 +284,14 @@ export default function Dashboard() {
         title={deepDiveItem?.title || ''}
         analysis={deepDiveAnalysis}
         isLoading={deepDiveLoading}
+      />
+
+      <PublishModal
+        isOpen={publishOpen}
+        onClose={() => setPublishOpen(false)}
+        item={publishItem}
+        topics={topics}
+        onPublish={handlePublishSubmit}
       />
     </div>
   );

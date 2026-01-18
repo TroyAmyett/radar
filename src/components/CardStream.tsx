@@ -14,6 +14,7 @@ interface CardStreamProps {
   onSave?: (id: string) => void;
   onAddNote?: (id: string, note: string) => void;
   onDeepDive?: (id: string) => void;
+  onPublish?: (id: string) => void;
 }
 
 export default function CardStream({
@@ -24,6 +25,7 @@ export default function CardStream({
   onSave,
   onAddNote,
   onDeepDive,
+  onPublish,
 }: CardStreamProps) {
   if (isLoading) {
     return (
@@ -70,6 +72,7 @@ export default function CardStream({
                 onSave={onSave}
                 onAddNote={onAddNote}
                 onDeepDive={onDeepDive}
+                onPublish={onPublish}
               />
             </div>
           );
@@ -83,6 +86,7 @@ export default function CardStream({
               onSave={onSave}
               onAddNote={onAddNote}
               onDeepDive={onDeepDive}
+              onPublish={onPublish}
             />
           </div>
         );
