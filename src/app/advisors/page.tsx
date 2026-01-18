@@ -45,8 +45,8 @@ export default function AdvisorsPage() {
         advisorsRes.json(),
         topicsRes.json(),
       ]);
-      setAdvisors(advisorsData);
-      setTopics(topicsData);
+      setAdvisors(Array.isArray(advisorsData) ? advisorsData : []);
+      setTopics(Array.isArray(topicsData) ? topicsData : []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
@@ -69,6 +69,10 @@ export default function AdvisorsPage() {
         body: JSON.stringify(advisor),
       });
       const newAdvisor = await res.json();
+      if (newAdvisor.error) {
+        console.error('Failed to add advisor:', newAdvisor.error);
+        return;
+      }
       setAdvisors((prev) => [newAdvisor, ...prev]);
     } catch (error) {
       console.error('Failed to add advisor:', error);
