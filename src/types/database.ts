@@ -54,6 +54,7 @@ export interface Database {
           url: string;
           channel_id: string | null;
           username: string | null;
+          image_url: string | null;
           is_active: boolean;
           last_fetched_at: string | null;
           created_at: string;
@@ -68,6 +69,7 @@ export interface Database {
           url: string;
           channel_id?: string | null;
           username?: string | null;
+          image_url?: string | null;
           is_active?: boolean;
           last_fetched_at?: string | null;
           created_at?: string;
@@ -82,6 +84,7 @@ export interface Database {
           url?: string;
           channel_id?: string | null;
           username?: string | null;
+          image_url?: string | null;
           is_active?: boolean;
           last_fetched_at?: string | null;
           created_at?: string;
