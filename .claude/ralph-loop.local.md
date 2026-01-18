@@ -3,57 +3,64 @@ active: true
 iteration: 1
 max_iterations: 25
 completion_promise: "COMPLETE"
-started_at: "2026-01-18T13:04:54Z"
+started_at: "2026-01-18T14:08:23Z"
 ---
 
-Migrate Radar from Vercel cron to Supabase pg_cron.
+Add Auth and Dual Mode to Radar. No billing.
 
-REMOVE VERCEL CRON:
-* Delete vercel.json cron configuration (if exists)
-* Keep API endpoints but ensure they validate CRON_SECRET
+AUTH PAGES (standalone mode only):
+* /login - Sign in with email/password
+* /signup - Create account
+* /forgot-password - Request password reset
+* Glassmorphism styling matching Radar design
+* Redirect to dashboard after auth
 
-SUPABASE SETUP:
-* Create migration file to enable pg_cron and pg_net extensions
-* Create cron jobs table to track job status and history
-* Set up cron schedules:
-  - fetch-sources: every 30 minutes
-  - morning-digest: 6am daily (EST/UTC-5)
-  - evening-digest: 9pm daily (EST/UTC-5)  
-  - weekly-digest: Sunday 8am (EST/UTC-5)
+DUAL MODE:
+* Add RADAR_MODE env variable (standalone/embedded)
+* Create StandaloneLayout with Radar header/nav
+* Create EmbeddedLayout placeholder (for AgentPM integration later)
+* Layout component switches based on mode
+* Auth pages only render in standalone mode
 
-MIGRATION SQL:
-* Enable extensions: pg_cron, pg_net
-* Create cron.schedule entries that call API endpoints via net.http_post
-* Pass CRON_SECRET in Authorization header
-* Create cron_job_logs table to track executions
+AUTH HOOKS:
+* useAuth() - returns user, session, signIn, signOut, signUp
+* useRequireAuth() - redirects to /login if not authenticated
+* Protect dashboard and all main routes
 
-API ENDPOINTS:
-* Ensure these endpoints exist and work:
-  - POST /api/cron/fetch-sources - Fetches all active sources
-  - POST /api/cron/morning-digest - Generates and sends morning digest
-  - POST /api/cron/evening-digest - Generates and sends evening digest
-  - POST /api/cron/weekly-digest - Generates and sends weekly digest
-* All endpoints validate Bearer token matches CRON_SECRET
-* All endpoints return JSON with success/error status
-* Log results to cron_job_logs table
+CROSS-APP ACTIONS:
+* 'Create Task' button on cards:
+  - Opens AgentPM in new tab: agentpm.funnelists.com/tasks/new?title=...&description=...
+  - Pass title and summary as URL params
+* 'Save to Notes' button on cards:
+  - Opens NoteTaker in new tab: agentpm.funnelists.com/notes/new?title=...&content=...
+  - Pass title and content as URL params
 
-ENV VARIABLES:
-* Use existing CRON_SECRET for auth
-* Use NEXT_PUBLIC_SUPABASE_URL for the base URL in cron calls
+RENAME ADVISORS → EXPERTS:
+* Update all UI labels from 'Advisors' to 'Experts'
+* Update navigation links
+* Update page titles
+* Rename route /advisors to /experts
+* Add redirect from /advisors to /experts for any old links
+* Keep database table name as 'advisors' (no migration needed)
 
-EDGE FUNCTION ALTERNATIVE (if pg_net not available):
-* Create Supabase Edge Function as fallback
-* Edge function calls the API endpoints on schedule
+DO NOT INCLUDE:
+* Subscriptions table
+* Stripe integration
+* Paywall UI
+* Trial tracking
+* Email sequences
 
-SUCCESS CRITERIA:
-* No Vercel cron configuration
-* pg_cron jobs created in Supabase
-* fetch-sources runs every 30 min
-* morning-digest runs at 6am EST
-* evening-digest runs at 9pm EST
-* weekly-digest runs Sunday 8am EST
-* Job executions logged to cron_job_logs
-* All endpoints protected by CRON_SECRET
+Success criteria:
+* Can sign up at /signup (standalone mode)
+* Can sign in at /login
+* Password reset works
+* Dashboard protected - redirects to login if not authenticated
+* Dual mode switches layout based on RADAR_MODE env
+* Create Task opens AgentPM with prefilled data
+* Save to Notes opens NoteTaker with prefilled data
+* All UI says 'Experts' not 'Advisors'
+* /experts route works
+* /advisors redirects to /experts
 * No linter errors
 
 Output <promise>COMPLETE</promise> when done.

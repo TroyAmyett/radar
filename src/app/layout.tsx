@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import Sidebar from '@/components/layout/Sidebar';
+import AppLayout from '@/components/layout/AppLayout';
 
 export const metadata: Metadata = {
   title: 'Radar - Intelligence Dashboard',
@@ -16,10 +16,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <div className="bg-gradient-orbs" />
-        <Sidebar />
-        <main className="ml-64 min-h-screen">
+        <AppLayout>
           {children}
-        </main>
+        </AppLayout>
       </body>
     </html>
   );

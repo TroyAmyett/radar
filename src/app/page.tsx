@@ -6,6 +6,7 @@ import TopicFilter from '@/components/TopicFilter';
 import CardStream from '@/components/CardStream';
 import DeepDiveModal from '@/components/modals/DeepDiveModal';
 import PublishModal, { PublishData } from '@/components/modals/PublishModal';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic, ContentItemWithInteraction, Advisor } from '@/types/database';
 import { RefreshCw } from 'lucide-react';
 
@@ -28,6 +29,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
 
   // Deep Dive modal state
   const [deepDiveOpen, setDeepDiveOpen] = useState(false);
@@ -78,6 +80,17 @@ export default function Dashboard() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Auto-fetch sources on first load if no content exists
+  useEffect(() => {
+    const autoFetchIfEmpty = async () => {
+      if (!isLoading && items.length === 0 && !hasFetchedOnce && !isRefreshing) {
+        setHasFetchedOnce(true);
+        await handleRefreshFeeds();
+      }
+    };
+    autoFetchIfEmpty();
+  }, [isLoading, items.length, hasFetchedOnce, isRefreshing]);
 
   const handleRefreshFeeds = async () => {
     setIsRefreshing(true);
@@ -228,6 +241,16 @@ export default function Dashboard() {
     setPublishOpen(true);
   };
 
+  const handleDismiss = async (id: string) => {
+    try {
+      await fetch(`/api/content?id=${id}`, { method: 'DELETE' });
+      // Remove from local state
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (error) {
+      console.error('Failed to dismiss:', error);
+    }
+  };
+
   const handlePublishSubmit = async (data: PublishData) => {
     const res = await fetch('/api/publish', {
       method: 'POST',
@@ -243,56 +266,60 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <Header onSearch={setSearchQuery} />
+    <ProtectedRoute>
+      <div className="flex flex-col h-screen">
+        <Header onSearch={setSearchQuery} />
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <TopicFilter
-            topics={topics}
-            selectedTopic={selectedTopic}
-            onSelectTopic={setSelectedTopic}
-          />
-
-          <button
-            onClick={handleRefreshFeeds}
-            disabled={isRefreshing}
-            className="glass-button flex items-center gap-2"
-          >
-            <RefreshCw
-              className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
+        <div className="flex-1 overflow-auto p-6">
+          <div className="flex items-center justify-between mb-6">
+            <TopicFilter
+              topics={topics}
+              selectedTopic={selectedTopic}
+              onSelectTopic={setSelectedTopic}
             />
-            <span>Refresh</span>
-          </button>
+
+            <button
+              onClick={handleRefreshFeeds}
+              disabled={isRefreshing}
+              className="glass-button flex items-center gap-2"
+            >
+              <RefreshCw
+                className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
+              />
+              <span>Refresh</span>
+            </button>
+          </div>
+
+          <CardStream
+            items={items}
+            advisors={advisors}
+            isLoading={isLoading}
+            isRefreshing={isRefreshing}
+            onLike={handleLike}
+            onSave={handleSave}
+            onAddNote={handleAddNote}
+            onDeepDive={handleDeepDive}
+            onPublish={handlePublish}
+            onDismiss={handleDismiss}
+          />
         </div>
 
-        <CardStream
-          items={items}
-          advisors={advisors}
-          isLoading={isLoading}
-          onLike={handleLike}
-          onSave={handleSave}
-          onAddNote={handleAddNote}
-          onDeepDive={handleDeepDive}
-          onPublish={handlePublish}
+        <DeepDiveModal
+          isOpen={deepDiveOpen}
+          onClose={() => setDeepDiveOpen(false)}
+          title={deepDiveItem?.title || ''}
+          analysis={deepDiveAnalysis}
+          isLoading={deepDiveLoading}
+        />
+
+        <PublishModal
+          isOpen={publishOpen}
+          onClose={() => setPublishOpen(false)}
+          item={publishItem}
+          topics={topics}
+          onPublish={handlePublishSubmit}
         />
       </div>
-
-      <DeepDiveModal
-        isOpen={deepDiveOpen}
-        onClose={() => setDeepDiveOpen(false)}
-        title={deepDiveItem?.title || ''}
-        analysis={deepDiveAnalysis}
-        isLoading={deepDiveLoading}
-      />
-
-      <PublishModal
-        isOpen={publishOpen}
-        onClose={() => setPublishOpen(false)}
-        item={publishItem}
-        topics={topics}
-        onPublish={handlePublishSubmit}
-      />
-    </div>
+    </ProtectedRoute>
   );
 }

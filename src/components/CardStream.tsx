@@ -10,22 +10,26 @@ interface CardStreamProps {
   items: ContentItemWithInteraction[];
   advisors?: Record<string, Advisor>;
   isLoading?: boolean;
+  isRefreshing?: boolean;
   onLike?: (id: string) => void;
   onSave?: (id: string) => void;
   onAddNote?: (id: string, note: string) => void;
   onDeepDive?: (id: string) => void;
   onPublish?: (id: string) => void;
+  onDismiss?: (id: string) => void;
 }
 
 export default function CardStream({
   items,
   advisors = {},
   isLoading = false,
+  isRefreshing = false,
   onLike,
   onSave,
   onAddNote,
   onDeepDive,
   onPublish,
+  onDismiss,
 }: CardStreamProps) {
   if (isLoading) {
     return (
@@ -35,11 +39,21 @@ export default function CardStream({
     );
   }
 
+  if (items.length === 0 && isRefreshing) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-white/60">
+        <Loader2 className="w-8 h-8 text-accent animate-spin mb-4" />
+        <p className="text-lg">Fetching content from your sources...</p>
+        <p className="text-sm mt-1 text-white/40">This may take a moment</p>
+      </div>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-white/40">
-        <p className="text-lg">No content yet</p>
-        <p className="text-sm mt-1">Add sources to start seeing content</p>
+        <p className="text-lg">No content found</p>
+        <p className="text-sm mt-1">Add sources to start seeing content, then click Refresh</p>
       </div>
     );
   }
@@ -73,6 +87,7 @@ export default function CardStream({
                 onAddNote={onAddNote}
                 onDeepDive={onDeepDive}
                 onPublish={onPublish}
+                onDismiss={onDismiss}
               />
             </div>
           );
@@ -87,6 +102,7 @@ export default function CardStream({
               onAddNote={onAddNote}
               onDeepDive={onDeepDive}
               onPublish={onPublish}
+              onDismiss={onDismiss}
             />
           </div>
         );

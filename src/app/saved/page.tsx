@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/layout/Header';
 import CardStream from '@/components/CardStream';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { ContentItemWithInteraction, Advisor } from '@/types/database';
 import { Bookmark } from 'lucide-react';
 
@@ -123,36 +124,38 @@ export default function SavedPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <Header onSearch={setSearchQuery} />
+    <ProtectedRoute>
+      <div className="flex flex-col h-screen">
+        <Header onSearch={setSearchQuery} />
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold">Saved Items</h1>
-          <p className="text-white/60 mt-1">
-            Your bookmarked articles, videos, and posts
-          </p>
-        </div>
-
-        {!isLoading && items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-white/40">
-            <Bookmark className="w-16 h-16 mb-4" />
-            <p className="text-lg">No saved items yet</p>
-            <p className="text-sm mt-1">
-              Save content from the dashboard to access it later
+        <div className="flex-1 overflow-auto p-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold">Saved Items</h1>
+            <p className="text-white/60 mt-1">
+              Your bookmarked articles, videos, and posts
             </p>
           </div>
-        ) : (
-          <CardStream
-            items={items}
-            advisors={advisors}
-            isLoading={isLoading}
-            onLike={handleLike}
-            onSave={handleSave}
-            onAddNote={handleAddNote}
-          />
-        )}
+
+          {!isLoading && items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-white/40">
+              <Bookmark className="w-16 h-16 mb-4" />
+              <p className="text-lg">No saved items yet</p>
+              <p className="text-sm mt-1">
+                Save content from the dashboard to access it later
+              </p>
+            </div>
+          ) : (
+            <CardStream
+              items={items}
+              advisors={advisors}
+              isLoading={isLoading}
+              onLike={handleLike}
+              onSave={handleSave}
+              onAddNote={handleAddNote}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

@@ -2,7 +2,7 @@
 
 import { ContentItemWithInteraction } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
-import { Heart, Bookmark, MessageSquare, ExternalLink, Play, Sparkles, Send, ClipboardList } from 'lucide-react';
+import { Heart, Bookmark, MessageSquare, ExternalLink, Play, Sparkles, Send, ClipboardList, FileText, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface VideoCardProps {
@@ -12,6 +12,7 @@ interface VideoCardProps {
   onAddNote?: (id: string, note: string) => void;
   onDeepDive?: (id: string) => void;
   onPublish?: (id: string) => void;
+  onDismiss?: (id: string) => void;
 }
 
 function formatDuration(seconds: number | null): string {
@@ -33,6 +34,7 @@ export default function VideoCard({
   onAddNote,
   onDeepDive,
   onPublish,
+  onDismiss,
 }: VideoCardProps) {
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [note, setNote] = useState(item.interaction?.notes || '');
@@ -46,34 +48,35 @@ export default function VideoCard({
     }
   };
 
-  const handleCreateTask = async () => {
+  const handleCreateTask = () => {
     // Open AgentPM in new tab with prefilled data
     const params = new URLSearchParams({
       title: `Research: ${item.title}`,
       description: item.summary || '',
-      radar_item_id: item.id,
     });
     window.open(`https://agentpm.funnelists.com/tasks/new?${params}`, '_blank');
+  };
 
-    // Also make API call if AgentPM exposes endpoint
-    try {
-      await fetch('https://agentpm.funnelists.com/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: `Research: ${item.title}`,
-          description: item.summary || '',
-          radar_item_id: item.id,
-        }),
-      });
-    } catch (error) {
-      // Silently fail API call - the new tab will still work
-      console.error('Failed to create task via API:', error);
-    }
+  const handleSaveToNotes = () => {
+    // Open NoteTaker in new tab with prefilled data
+    const params = new URLSearchParams({
+      title: item.title,
+      content: item.summary || item.content || '',
+    });
+    window.open(`https://agentpm.funnelists.com/notes/new?${params}`, '_blank');
   };
 
   return (
-    <article className="glass-card overflow-hidden group">
+    <article className="glass-card overflow-hidden group relative">
+      {onDismiss && (
+        <button
+          onClick={() => onDismiss(item.id)}
+          className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/60 hover:bg-red-500/80 text-white/60 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+          title="Dismiss"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      )}
       <a
         href={item.url}
         target="_blank"
@@ -194,6 +197,14 @@ export default function VideoCard({
             title="Create Task in AgentPM"
           >
             <ClipboardList className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={handleSaveToNotes}
+            className="p-2 rounded-lg hover:bg-yellow-500/20 text-white/50 hover:text-yellow-400 transition-all"
+            title="Save to Notes"
+          >
+            <FileText className="w-4 h-4" />
           </button>
 
           <a

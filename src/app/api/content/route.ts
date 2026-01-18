@@ -64,3 +64,26 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json(filteredData);
 }
+
+export async function DELETE(request: NextRequest) {
+  const accountId = getAccountId();
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+
+  if (!id) {
+    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+  }
+
+  // Delete the content item (interactions will cascade delete due to FK)
+  const { error } = await supabase
+    .from('content_items')
+    .delete()
+    .eq('id', id)
+    .eq('account_id', accountId);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}

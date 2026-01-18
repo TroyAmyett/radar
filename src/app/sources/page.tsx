@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import AddSourceModal from '@/components/modals/AddSourceModal';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Source, Topic } from '@/types/database';
 import { Plus, Rss, Youtube, Twitter, Trash2, RefreshCw, LucideProps } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -122,26 +123,27 @@ export default function SourcesPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <Header />
+    <ProtectedRoute>
+      <div className="flex flex-col h-screen">
+        <Header />
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-semibold">Sources</h1>
-            <p className="text-white/60 mt-1">
-              Manage your RSS feeds, YouTube channels, and X accounts
-            </p>
+        <div className="flex-1 overflow-auto p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-semibold">Sources</h1>
+              <p className="text-white/60 mt-1">
+                Manage your RSS feeds, YouTube channels, and X accounts
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="glass-button flex items-center gap-2 bg-accent hover:bg-accent/80"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Add Source</span>
+            </button>
           </div>
-
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="glass-button flex items-center gap-2 bg-accent hover:bg-accent/80"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Add Source</span>
-          </button>
-        </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -217,12 +219,13 @@ export default function SourcesPage() {
         )}
       </div>
 
-      <AddSourceModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onAdd={handleAddSource}
-        topics={topics}
-      />
-    </div>
+        <AddSourceModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onAdd={handleAddSource}
+          topics={topics}
+        />
+      </div>
+    </ProtectedRoute>
   );
 }

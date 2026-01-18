@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic } from '@/types/database';
 import { Settings, Plus, Palette, Mail, Clock, Save } from 'lucide-react';
 
@@ -125,27 +126,28 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <Header />
+    <ProtectedRoute>
+      <div className="flex flex-col h-screen">
+        <Header />
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold">Settings</h1>
-          <p className="text-white/60 mt-1">Manage your topics and preferences</p>
-        </div>
+        <div className="flex-1 overflow-auto p-6">
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold">Settings</h1>
+            <p className="text-white/60 mt-1">Manage your topics and preferences</p>
+          </div>
 
-        <div className="max-w-2xl">
-          {/* Topics Section */}
-          <section className="glass-card p-6 mb-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 rounded-lg bg-accent/20">
-                <Palette className="w-5 h-5 text-accent" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold">Topics</h2>
-                <p className="text-white/60 text-sm">
-                  Organize your content with custom topics
-                </p>
+          <div className="max-w-2xl">
+            {/* Topics Section */}
+            <section className="glass-card p-6 mb-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 rounded-lg bg-accent/20">
+                  <Palette className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Topics</h2>
+                  <p className="text-white/60 text-sm">
+                    Organize your content with custom topics
+                  </p>
               </div>
             </div>
 
@@ -410,10 +412,11 @@ export default function SettingsPage() {
                   <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                 </label>
               </div>
-            </div>
-          </section>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/layout/Header';
 import SubscribeWidget from '@/components/widgets/SubscribeWidget';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic, WhatsHotPost } from '@/types/database';
 import { Flame, ExternalLink, Calendar, ChevronLeft, ChevronRight, Twitter } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -83,21 +84,22 @@ export default function WhatsHotPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <Header />
+    <ProtectedRoute>
+      <div className="flex flex-col h-screen">
+        <Header />
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg bg-orange-500/20">
-              <Flame className="w-6 h-6 text-orange-400" />
+        <div className="flex-1 overflow-auto p-6">
+          <div className="max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-orange-500/20">
+                <Flame className="w-6 h-6 text-orange-400" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-semibold">What&apos;s Hot</h1>
+                <p className="text-white/60">Curated content from our intelligence feed</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-semibold">What&apos;s Hot</h1>
-              <p className="text-white/60">Curated content from our intelligence feed</p>
-            </div>
-          </div>
 
           {/* Topic Filter */}
           <div className="flex gap-2 flex-wrap mb-6">
@@ -265,10 +267,11 @@ export default function WhatsHotPage() {
             </div>
           )}
 
-          {/* Subscribe Widget */}
-          <SubscribeWidget source="whats-hot" className="mt-8" />
+            {/* Subscribe Widget */}
+            <SubscribeWidget source="whats-hot" className="mt-8" />
+          </div>
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }
