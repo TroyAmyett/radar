@@ -1,21 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Twitter, Linkedin, Youtube } from 'lucide-react';
-import { Topic } from '@/types/database';
+import { Topic, Advisor } from '@/types/database';
+
+interface AdvisorFormData {
+  name: string;
+  platform: 'twitter' | 'linkedin' | 'youtube';
+  username: string;
+  avatar_url?: string;
+  bio?: string;
+  topic_id?: string;
+}
 
 interface AddAdvisorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (advisor: {
-    name: string;
-    platform: 'twitter' | 'linkedin' | 'youtube';
-    username: string;
-    avatar_url?: string;
-    bio?: string;
-    topic_id?: string;
-  }) => void;
+  onAdd: (advisor: AdvisorFormData) => void;
+  onEdit?: (id: string, advisor: AdvisorFormData) => void;
   topics: Topic[];
+  editingAdvisor?: Advisor | null;
 }
 
 const platforms = [
@@ -28,7 +32,9 @@ export default function AddAdvisorModal({
   isOpen,
   onClose,
   onAdd,
+  onEdit,
   topics,
+  editingAdvisor,
 }: AddAdvisorModalProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<'twitter' | 'linkedin' | 'youtube'>('twitter');
   const [name, setName] = useState('');
@@ -38,31 +44,55 @@ export default function AddAdvisorModal({
   const [topicId, setTopicId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isEditing = !!editingAdvisor;
+
+  useEffect(() => {
+    if (editingAdvisor) {
+      setSelectedPlatform(editingAdvisor.platform as 'twitter' | 'linkedin' | 'youtube');
+      setName(editingAdvisor.name);
+      setUsername(editingAdvisor.username);
+      setAvatarUrl(editingAdvisor.avatar_url || '');
+      setBio(editingAdvisor.bio || '');
+      setTopicId(editingAdvisor.topic_id || '');
+    } else {
+      resetForm();
+    }
+  }, [editingAdvisor, isOpen]);
+
+  const resetForm = () => {
+    setSelectedPlatform('twitter');
+    setName('');
+    setUsername('');
+    setAvatarUrl('');
+    setBio('');
+    setTopicId('');
+  };
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    try {
-      await onAdd({
-        name,
-        platform: selectedPlatform,
-        username,
-        avatar_url: avatarUrl || undefined,
-        bio: bio || undefined,
-        topic_id: topicId || undefined,
-      });
+    const formData: AdvisorFormData = {
+      name,
+      platform: selectedPlatform,
+      username,
+      avatar_url: avatarUrl || undefined,
+      bio: bio || undefined,
+      topic_id: topicId || undefined,
+    };
 
-      // Reset form
-      setName('');
-      setUsername('');
-      setAvatarUrl('');
-      setBio('');
-      setTopicId('');
+    try {
+      if (isEditing && onEdit) {
+        await onEdit(editingAdvisor.id, formData);
+      } else {
+        await onAdd(formData);
+      }
+      resetForm();
       onClose();
     } catch (error) {
-      console.error('Failed to add advisor:', error);
+      console.error('Failed to save advisor:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -80,7 +110,9 @@ export default function AddAdvisorModal({
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-xl font-semibold mb-6">Add Advisor to Follow</h2>
+        <h2 className="text-xl font-semibold mb-6">
+          {isEditing ? 'Edit Advisor' : 'Add Advisor to Follow'}
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -183,7 +215,9 @@ export default function AddAdvisorModal({
             disabled={isSubmitting}
             className="w-full py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Adding...' : 'Add Advisor'}
+            {isSubmitting
+              ? (isEditing ? 'Saving...' : 'Adding...')
+              : (isEditing ? 'Save Changes' : 'Add Advisor')}
           </button>
         </form>
       </div>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import AddAdvisorModal from '@/components/modals/AddAdvisorModal';
 import { Advisor, Topic } from '@/types/database';
-import { Plus, Users, Twitter, Linkedin, Youtube, Trash2, ExternalLink, LucideProps } from 'lucide-react';
+import { Plus, Users, Twitter, Linkedin, Youtube, Trash2, ExternalLink, Pencil, LucideProps } from 'lucide-react';
 
 const platformIcons: Record<string, React.ComponentType<LucideProps>> = {
   twitter: Twitter,
@@ -29,6 +29,7 @@ export default function AdvisorsPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAdvisor, setEditingAdvisor] = useState<Advisor | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -79,6 +80,33 @@ export default function AdvisorsPage() {
     }
   };
 
+  const handleEditAdvisor = async (id: string, advisor: {
+    name: string;
+    platform: 'twitter' | 'linkedin' | 'youtube';
+    username: string;
+    avatar_url?: string;
+    bio?: string;
+    topic_id?: string;
+  }) => {
+    try {
+      const res = await fetch('/api/advisors', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...advisor }),
+      });
+      const updatedAdvisor = await res.json();
+      if (updatedAdvisor.error) {
+        console.error('Failed to update advisor:', updatedAdvisor.error);
+        return;
+      }
+      setAdvisors((prev) =>
+        prev.map((a) => (a.id === id ? updatedAdvisor : a))
+      );
+    } catch (error) {
+      console.error('Failed to update advisor:', error);
+    }
+  };
+
   const handleDeleteAdvisor = async (id: string) => {
     if (!confirm('Are you sure you want to unfollow this advisor?')) return;
 
@@ -88,6 +116,21 @@ export default function AdvisorsPage() {
     } catch (error) {
       console.error('Failed to delete advisor:', error);
     }
+  };
+
+  const openAddModal = () => {
+    setEditingAdvisor(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (advisor: Advisor) => {
+    setEditingAdvisor(advisor);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingAdvisor(null);
   };
 
   return (
@@ -104,7 +147,7 @@ export default function AdvisorsPage() {
           </div>
 
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={openAddModal}
             className="glass-button flex items-center gap-2 bg-accent hover:bg-accent/80"
           >
             <Plus className="w-5 h-5" />
@@ -144,7 +187,7 @@ export default function AdvisorsPage() {
                     ) : (
                       <div className="w-14 h-14 rounded-full bg-accent/20 flex items-center justify-center">
                         <span className="text-accent font-semibold text-xl">
-                          {advisor.name.charAt(0)}
+                          {advisor.name?.charAt(0) || '?'}
                         </span>
                       </div>
                     )}
@@ -179,8 +222,17 @@ export default function AdvisorsPage() {
                     </a>
 
                     <button
+                      onClick={() => openEditModal(advisor)}
+                      className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+                      title="Edit advisor"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+
+                    <button
                       onClick={() => handleDeleteAdvisor(advisor.id)}
                       className="p-2 rounded-lg hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors"
+                      title="Delete advisor"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -194,9 +246,11 @@ export default function AdvisorsPage() {
 
       <AddAdvisorModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={closeModal}
         onAdd={handleAddAdvisor}
+        onEdit={handleEditAdvisor}
         topics={topics}
+        editingAdvisor={editingAdvisor}
       />
     </div>
   );
