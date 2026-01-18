@@ -87,7 +87,23 @@ interface ChannelInfo {
   subscriber_count?: number;
 }
 
-function extractChannelInfo(item: any): ChannelInfo {
+interface YouTubeChannelItem {
+  id: string;
+  snippet: {
+    title: string;
+    description: string;
+    customUrl?: string;
+    thumbnails: {
+      default?: { url: string };
+      high?: { url: string };
+    };
+  };
+  statistics?: {
+    subscriberCount?: string;
+  };
+}
+
+function extractChannelInfo(item: YouTubeChannelItem): ChannelInfo {
   const snippet = item.snippet;
   const statistics = item.statistics;
 
