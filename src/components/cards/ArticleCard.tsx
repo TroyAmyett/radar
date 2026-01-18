@@ -2,7 +2,7 @@
 
 import { ContentItemWithInteraction } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
-import { Heart, Bookmark, MessageSquare, ExternalLink, Sparkles, Send } from 'lucide-react';
+import { Heart, Bookmark, MessageSquare, ExternalLink, Sparkles, Send, ClipboardList } from 'lucide-react';
 import { useState } from 'react';
 
 interface ArticleCardProps {
@@ -31,6 +31,32 @@ export default function ArticleCard({
     if (note.trim()) {
       onAddNote?.(item.id, note);
       setShowNoteInput(false);
+    }
+  };
+
+  const handleCreateTask = async () => {
+    // Open AgentPM in new tab with prefilled data
+    const params = new URLSearchParams({
+      title: `Research: ${item.title}`,
+      description: item.summary || '',
+      radar_item_id: item.id,
+    });
+    window.open(`https://agentpm.funnelists.com/tasks/new?${params}`, '_blank');
+
+    // Also make API call if AgentPM exposes endpoint
+    try {
+      await fetch('https://agentpm.funnelists.com/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Research: ${item.title}`,
+          description: item.summary || '',
+          radar_item_id: item.id,
+        }),
+      });
+    } catch (error) {
+      // Silently fail API call - the new tab will still work
+      console.error('Failed to create task via API:', error);
     }
   };
 
@@ -120,6 +146,14 @@ export default function ArticleCard({
           title="Publish to What's Hot"
         >
           <Send className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={handleCreateTask}
+          className="p-2 rounded-lg hover:bg-blue-500/20 text-white/50 hover:text-blue-400 transition-all"
+          title="Create Task in AgentPM"
+        >
+          <ClipboardList className="w-4 h-4" />
         </button>
 
         <a
