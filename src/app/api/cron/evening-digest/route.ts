@@ -27,12 +27,12 @@ export async function GET(request: NextRequest) {
   const logId = request.nextUrl.searchParams.get('log_id');
 
   try {
-    // Get all users with digest enabled for weekly
+    // Get all users with digest enabled for daily
     const { data: preferences } = await supabase
       .from('user_preferences')
       .select('*')
       .eq('digest_enabled', true)
-      .in('digest_frequency', ['weekly', 'both'])
+      .in('digest_frequency', ['daily', 'both'])
       .not('email_address', 'is', null);
 
     const results = {
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            type: 'weekly',
+            type: 'evening',
             account_id: pref.account_id,
           }),
         });
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              type: 'weekly',
+              type: 'evening',
               html: digest.html,
               email: pref.email_address,
               account_id: pref.account_id,
@@ -90,14 +90,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(responseBody);
   } catch (error) {
-    console.error('Cron weekly-digest failed:', error);
+    console.error('Cron evening-digest failed:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     // Log failure
-    await logCronJobComplete(logId, 'failed', 500, { error: 'Failed to send weekly digests' }, errorMessage);
+    await logCronJobComplete(logId, 'failed', 500, { error: 'Failed to send evening digests' }, errorMessage);
 
     return NextResponse.json(
-      { error: 'Failed to send weekly digests' },
+      { error: 'Failed to send evening digests' },
       { status: 500 }
     );
   }

@@ -1,54 +1,59 @@
 ---
 active: true
 iteration: 1
-max_iterations: 35
+max_iterations: 25
 completion_promise: "COMPLETE"
-started_at: "2026-01-18T03:48:19Z"
+started_at: "2026-01-18T13:04:54Z"
 ---
 
-Build Radar Phase 3 - What's Hot Publishing.
+Migrate Radar from Vercel cron to Supabase pg_cron.
 
-WHAT'S HOT DATABASE:
-* Create whats_hot_posts table
-* Create email_subscribers table
+REMOVE VERCEL CRON:
+* Delete vercel.json cron configuration (if exists)
+* Keep API endpoints but ensure they validate CRON_SECRET
 
-PUBLISH FLOW:
-* Add Publish button to content cards
-* PublishModal: edit title/summary, toggle X post, toggle email
-* On publish:
-  - Create whats_hot_posts record
-  - If X enabled, post via X API
-  - If email enabled, queue for next digest
+SUPABASE SETUP:
+* Create migration file to enable pg_cron and pg_net extensions
+* Create cron jobs table to track job status and history
+* Set up cron schedules:
+  - fetch-sources: every 30 minutes
+  - morning-digest: 6am daily (EST/UTC-5)
+  - evening-digest: 9pm daily (EST/UTC-5)  
+  - weekly-digest: Sunday 8am (EST/UTC-5)
 
-WHAT'S HOT PAGE (for funnelists-cms):
-* Create /whats-hot page component
-* List published posts with pagination
-* Topic filter
-* Link to original source
+MIGRATION SQL:
+* Enable extensions: pg_cron, pg_net
+* Create cron.schedule entries that call API endpoints via net.http_post
+* Pass CRON_SECRET in Authorization header
+* Create cron_job_logs table to track executions
 
-EMAIL SUBSCRIPTION:
-* Create subscription widget component
-* POST /api/subscribers endpoint
-* Confirmation email via Resend
-* Unsubscribe link
+API ENDPOINTS:
+* Ensure these endpoints exist and work:
+  - POST /api/cron/fetch-sources - Fetches all active sources
+  - POST /api/cron/morning-digest - Generates and sends morning digest
+  - POST /api/cron/evening-digest - Generates and sends evening digest
+  - POST /api/cron/weekly-digest - Generates and sends weekly digest
+* All endpoints validate Bearer token matches CRON_SECRET
+* All endpoints return JSON with success/error status
+* Log results to cron_job_logs table
 
-X INTEGRATION:
-* Set up X API v2 client
-* Post with title, summary, link, hashtags
-* Store post ID for tracking
+ENV VARIABLES:
+* Use existing CRON_SECRET for auth
+* Use NEXT_PUBLIC_SUPABASE_URL for the base URL in cron calls
 
-AUTO-PUBLISH (optional):
-* Score content relevance 0-100
-* Auto-publish if score > 80
-* Queue for review if 50-80
+EDGE FUNCTION ALTERNATIVE (if pg_net not available):
+* Create Supabase Edge Function as fallback
+* Edge function calls the API endpoints on schedule
 
-Success criteria:
-* Can publish content to What's Hot
-* What's Hot page displays published posts
-* Can post to X via API
-* Email subscription works
-* Subscribers receive digest
-* Unsubscribe works
+SUCCESS CRITERIA:
+* No Vercel cron configuration
+* pg_cron jobs created in Supabase
+* fetch-sources runs every 30 min
+* morning-digest runs at 6am EST
+* evening-digest runs at 9pm EST
+* weekly-digest runs Sunday 8am EST
+* Job executions logged to cron_job_logs
+* All endpoints protected by CRON_SECRET
 * No linter errors
 
 Output <promise>COMPLETE</promise> when done.

@@ -108,7 +108,7 @@ export default function AdvisorsPage() {
   };
 
   const handleDeleteAdvisor = async (id: string) => {
-    if (!confirm('Are you sure you want to unfollow this advisor?')) return;
+    if (!confirm('Are you sure you want to unfollow this expert?')) return;
 
     try {
       await fetch(`/api/advisors?id=${id}`, { method: 'DELETE' });
@@ -140,7 +140,7 @@ export default function AdvisorsPage() {
       <div className="flex-1 overflow-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold">Advisors</h1>
+            <h1 className="text-2xl font-semibold">Experts</h1>
             <p className="text-white/60 mt-1">
               Follow thought leaders and industry experts
             </p>
@@ -151,7 +151,7 @@ export default function AdvisorsPage() {
             className="glass-button flex items-center gap-2 bg-accent hover:bg-accent/80"
           >
             <Plus className="w-5 h-5" />
-            <span>Add Advisor</span>
+            <span>Add Expert</span>
           </button>
         </div>
 
@@ -162,7 +162,7 @@ export default function AdvisorsPage() {
         ) : advisors.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-white/40">
             <Users className="w-16 h-16 mb-4" />
-            <p className="text-lg">No advisors yet</p>
+            <p className="text-lg">No experts yet</p>
             <p className="text-sm mt-1">
               Follow thought leaders on X, LinkedIn, or YouTube
             </p>

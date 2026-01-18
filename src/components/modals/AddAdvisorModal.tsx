@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Twitter, Linkedin, Youtube } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { X, Twitter, Linkedin, Youtube, Loader2 } from 'lucide-react';
 import { Topic, Advisor } from '@/types/database';
 
 interface AdvisorFormData {
@@ -43,8 +43,32 @@ export default function AddAdvisorModal({
   const [bio, setBio] = useState('');
   const [topicId, setTopicId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingProfile, setIsFetchingProfile] = useState(false);
 
   const isEditing = !!editingAdvisor;
+
+  // Fetch YouTube profile when username changes
+  const fetchYouTubeProfile = useCallback(async (usernameToFetch: string) => {
+    if (!usernameToFetch || selectedPlatform !== 'youtube') return;
+
+    setIsFetchingProfile(true);
+    try {
+      const res = await fetch(`/api/youtube/channel?username=${encodeURIComponent(usernameToFetch)}`);
+      if (res.ok) {
+        const data = await res.json();
+        // Only auto-fill if fields are empty
+        if (!name) setName(data.name || '');
+        if (!avatarUrl) setAvatarUrl(data.avatar_url || '');
+        if (!bio) setBio(data.bio || '');
+        // Update username to the canonical one from YouTube
+        if (data.username) setUsername(data.username);
+      }
+    } catch (error) {
+      console.error('Failed to fetch YouTube profile:', error);
+    } finally {
+      setIsFetchingProfile(false);
+    }
+  }, [selectedPlatform, name, avatarUrl, bio]);
 
   useEffect(() => {
     if (editingAdvisor) {
@@ -111,7 +135,7 @@ export default function AddAdvisorModal({
         </button>
 
         <h2 className="text-xl font-semibold mb-6">
-          {isEditing ? 'Edit Advisor' : 'Add Advisor to Follow'}
+          {isEditing ? 'Edit Expert' : 'Add Expert to Follow'}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -154,7 +178,14 @@ export default function AddAdvisorModal({
           </div>
 
           <div>
-            <label className="block text-sm text-white/60 mb-2">Username</label>
+            <label className="block text-sm text-white/60 mb-2">
+              Username
+              {isFetchingProfile && (
+                <span className="ml-2 text-accent">
+                  <Loader2 className="w-3 h-3 inline animate-spin" /> Fetching profile...
+                </span>
+              )}
+            </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
                 @
@@ -162,12 +193,22 @@ export default function AddAdvisorModal({
               <input
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => setUsername(e.target.value.replace(/^@/, ''))}
+                onBlur={(e) => {
+                  if (selectedPlatform === 'youtube' && e.target.value) {
+                    fetchYouTubeProfile(e.target.value);
+                  }
+                }}
                 placeholder="username"
                 className="glass-input w-full pl-8"
                 required
               />
             </div>
+            {selectedPlatform === 'youtube' && (
+              <p className="text-xs text-white/40 mt-1">
+                Enter the channel handle and we&apos;ll auto-fill the profile info
+              </p>
+            )}
           </div>
 
           <div>
@@ -217,7 +258,7 @@ export default function AddAdvisorModal({
           >
             {isSubmitting
               ? (isEditing ? 'Saving...' : 'Adding...')
-              : (isEditing ? 'Save Changes' : 'Add Advisor')}
+              : (isEditing ? 'Save Changes' : 'Add Expert')}
           </button>
         </form>
       </div>

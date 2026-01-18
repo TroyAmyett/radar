@@ -1,8 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { supabase } from '@/lib/supabase';
 
-export async function GET() {
+async function logCronJobComplete(logId: string | null, status: string, responseStatus: number, responseBody: object, errorMessage: string | null = null) {
+  if (!logId) return;
+
+  await supabase.rpc('log_cron_job_complete', {
+    p_log_id: logId,
+    p_status: status,
+    p_response_status: responseStatus,
+    p_response_body: responseBody,
+    p_error_message: errorMessage
+  });
+}
+
+export async function GET(request: NextRequest) {
   // Verify cron secret in production
   const headersList = await headers();
   const authHeader = headersList.get('authorization');
@@ -10,6 +22,9 @@ export async function GET() {
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  // Get log_id from query params if provided by pg_cron
+  const logId = request.nextUrl.searchParams.get('log_id');
 
   try {
     // Get all users with digest enabled for daily
@@ -64,16 +79,30 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
+    const responseBody = {
       success: true,
       timestamp: new Date().toISOString(),
       ...results,
-    });
+    };
+
+    // Log completion
+    await logCronJobComplete(logId, 'completed', 200, responseBody);
+
+    return NextResponse.json(responseBody);
   } catch (error) {
     console.error('Cron morning-digest failed:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    // Log failure
+    await logCronJobComplete(logId, 'failed', 500, { error: 'Failed to send morning digests' }, errorMessage);
+
     return NextResponse.json(
       { error: 'Failed to send morning digests' },
       { status: 500 }
     );
   }
+}
+
+export async function POST(request: NextRequest) {
+  return GET(request);
 }
