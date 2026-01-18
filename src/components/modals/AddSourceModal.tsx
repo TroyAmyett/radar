@@ -1,13 +1,19 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { X, Rss, Youtube, Twitter, Loader2, Search, CheckCircle2 } from 'lucide-react';
+import { X, Loader2, Link, Youtube, Rss, Twitter, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Topic } from '@/types/database';
 
-interface DiscoveredFeed {
+interface SourceInfo {
+  type: 'youtube' | 'rss' | 'twitter';
+  name: string;
   url: string;
-  title?: string;
-  type: 'rss' | 'atom';
+  imageUrl?: string;
+  description?: string;
+  channelId?: string;
+  username?: string;
+  feedUrl?: string;
+  subscriberCount?: number;
 }
 
 interface AddSourceModalProps {
@@ -20,15 +26,39 @@ interface AddSourceModalProps {
     channel_id?: string;
     username?: string;
     topic_id?: string;
+    image_url?: string;
+    description?: string;
   }) => void;
   topics: Topic[];
 }
 
-const sourceTypes = [
-  { type: 'rss' as const, label: 'RSS Feed', icon: Rss },
-  { type: 'youtube' as const, label: 'YouTube Channel', icon: Youtube },
-  { type: 'twitter' as const, label: 'X / Twitter', icon: Twitter },
-];
+function formatSubscribers(count: number): string {
+  if (count >= 1000000) {
+    return `${(count / 1000000).toFixed(1)}M subscribers`;
+  }
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(1)}K subscribers`;
+  }
+  return `${count} subscribers`;
+}
+
+const typeIcons = {
+  youtube: Youtube,
+  rss: Rss,
+  twitter: Twitter,
+};
+
+const typeLabels = {
+  youtube: 'YouTube Channel',
+  rss: 'RSS Feed',
+  twitter: 'X / Twitter',
+};
+
+const typeColors = {
+  youtube: 'text-red-400',
+  rss: 'text-orange-400',
+  twitter: 'text-blue-400',
+};
 
 export default function AddSourceModal({
   isOpen,
@@ -36,96 +66,79 @@ export default function AddSourceModal({
   onAdd,
   topics,
 }: AddSourceModalProps) {
-  const [selectedType, setSelectedType] = useState<'rss' | 'youtube' | 'twitter'>('rss');
-  const [name, setName] = useState('');
-  const [url, setUrl] = useState('');
-  const [channelId, setChannelId] = useState('');
-  const [username, setUsername] = useState('');
+  const [inputUrl, setInputUrl] = useState('');
+  const [isLookingUp, setIsLookingUp] = useState(false);
+  const [lookupError, setLookupError] = useState('');
+  const [sourceInfo, setSourceInfo] = useState<SourceInfo | null>(null);
   const [topicId, setTopicId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // RSS discovery state
-  const [websiteUrl, setWebsiteUrl] = useState('');
-  const [isDiscovering, setIsDiscovering] = useState(false);
-  const [discoveredFeeds, setDiscoveredFeeds] = useState<DiscoveredFeed[]>([]);
-  const [discoveryError, setDiscoveryError] = useState('');
-  const [feedDiscovered, setFeedDiscovered] = useState(false);
+  // Allow editing the auto-detected name
+  const [editedName, setEditedName] = useState('');
 
   const resetForm = useCallback(() => {
-    setName('');
-    setUrl('');
-    setChannelId('');
-    setUsername('');
+    setInputUrl('');
+    setIsLookingUp(false);
+    setLookupError('');
+    setSourceInfo(null);
     setTopicId('');
-    setWebsiteUrl('');
-    setDiscoveredFeeds([]);
-    setDiscoveryError('');
-    setFeedDiscovered(false);
+    setEditedName('');
   }, []);
 
-  const discoverFeed = useCallback(async () => {
-    if (!websiteUrl) return;
+  const lookupUrl = useCallback(async () => {
+    if (!inputUrl.trim()) return;
 
-    setIsDiscovering(true);
-    setDiscoveryError('');
-    setDiscoveredFeeds([]);
-    setFeedDiscovered(false);
+    setIsLookingUp(true);
+    setLookupError('');
+    setSourceInfo(null);
 
     try {
-      const res = await fetch('/api/rss/discover', {
+      const res = await fetch('/api/sources/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: websiteUrl }),
+        body: JSON.stringify({ url: inputUrl.trim() }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setDiscoveryError(data.error || 'Failed to discover feed');
+        setLookupError(data.error || 'Could not identify source from URL');
         return;
       }
 
-      if (data.feeds && data.feeds.length > 0) {
-        setDiscoveredFeeds(data.feeds);
-        // Auto-select the first feed
-        const firstFeed = data.feeds[0];
-        setUrl(firstFeed.url);
-        if (!name && (firstFeed.title || data.pageTitle)) {
-          setName(firstFeed.title || data.pageTitle);
-        }
-        setFeedDiscovered(true);
-      } else {
-        setDiscoveryError('No RSS feed found at this URL. Try entering the feed URL directly.');
-      }
+      setSourceInfo(data);
+      setEditedName(data.name);
     } catch (error) {
-      console.error('Feed discovery error:', error);
-      setDiscoveryError('Failed to discover feed. Please try entering the feed URL directly.');
+      console.error('Lookup error:', error);
+      setLookupError('Failed to lookup URL. Please check the URL and try again.');
     } finally {
-      setIsDiscovering(false);
+      setIsLookingUp(false);
     }
-  }, [websiteUrl, name]);
+  }, [inputUrl]);
 
-  const selectFeed = useCallback((feed: DiscoveredFeed) => {
-    setUrl(feed.url);
-    if (!name && feed.title) {
-      setName(feed.title);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isLookingUp && inputUrl.trim()) {
+      e.preventDefault();
+      lookupUrl();
     }
-  }, [name]);
-
-  if (!isOpen) return null;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!sourceInfo) return;
+
     setIsSubmitting(true);
 
     try {
       await onAdd({
-        name,
-        type: selectedType,
-        url: selectedType === 'twitter' ? `https://x.com/${username}` : url,
-        channel_id: selectedType === 'youtube' ? channelId : undefined,
-        username: selectedType === 'twitter' ? username : undefined,
+        name: editedName || sourceInfo.name,
+        type: sourceInfo.type,
+        url: sourceInfo.feedUrl || sourceInfo.url,
+        channel_id: sourceInfo.channelId,
+        username: sourceInfo.username,
         topic_id: topicId || undefined,
+        image_url: sourceInfo.imageUrl,
+        description: sourceInfo.description,
       });
 
       resetForm();
@@ -142,6 +155,10 @@ export default function AddSourceModal({
     onClose();
   };
 
+  if (!isOpen) return null;
+
+  const TypeIcon = sourceInfo ? typeIcons[sourceInfo.type] : Link;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
@@ -154,216 +171,168 @@ export default function AddSourceModal({
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-xl font-semibold mb-6">Add New Source</h2>
+        <h2 className="text-xl font-semibold mb-2">Add New Source</h2>
+        <p className="text-sm text-white/50 mb-6">
+          Paste any YouTube, Twitter/X, or blog URL
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* URL Input */}
           <div>
-            <label className="block text-sm text-white/60 mb-2">Source Type</label>
+            <label className="block text-sm text-white/60 mb-2">URL</label>
             <div className="flex gap-2">
-              {sourceTypes.map((st) => {
-                const Icon = st.icon;
-                return (
-                  <button
-                    key={st.type}
-                    type="button"
-                    onClick={() => {
-                      setSelectedType(st.type);
-                      setDiscoveredFeeds([]);
-                      setDiscoveryError('');
-                      setFeedDiscovered(false);
-                    }}
-                    className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-all ${
-                      selectedType === st.type
-                        ? 'bg-accent text-white'
-                        : 'glass-button text-white/70'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="text-sm font-medium hidden sm:inline">
-                      {st.label}
-                    </span>
-                  </button>
-                );
-              })}
+              <div className="relative flex-1">
+                <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <input
+                  type="url"
+                  value={inputUrl}
+                  onChange={(e) => {
+                    setInputUrl(e.target.value);
+                    setSourceInfo(null);
+                    setLookupError('');
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder="https://youtube.com/@channel or blog URL"
+                  className="glass-input w-full pl-10"
+                  autoFocus
+                />
+              </div>
+              <button
+                type="button"
+                onClick={lookupUrl}
+                disabled={!inputUrl.trim() || isLookingUp}
+                className="px-4 py-2 bg-accent hover:bg-accent/80 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+              >
+                {isLookingUp ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Lookup'
+                )}
+              </button>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm text-white/60 mb-2">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Tech Crunch, Lex Fridman"
-              className="glass-input w-full"
-              required
-            />
-          </div>
-
-          {selectedType === 'rss' && (
-            <>
-              {/* Website URL with discovery */}
-              <div>
-                <label className="block text-sm text-white/60 mb-2">
-                  Website or Blog URL
-                  {feedDiscovered && (
-                    <span className="ml-2 text-green-400">
-                      <CheckCircle2 className="w-3 h-3 inline" /> Feed found
-                    </span>
-                  )}
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    value={websiteUrl}
-                    onChange={(e) => {
-                      setWebsiteUrl(e.target.value);
-                      setFeedDiscovered(false);
-                    }}
-                    placeholder="https://example.com/blog"
-                    className="glass-input flex-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={discoverFeed}
-                    disabled={!websiteUrl || isDiscovering}
-                    className="px-4 py-2 bg-accent/20 hover:bg-accent/30 text-accent rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {isDiscovering ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Search className="w-4 h-4" />
-                    )}
-                    <span className="hidden sm:inline">Find Feed</span>
-                  </button>
-                </div>
-                <p className="text-xs text-white/40 mt-1">
-                  Enter any page URL and we&apos;ll find the RSS feed automatically
-                </p>
-              </div>
-
-              {/* Discovery error */}
-              {discoveryError && (
-                <p className="text-sm text-red-400">{discoveryError}</p>
-              )}
-
-              {/* Discovered feeds list */}
-              {discoveredFeeds.length > 1 && (
-                <div>
-                  <label className="block text-sm text-white/60 mb-2">
-                    Found {discoveredFeeds.length} feeds - select one:
-                  </label>
-                  <div className="space-y-2">
-                    {discoveredFeeds.map((feed, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => selectFeed(feed)}
-                        className={`w-full text-left p-3 rounded-lg transition-all ${
-                          url === feed.url
-                            ? 'bg-accent/20 border border-accent'
-                            : 'glass-button'
-                        }`}
-                      >
-                        <div className="font-medium text-sm">
-                          {feed.title || 'Untitled Feed'}
-                        </div>
-                        <div className="text-xs text-white/40 truncate">
-                          {feed.url}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Direct feed URL input */}
-              <div>
-                <label className="block text-sm text-white/60 mb-2">
-                  Feed URL {feedDiscovered && '(auto-filled)'}
-                </label>
-                <input
-                  type="url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://example.com/feed.xml"
-                  className="glass-input w-full"
-                  required
-                />
-              </div>
-            </>
+          {/* Error message */}
+          {lookupError && (
+            <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-400">{lookupError}</p>
+            </div>
           )}
 
-          {selectedType === 'youtube' && (
-            <>
-              <div>
-                <label className="block text-sm text-white/60 mb-2">Channel URL</label>
-                <input
-                  type="url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://youtube.com/@channel"
-                  className="glass-input w-full"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-white/60 mb-2">
-                  Channel ID (optional)
-                </label>
-                <input
-                  type="text"
-                  value={channelId}
-                  onChange={(e) => setChannelId(e.target.value)}
-                  placeholder="UCxxxxxxxxxxxxxxxx"
-                  className="glass-input w-full"
-                />
-              </div>
-            </>
-          )}
-
-          {selectedType === 'twitter' && (
-            <div>
-              <label className="block text-sm text-white/60 mb-2">Username</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">
-                  @
+          {/* Source Preview */}
+          {sourceInfo && (
+            <div className="p-4 bg-white/5 rounded-lg border border-white/10 space-y-4">
+              {/* Detected type badge */}
+              <div className="flex items-center gap-2">
+                <TypeIcon className={`w-5 h-5 ${typeColors[sourceInfo.type]}`} />
+                <span className={`text-sm font-medium ${typeColors[sourceInfo.type]}`}>
+                  {typeLabels[sourceInfo.type]}
                 </span>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.replace(/^@/, ''))}
-                  placeholder="username"
-                  className="glass-input w-full pl-8"
-                  required
-                />
+                {sourceInfo.type === 'twitter' ? (
+                  <span className="ml-auto px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">
+                    Coming Soon
+                  </span>
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 text-green-400 ml-auto" />
+                )}
               </div>
+
+              {/* Twitter/X limitation warning */}
+              {sourceInfo.type === 'twitter' && (
+                <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                  <p className="text-sm text-yellow-400">
+                    X/Twitter API requires a paid subscription ($100/month). Posts won&apos;t be fetched automatically yet.
+                  </p>
+                </div>
+              )}
+
+              {/* Source info */}
+              <div className="flex gap-4">
+                {sourceInfo.imageUrl && (
+                  <img
+                    src={sourceInfo.imageUrl}
+                    alt={sourceInfo.name}
+                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  {/* Editable name */}
+                  <input
+                    type="text"
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    className="w-full bg-transparent border-b border-white/20 focus:border-accent outline-none font-semibold text-lg pb-1 mb-1"
+                    placeholder="Source name"
+                  />
+                  {sourceInfo.subscriberCount && sourceInfo.subscriberCount > 0 && (
+                    <p className="text-sm text-white/50">
+                      {formatSubscribers(sourceInfo.subscriberCount)}
+                    </p>
+                  )}
+                  {sourceInfo.description && (
+                    <p className="text-sm text-white/40 line-clamp-2 mt-1">
+                      {sourceInfo.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Channel ID display for YouTube */}
+              {sourceInfo.channelId && (
+                <p className="text-xs text-white/30 font-mono">
+                  Channel ID: {sourceInfo.channelId}
+                </p>
+              )}
+
+              {/* Feed URL display for RSS */}
+              {sourceInfo.feedUrl && sourceInfo.feedUrl !== sourceInfo.url && (
+                <p className="text-xs text-white/30 truncate">
+                  Feed: {sourceInfo.feedUrl}
+                </p>
+              )}
             </div>
           )}
 
-          <div>
-            <label className="block text-sm text-white/60 mb-2">Topic (optional)</label>
-            <select
-              value={topicId}
-              onChange={(e) => setTopicId(e.target.value)}
-              className="glass-input w-full"
-            >
-              <option value="">No specific topic</option>
-              {topics.map((topic) => (
-                <option key={topic.id} value={topic.id}>
-                  {topic.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Topic selector - only show after source is detected */}
+          {sourceInfo && (
+            <div>
+              <label className="block text-sm text-white/60 mb-2">Topic (optional)</label>
+              <select
+                value={topicId}
+                onChange={(e) => setTopicId(e.target.value)}
+                className="glass-input w-full"
+              >
+                <option value="">No specific topic</option>
+                {topics.map((topic) => (
+                  <option key={topic.id} value={topic.id}>
+                    {topic.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Adding...' : 'Add Source'}
-          </button>
+          {/* Submit button - only show after source is detected */}
+          {sourceInfo && (
+            <button
+              type="submit"
+              disabled={isSubmitting || !editedName.trim()}
+              className="w-full py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <TypeIcon className="w-4 h-4" />
+                  Add {typeLabels[sourceInfo.type]}
+                </>
+              )}
+            </button>
+          )}
         </form>
       </div>
     </div>

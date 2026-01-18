@@ -1,14 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/layout/Header';
 import TopicFilter from '@/components/TopicFilter';
+import ContentTypeFilter, { ContentType } from '@/components/ContentTypeFilter';
 import CardStream from '@/components/CardStream';
 import DeepDiveModal from '@/components/modals/DeepDiveModal';
 import PublishModal, { PublishData } from '@/components/modals/PublishModal';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic, ContentItemWithInteraction, Advisor } from '@/types/database';
 import { RefreshCw } from 'lucide-react';
+
+// Only include active content types (post/tweet coming soon - X API is $100/month)
+const ALL_CONTENT_TYPES: ContentType[] = ['video', 'article'];
 
 interface DeepDiveAnalysis {
   summary: string;
@@ -26,6 +30,7 @@ export default function Dashboard() {
   const [items, setItems] = useState<ContentItemWithInteraction[]>([]);
   const [advisors, setAdvisors] = useState<Record<string, Advisor>>({});
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [selectedTypes, setSelectedTypes] = useState<ContentType[]>(ALL_CONTENT_TYPES);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -91,6 +96,38 @@ export default function Dashboard() {
     };
     autoFetchIfEmpty();
   }, [isLoading, items.length, hasFetchedOnce, isRefreshing]);
+
+  // Filter items by content type (client-side filtering)
+  const filteredItems = useMemo(() => {
+    if (selectedTypes.length === ALL_CONTENT_TYPES.length) {
+      return items; // All selected, no filtering needed
+    }
+    return items.filter((item) => {
+      // Map item types to our filter types
+      const itemType = item.type === 'tweet' ? 'post' : item.type;
+      return selectedTypes.includes(itemType as ContentType);
+    });
+  }, [items, selectedTypes]);
+
+  const handleToggleType = (type: ContentType) => {
+    setSelectedTypes((prev) => {
+      if (prev.includes(type)) {
+        // Don't allow deselecting all - keep at least one
+        if (prev.length === 1) return prev;
+        return prev.filter((t) => t !== type);
+      }
+      return [...prev, type];
+    });
+  };
+
+  const handleToggleAllTypes = () => {
+    if (selectedTypes.length === ALL_CONTENT_TYPES.length) {
+      // If all selected, don't deselect all - keep first type
+      setSelectedTypes([ALL_CONTENT_TYPES[0]]);
+    } else {
+      setSelectedTypes([...ALL_CONTENT_TYPES]);
+    }
+  };
 
   const handleRefreshFeeds = async () => {
     setIsRefreshing(true);
@@ -271,7 +308,7 @@ export default function Dashboard() {
         <Header onSearch={setSearchQuery} />
 
         <div className="flex-1 overflow-auto p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <TopicFilter
               topics={topics}
               selectedTopic={selectedTopic}
@@ -290,8 +327,16 @@ export default function Dashboard() {
             </button>
           </div>
 
+          <div className="mb-6">
+            <ContentTypeFilter
+              selectedTypes={selectedTypes}
+              onToggleType={handleToggleType}
+              onToggleAll={handleToggleAllTypes}
+            />
+          </div>
+
           <CardStream
-            items={items}
+            items={filteredItems}
             advisors={advisors}
             isLoading={isLoading}
             isRefreshing={isRefreshing}

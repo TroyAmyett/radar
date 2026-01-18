@@ -3,6 +3,35 @@ import { supabase, getAccountId } from '@/lib/supabase';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
+// Decode HTML entities from YouTube API responses
+function decodeHtmlEntities(text: string): string {
+  if (!text) return text;
+  const entities: Record<string, string> = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'",
+    '&#x27;': "'",
+    '&#x2F;': '/',
+    '&#47;': '/',
+    '&apos;': "'",
+    '&nbsp;': ' ',
+  };
+  return text.replace(/&(?:#\d+|#x[\da-f]+|\w+);/gi, (match) => {
+    // Check named/numeric entities
+    if (entities[match]) return entities[match];
+    // Handle numeric entities like &#123;
+    if (match.startsWith('&#x')) {
+      return String.fromCharCode(parseInt(match.slice(3, -1), 16));
+    }
+    if (match.startsWith('&#')) {
+      return String.fromCharCode(parseInt(match.slice(2, -1), 10));
+    }
+    return match;
+  });
+}
+
 interface YouTubeVideo {
   id: { videoId: string };
   snippet: {
@@ -126,6 +155,10 @@ export async function POST(request: NextRequest) {
 
         if (existing) continue;
 
+        const decodedTitle = decodeHtmlEntities(video.snippet.title);
+        const decodedDescription = decodeHtmlEntities(video.snippet.description);
+        const decodedAuthor = decodeHtmlEntities(video.snippet.channelTitle);
+
         const { error: insertError } = await supabase
           .from('content_items')
           .insert({
@@ -133,15 +166,15 @@ export async function POST(request: NextRequest) {
             source_id: source.id,
             topic_id: source.topic_id,
             type: 'video',
-            title: video.snippet.title,
-            summary: video.snippet.description?.substring(0, 300),
-            content: video.snippet.description,
+            title: decodedTitle,
+            summary: decodedDescription?.substring(0, 300),
+            content: decodedDescription,
             url: `https://www.youtube.com/watch?v=${externalId}`,
             thumbnail_url:
               video.snippet.thumbnails.high?.url ||
               video.snippet.thumbnails.medium?.url ||
               video.snippet.thumbnails.default?.url,
-            author: video.snippet.channelTitle,
+            author: decodedAuthor,
             published_at: video.snippet.publishedAt,
             duration: durations[externalId] || null,
             external_id: externalId,
