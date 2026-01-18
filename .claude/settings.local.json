@@ -19,7 +19,8 @@
       "Bash(type:*)",
       "Bash(dir:*)",
       "Bash(git config:*)",
-      "Bash(git remote add:*)"
+      "Bash(git remote add:*)",
+      "Bash(npx vercel:*)"
     ]
   }
 }
