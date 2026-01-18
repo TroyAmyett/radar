@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic } from '@/types/database';
-import { Settings, Plus, Palette, Mail, Clock, Save } from 'lucide-react';
+import { Settings, Plus, Palette, Mail, Clock, Save, Pencil, Trash2 } from 'lucide-react';
 
 const iconOptions = ['bot', 'sparkles', 'link', 'users', 'play', 'globe', 'code', 'database'];
 const colorOptions = ['#0ea5e9', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#ec4899', '#06b6d4', '#84cc16'];
@@ -25,6 +25,13 @@ export default function SettingsPage() {
   const [newTopicColor, setNewTopicColor] = useState('#0ea5e9');
   const [newTopicIcon, setNewTopicIcon] = useState('sparkles');
   const [isAdding, setIsAdding] = useState(false);
+
+  // Edit topic state
+  const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editColor, setEditColor] = useState('');
+  const [editIcon, setEditIcon] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Digest preferences state
   const [digestPrefs, setDigestPrefs] = useState<DigestPreferences>({
@@ -92,6 +99,55 @@ export default function SettingsPage() {
       console.error('Failed to add topic:', error);
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const handleEditTopic = (topic: Topic) => {
+    setEditingTopic(topic);
+    setEditName(topic.name);
+    setEditColor(topic.color || '#0ea5e9');
+    setEditIcon(topic.icon || 'sparkles');
+  };
+
+  const handleUpdateTopic = async () => {
+    if (!editingTopic || !editName.trim()) return;
+
+    setIsUpdating(true);
+    try {
+      const res = await fetch('/api/topics', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingTopic.id,
+          name: editName,
+          color: editColor,
+          icon: editIcon,
+        }),
+      });
+      const updatedTopic = await res.json();
+      setTopics((prev) =>
+        prev.map((t) => (t.id === updatedTopic.id ? updatedTopic : t))
+      );
+      setEditingTopic(null);
+    } catch (error) {
+      console.error('Failed to update topic:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteTopic = async (topicId: string) => {
+    if (!confirm('Are you sure you want to delete this topic? This will unlink all associated content.')) {
+      return;
+    }
+
+    try {
+      await fetch(`/api/topics?id=${topicId}`, {
+        method: 'DELETE',
+      });
+      setTopics((prev) => prev.filter((t) => t.id !== topicId));
+    } catch (error) {
+      console.error('Failed to delete topic:', error);
     }
   };
 
@@ -216,22 +272,104 @@ export default function SettingsPage() {
             ) : (
               <div className="space-y-2">
                 {topics.map((topic) => (
-                  <div
-                    key={topic.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-white/5"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: topic.color || '#0ea5e9' }}
-                      />
-                      <span className="font-medium">{topic.name}</span>
-                      {topic.is_default && (
-                        <span className="text-xs text-white/40 px-2 py-0.5 rounded bg-white/10">
-                          Default
-                        </span>
-                      )}
-                    </div>
+                  <div key={topic.id}>
+                    {editingTopic?.id === topic.id ? (
+                      // Edit Mode
+                      <div className="p-4 rounded-lg bg-white/10 border border-accent/50">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm text-white/60 mb-2">Name</label>
+                            <input
+                              type="text"
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              className="glass-input w-full"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm text-white/60 mb-2">Color</label>
+                            <div className="flex gap-2 flex-wrap">
+                              {colorOptions.map((color) => (
+                                <button
+                                  key={color}
+                                  type="button"
+                                  onClick={() => setEditColor(color)}
+                                  className={`w-8 h-8 rounded-full transition-transform ${
+                                    editColor === color ? 'scale-110 ring-2 ring-white' : ''
+                                  }`}
+                                  style={{ backgroundColor: color }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm text-white/60 mb-2">Icon</label>
+                            <select
+                              value={editIcon}
+                              onChange={(e) => setEditIcon(e.target.value)}
+                              className="glass-input w-full"
+                            >
+                              {iconOptions.map((icon) => (
+                                <option key={icon} value={icon}>
+                                  {icon}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleUpdateTopic}
+                            disabled={isUpdating || !editName.trim()}
+                            className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/80 disabled:opacity-50"
+                          >
+                            {isUpdating ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            onClick={() => setEditingTopic(null)}
+                            className="px-4 py-2 glass-button"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      // View Mode
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 group hover:bg-white/10 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: topic.color || '#0ea5e9' }}
+                          />
+                          <span className="font-medium">{topic.name}</span>
+                          {topic.is_default && (
+                            <span className="text-xs text-white/40 px-2 py-0.5 rounded bg-white/10">
+                              Default
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => handleEditTopic(topic)}
+                            className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white"
+                            title="Edit topic"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTopic(topic.id)}
+                            className="p-2 rounded-lg hover:bg-red-500/20 text-white/60 hover:text-red-400"
+                            title="Delete topic"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
