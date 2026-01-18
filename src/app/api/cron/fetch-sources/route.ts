@@ -18,7 +18,7 @@ export async function GET() {
       .select('account_id')
       .eq('is_active', true);
 
-    const uniqueAccounts = [...new Set(accounts?.map((a) => a.account_id) || [])];
+    const uniqueAccounts = Array.from(new Set(accounts?.map((a) => a.account_id) || []));
 
     const results = {
       accounts: uniqueAccounts.length,
