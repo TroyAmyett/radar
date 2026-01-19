@@ -24,6 +24,15 @@ export async function POST(request: NextRequest) {
   const accountId = getAccountId();
   const body = await request.json();
 
+  // Validate required fields
+  if (!body.name || !body.type || !body.url) {
+    console.error('Missing required fields:', { name: body.name, type: body.type, url: body.url });
+    return NextResponse.json(
+      { error: 'Name, type, and URL are required' },
+      { status: 400 }
+    );
+  }
+
   const { data, error } = await supabaseAdmin
     .from('sources')
     .insert({
@@ -31,16 +40,17 @@ export async function POST(request: NextRequest) {
       name: body.name,
       type: body.type,
       url: body.url,
-      channel_id: body.channel_id,
-      username: body.username,
-      topic_id: body.topic_id,
-      image_url: body.image_url,
-      description: body.description,
+      channel_id: body.channel_id || null,
+      username: body.username || null,
+      topic_id: body.topic_id || null,
+      image_url: body.image_url || null,
+      description: body.description || null,
     })
     .select()
     .single();
 
   if (error) {
+    console.error('Supabase insert error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

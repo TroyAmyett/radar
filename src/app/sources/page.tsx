@@ -74,6 +74,13 @@ export default function SourcesPage() {
         body: JSON.stringify(source),
       });
       const newSource = await res.json();
+
+      // Check if the response is an error
+      if (!res.ok || newSource.error) {
+        console.error('Failed to add source:', newSource.error);
+        return;
+      }
+
       setSources((prev) => [newSource, ...prev]);
 
       // Fetch content for the new source if it's RSS or YouTube

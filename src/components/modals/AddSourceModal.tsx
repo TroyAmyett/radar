@@ -129,17 +129,21 @@ export default function AddSourceModal({
 
     setIsSubmitting(true);
 
+    const sourceData = {
+      name: editedName || sourceInfo.name,
+      type: sourceInfo.type,
+      url: sourceInfo.feedUrl || sourceInfo.url,
+      channel_id: sourceInfo.channelId,
+      username: sourceInfo.username,
+      topic_id: topicId || undefined,
+      image_url: sourceInfo.imageUrl,
+      description: sourceInfo.description,
+    };
+
+    console.log('Adding source with data:', sourceData);
+
     try {
-      await onAdd({
-        name: editedName || sourceInfo.name,
-        type: sourceInfo.type,
-        url: sourceInfo.feedUrl || sourceInfo.url,
-        channel_id: sourceInfo.channelId,
-        username: sourceInfo.username,
-        topic_id: topicId || undefined,
-        image_url: sourceInfo.imageUrl,
-        description: sourceInfo.description,
-      });
+      await onAdd(sourceData);
 
       resetForm();
       onClose();
