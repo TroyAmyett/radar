@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   Rss,
@@ -15,6 +15,8 @@ import {
   StickyNote,
   Palette,
   ChevronDown,
+  Menu,
+  X,
 } from 'lucide-react';
 
 // Helper to get app URLs based on environment
@@ -72,7 +74,22 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const currentTool = appTools.find(t => t.id === 'radar');
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Close mobile menu on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileMenuOpen(false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
 
   const handleToolSelect = (tool: Tool) => {
     if (tool.comingSoon) return;
@@ -82,8 +99,24 @@ export default function Sidebar() {
     setToolsOpen(false);
   };
 
-  return (
-    <aside className="fixed left-0 top-0 h-full w-64 glass border-r border-white/10 p-4 z-50">
+  // Mobile hamburger button (fixed position)
+  const MobileMenuButton = () => (
+    <button
+      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+      className="md:hidden fixed top-3 left-3 z-[60] p-2 rounded-lg glass border border-white/10 hover:bg-white/10 transition-colors"
+      aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+    >
+      {mobileMenuOpen ? (
+        <X className="w-5 h-5 text-white" />
+      ) : (
+        <Menu className="w-5 h-5 text-white" />
+      )}
+    </button>
+  );
+
+  // Sidebar content (shared between mobile and desktop)
+  const SidebarContent = () => (
+    <>
       {/* Tool Switcher */}
       <div className="relative mb-6">
         <button
@@ -166,6 +199,35 @@ export default function Sidebar() {
           );
         })}
       </nav>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <MobileMenuButton />
+
+      {/* Mobile overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile sidebar (slide-in drawer) */}
+      <aside
+        className={`md:hidden fixed left-0 top-0 h-full w-64 glass border-r border-white/10 p-4 pt-16 z-50 transform transition-transform duration-300 ease-in-out ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <SidebarContent />
+      </aside>
+
+      {/* Desktop sidebar (always visible) */}
+      <aside className="hidden md:block fixed left-0 top-0 h-full w-64 glass border-r border-white/10 p-4 z-50">
+        <SidebarContent />
+      </aside>
+    </>
   );
 }

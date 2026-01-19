@@ -122,8 +122,23 @@ export default function AddSourceModal({
     setPolymarketCategories([]);
   }, []);
 
-  const lookupUrl = useCallback(async () => {
-    if (!inputUrl.trim()) return;
+  // Normalize URL - add https:// if missing
+  const normalizeUrl = useCallback((url: string): string => {
+    let normalized = url.trim();
+    if (!normalized) return normalized;
+
+    // If it doesn't start with http:// or https://, add https://
+    if (!normalized.match(/^https?:\/\//i)) {
+      normalized = 'https://' + normalized;
+    }
+    return normalized;
+  }, []);
+
+  const lookupUrl = useCallback(async (urlOverride?: string) => {
+    const urlToLookup = urlOverride || inputUrl;
+    if (!urlToLookup.trim()) return;
+
+    const normalizedUrl = normalizeUrl(urlToLookup);
 
     setIsLookingUp(true);
     setLookupError('');
@@ -133,7 +148,7 @@ export default function AddSourceModal({
       const res = await fetch('/api/sources/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: inputUrl.trim() }),
+        body: JSON.stringify({ url: normalizedUrl }),
       });
 
       const data = await res.json();
@@ -155,7 +170,20 @@ export default function AddSourceModal({
     } finally {
       setIsLookingUp(false);
     }
-  }, [inputUrl]);
+  }, [inputUrl, normalizeUrl]);
+
+  // Quick-add handler for clickable source type hints
+  const handleQuickAdd = useCallback((type: 'youtube' | 'rss' | 'twitter' | 'polymarket') => {
+    const defaultUrls: Record<string, string> = {
+      polymarket: 'polymarket.com',
+    };
+
+    if (defaultUrls[type]) {
+      setInputUrl(defaultUrls[type]);
+      // Auto-lookup for types with default URLs
+      lookupUrl(defaultUrls[type]);
+    }
+  }, [lookupUrl]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isLookingUp && inputUrl.trim()) {
@@ -235,7 +263,7 @@ export default function AddSourceModal({
           Paste any YouTube, Twitter/X, blog URL, or polymarket.com
         </p>
 
-        {/* Source type hints */}
+        {/* Source type hints - Polymarket is clickable */}
         <div className="flex flex-wrap gap-2 mb-6">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full text-xs text-white/50">
             <Youtube className="w-3.5 h-3.5 text-red-400" />
@@ -249,10 +277,16 @@ export default function AddSourceModal({
             <Twitter className="w-3.5 h-3.5 text-blue-400" />
             X / Twitter
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full text-xs text-white/50">
-            <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
+          <button
+            type="button"
+            onClick={() => handleQuickAdd('polymarket')}
+            disabled={isLookingUp}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/20 hover:bg-purple-500/30 rounded-full text-xs text-purple-400 hover:text-purple-300 transition-colors cursor-pointer border border-purple-500/30"
+            title="Click to add Polymarket"
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
             Polymarket
-          </span>
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
