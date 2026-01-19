@@ -45,10 +45,13 @@ export default function SourcesPage() {
         sourcesRes.json(),
         topicsRes.json(),
       ]);
-      setSources(sourcesData);
-      setTopics(topicsData);
+      // Only set data if it's an array (not an error object)
+      setSources(Array.isArray(sourcesData) ? sourcesData : []);
+      setTopics(Array.isArray(topicsData) ? topicsData : []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
+      setSources([]);
+      setTopics([]);
     } finally {
       setIsLoading(false);
     }
