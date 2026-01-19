@@ -231,9 +231,29 @@ export default function AddSourceModal({
         </button>
 
         <h2 className="text-xl font-semibold mb-2">Add New Source</h2>
-        <p className="text-sm text-white/50 mb-6">
-          Paste any YouTube, Twitter/X, or blog URL
+        <p className="text-sm text-white/50 mb-4">
+          Paste any YouTube, Twitter/X, blog URL, or polymarket.com
         </p>
+
+        {/* Source type hints */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full text-xs text-white/50">
+            <Youtube className="w-3.5 h-3.5 text-red-400" />
+            YouTube
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full text-xs text-white/50">
+            <Rss className="w-3.5 h-3.5 text-orange-400" />
+            RSS / Blogs
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full text-xs text-white/50">
+            <Twitter className="w-3.5 h-3.5 text-blue-400" />
+            X / Twitter
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full text-xs text-white/50">
+            <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
+            Polymarket
+          </span>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* URL Input */}
@@ -320,12 +340,21 @@ export default function AddSourceModal({
 
               {/* Source info */}
               <div className="flex gap-4">
-                {sourceInfo.imageUrl && (
+                {sourceInfo.imageUrl ? (
                   <img
                     src={sourceInfo.imageUrl}
                     alt={sourceInfo.name}
                     className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                   />
+                ) : (
+                  <div className={`w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    sourceInfo.type === 'polymarket' ? 'bg-purple-500/20' :
+                    sourceInfo.type === 'youtube' ? 'bg-red-500/20' :
+                    sourceInfo.type === 'twitter' ? 'bg-blue-500/20' :
+                    'bg-orange-500/20'
+                  }`}>
+                    <TypeIcon className={`w-8 h-8 ${typeColors[sourceInfo.type]}`} />
+                  </div>
                 )}
                 <div className="flex-1 min-w-0">
                   {/* Editable name */}

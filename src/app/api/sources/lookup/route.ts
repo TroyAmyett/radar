@@ -626,7 +626,8 @@ async function lookupPolymarket(url: string): Promise<NextResponse> {
     type: 'polymarket',
     name: 'Polymarket - Trending Markets',
     url: 'https://polymarket.com',
-    imageUrl: 'https://polymarket.com/icons/favicon-196x196.png',
+    // Use data URI for Polymarket logo (purple P on transparent background)
+    imageUrl: undefined, // Let the modal use the TrendingUp icon instead
     description: 'Prediction markets for politics, finance, geopolitics, and more. Sports excluded by default.',
     polymarketTags: ['trending'],
     polymarketExcludeSports: true,
