@@ -6,8 +6,99 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic } from '@/types/database';
 import { Settings, Plus, Palette, Mail, Clock, Save, Pencil, Trash2 } from 'lucide-react';
 
-const iconOptions = ['bot', 'sparkles', 'link', 'users', 'play', 'globe', 'code', 'database'];
+// Expanded icon options with keyword associations for auto-selection
+const iconOptions = [
+  'sparkles', 'bot', 'brain', 'cpu', 'zap',           // AI/Tech
+  'users', 'building', 'briefcase', 'handshake',       // Business
+  'code', 'terminal', 'database', 'server',            // Development
+  'globe', 'link', 'rss', 'wifi',                      // Web/Network
+  'play', 'video', 'mic', 'headphones',                // Media
+  'chart-line', 'trending-up', 'bar-chart', 'target', // Analytics
+  'shield', 'lock', 'key', 'eye',                      // Security
+  'cloud', 'rocket', 'star', 'lightning-bolt',         // General
+  'dollar-sign', 'credit-card', 'coins', 'wallet',     // Finance
+  'message-circle', 'mail', 'bell', 'megaphone',       // Communication
+];
+
 const colorOptions = ['#0ea5e9', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#ec4899', '#06b6d4', '#84cc16'];
+
+// Auto-suggest an icon based on topic name, avoiding already-used icons
+function suggestIcon(topicName: string, usedIcons: string[]): string {
+  const name = topicName.toLowerCase();
+
+  // Keyword to icon mappings
+  const iconKeywords: Record<string, string[]> = {
+    'sparkles': ['ai', 'magic', 'smart', 'intelligent'],
+    'bot': ['agent', 'automation', 'robot', 'assistant'],
+    'brain': ['learning', 'neural', 'cognitive', 'think'],
+    'cpu': ['processor', 'compute', 'hardware', 'chip'],
+    'zap': ['fast', 'quick', 'lightning', 'power', 'energy'],
+    'users': ['team', 'people', 'community', 'group', 'social'],
+    'building': ['enterprise', 'company', 'corporate', 'organization'],
+    'briefcase': ['business', 'work', 'professional', 'job'],
+    'handshake': ['partner', 'deal', 'agreement', 'collaboration'],
+    'code': ['developer', 'programming', 'software', 'engineering'],
+    'terminal': ['cli', 'command', 'shell', 'console'],
+    'database': ['data', 'storage', 'sql', 'records'],
+    'server': ['backend', 'infrastructure', 'hosting', 'cloud'],
+    'globe': ['global', 'world', 'international', 'web'],
+    'link': ['connect', 'integration', 'api', 'chain'],
+    'rss': ['feed', 'news', 'blog', 'content'],
+    'wifi': ['network', 'wireless', 'connection', 'signal'],
+    'play': ['video', 'youtube', 'media', 'stream'],
+    'video': ['film', 'movie', 'recording', 'camera'],
+    'mic': ['podcast', 'audio', 'voice', 'speak'],
+    'headphones': ['music', 'listen', 'sound', 'audio'],
+    'chart-line': ['analytics', 'metrics', 'stats', 'growth'],
+    'trending-up': ['trend', 'increase', 'rising', 'market'],
+    'bar-chart': ['report', 'dashboard', 'visualization', 'chart'],
+    'target': ['goal', 'objective', 'focus', 'aim'],
+    'shield': ['security', 'protect', 'safe', 'defense'],
+    'lock': ['secure', 'private', 'password', 'encrypt'],
+    'key': ['access', 'auth', 'credential', 'unlock'],
+    'eye': ['monitor', 'watch', 'observe', 'view'],
+    'cloud': ['saas', 'aws', 'azure', 'hosting'],
+    'rocket': ['launch', 'startup', 'fast', 'deploy'],
+    'star': ['favorite', 'premium', 'best', 'top'],
+    'lightning-bolt': ['electric', 'power', 'force', 'salesforce'],
+    'dollar-sign': ['money', 'price', 'cost', 'revenue'],
+    'credit-card': ['payment', 'billing', 'transaction', 'purchase'],
+    'coins': ['crypto', 'bitcoin', 'currency', 'token'],
+    'wallet': ['finance', 'budget', 'fund', 'savings'],
+    'message-circle': ['chat', 'message', 'comment', 'discuss'],
+    'mail': ['email', 'inbox', 'newsletter', 'correspondence'],
+    'bell': ['notification', 'alert', 'reminder', 'update'],
+    'megaphone': ['marketing', 'announce', 'promote', 'advertise'],
+  };
+
+  // Find the best matching icon
+  let bestIcon: string | null = null;
+  let bestScore = 0;
+
+  for (const [icon, keywords] of Object.entries(iconKeywords)) {
+    // Skip already used icons
+    if (usedIcons.includes(icon)) continue;
+
+    let score = 0;
+    for (const keyword of keywords) {
+      if (name.includes(keyword)) {
+        score += keyword.length; // Longer matches score higher
+      }
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestIcon = icon;
+    }
+  }
+
+  // If no match found, pick first unused icon
+  if (!bestIcon) {
+    bestIcon = iconOptions.find(icon => !usedIcons.includes(icon)) || 'sparkles';
+  }
+
+  return bestIcon;
+}
 
 interface DigestPreferences {
   digest_enabled: boolean;
@@ -95,6 +186,7 @@ export default function SettingsPage() {
       const newTopic = await res.json();
       setTopics((prev) => [...prev, newTopic]);
       setNewTopicName('');
+      setNewTopicIcon('sparkles'); // Reset to default
     } catch (error) {
       console.error('Failed to add topic:', error);
     } finally {
@@ -215,7 +307,15 @@ export default function SettingsPage() {
                   <input
                     type="text"
                     value={newTopicName}
-                    onChange={(e) => setNewTopicName(e.target.value)}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      setNewTopicName(name);
+                      // Auto-select icon based on topic name
+                      if (name.trim()) {
+                        const usedIcons = topics.map(t => t.icon).filter(Boolean) as string[];
+                        setNewTopicIcon(suggestIcon(name, usedIcons));
+                      }
+                    }}
                     placeholder="Topic name"
                     className="glass-input w-full"
                   />
@@ -239,17 +339,22 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Icon</label>
+                  <label className="block text-sm text-white/60 mb-2">
+                    Icon <span className="text-white/40">(auto-selected)</span>
+                  </label>
                   <select
                     value={newTopicIcon}
                     onChange={(e) => setNewTopicIcon(e.target.value)}
                     className="glass-input w-full"
                   >
-                    {iconOptions.map((icon) => (
-                      <option key={icon} value={icon}>
-                        {icon}
-                      </option>
-                    ))}
+                    {iconOptions.map((icon) => {
+                      const isUsed = topics.some(t => t.icon === icon);
+                      return (
+                        <option key={icon} value={icon} disabled={isUsed}>
+                          {icon}{isUsed ? ' (in use)' : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
