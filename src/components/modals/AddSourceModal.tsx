@@ -72,6 +72,7 @@ export default function AddSourceModal({
   const [sourceInfo, setSourceInfo] = useState<SourceInfo | null>(null);
   const [topicId, setTopicId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   // Allow editing the auto-detected name
   const [editedName, setEditedName] = useState('');
@@ -83,6 +84,7 @@ export default function AddSourceModal({
     setSourceInfo(null);
     setTopicId('');
     setEditedName('');
+    setSubmitError('');
   }, []);
 
   const lookupUrl = useCallback(async () => {
@@ -128,6 +130,7 @@ export default function AddSourceModal({
     if (!sourceInfo) return;
 
     setIsSubmitting(true);
+    setSubmitError('');
 
     const sourceData = {
       name: editedName || sourceInfo.name,
@@ -149,6 +152,7 @@ export default function AddSourceModal({
       onClose();
     } catch (error) {
       console.error('Failed to add source:', error);
+      setSubmitError(error instanceof Error ? error.message : 'Failed to add source. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -314,6 +318,14 @@ export default function AddSourceModal({
                   </option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {/* Submit error message */}
+          {submitError && (
+            <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-400">{submitError}</p>
             </div>
           )}
 

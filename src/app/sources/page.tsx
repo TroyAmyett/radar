@@ -67,38 +67,34 @@ export default function SourcesPage() {
     image_url?: string;
     description?: string;
   }) => {
-    try {
-      const res = await fetch('/api/sources', {
+    const res = await fetch('/api/sources', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(source),
+    });
+    const newSource = await res.json();
+
+    // Check if the response is an error - throw so the modal knows not to close
+    if (!res.ok || newSource.error) {
+      console.error('Failed to add source:', newSource.error);
+      throw new Error(newSource.error || 'Failed to add source');
+    }
+
+    setSources((prev) => [newSource, ...prev]);
+
+    // Fetch content for the new source if it's RSS or YouTube
+    if (source.type === 'rss') {
+      fetch('/api/fetch-feeds', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(source),
+        body: JSON.stringify({ source_id: newSource.id }),
       });
-      const newSource = await res.json();
-
-      // Check if the response is an error
-      if (!res.ok || newSource.error) {
-        console.error('Failed to add source:', newSource.error);
-        return;
-      }
-
-      setSources((prev) => [newSource, ...prev]);
-
-      // Fetch content for the new source if it's RSS or YouTube
-      if (source.type === 'rss') {
-        await fetch('/api/fetch-feeds', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ source_id: newSource.id }),
-        });
-      } else if (source.type === 'youtube') {
-        await fetch('/api/fetch-youtube', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ source_id: newSource.id }),
-        });
-      }
-    } catch (error) {
-      console.error('Failed to add source:', error);
+    } else if (source.type === 'youtube') {
+      fetch('/api/fetch-youtube', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_id: newSource.id }),
+      });
     }
   };
 
