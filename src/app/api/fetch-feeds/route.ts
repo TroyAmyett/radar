@@ -2,7 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, getAccountId } from '@/lib/supabase';
 import Parser from 'rss-parser';
 
-const parser = new Parser({
+// Custom RSS item type that includes both standard and custom fields
+type CustomItem = {
+  'media:content'?: unknown;
+  'media:thumbnail'?: unknown;
+  'media:group'?: unknown;
+  enclosure?: unknown;
+  image?: unknown;
+  'content:encoded'?: string;
+  // Standard fields that rss-parser provides
+  title?: string;
+  link?: string;
+  guid?: string;
+  pubDate?: string;
+  creator?: string;
+  content?: string;
+  contentSnippet?: string;
+  categories?: string[];
+  isoDate?: string;
+};
+
+const parser: Parser<unknown, CustomItem> = new Parser({
   timeout: 10000,
   headers: {
     'User-Agent': 'Radar Intelligence Dashboard',
@@ -90,7 +110,7 @@ export async function POST(request: NextRequest) {
             content: item.content,
             url: item.link || '',
             thumbnail_url: thumbnailUrl,
-            author: item.creator || item.author,
+            author: item.creator || null,
             published_at: item.pubDate ? new Date(item.pubDate).toISOString() : null,
             external_id: externalId,
             metadata: {
