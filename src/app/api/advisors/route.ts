@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdminAdmin, getAccountId } from '@/lib/supabaseAdmin';
+import { supabaseAdmin, getAccountId } from '@/lib/supabase';
 
 export async function GET() {
   const accountId = getAccountId();
