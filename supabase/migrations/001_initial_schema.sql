@@ -168,13 +168,13 @@ CREATE POLICY "Users can update their own interactions" ON content_interactions
 CREATE POLICY "Users can delete their own interactions" ON content_interactions
   FOR DELETE USING (account_id = current_setting('app.account_id', true));
 
--- Seed default topics
+-- Seed default topics (using UUID format for account_id)
 INSERT INTO topics (account_id, name, slug, color, icon, is_default) VALUES
-  ('default-account', 'Agentforce', 'agentforce', '#0ea5e9', 'bot', true),
-  ('default-account', 'AI Tools', 'ai-tools', '#8b5cf6', 'sparkles', true),
-  ('default-account', 'Blockchain AI', 'blockchain-ai', '#f59e0b', 'link', true),
-  ('default-account', 'Competitors', 'competitors', '#ef4444', 'target', true),
-  ('default-account', 'Partners', 'partners', '#10b981', 'handshake', true)
+  ('00000000-0000-0000-0000-000000000001', 'Agentforce', 'agentforce', '#0ea5e9', 'bot', true),
+  ('00000000-0000-0000-0000-000000000001', 'AI Tools', 'ai-tools', '#8b5cf6', 'sparkles', true),
+  ('00000000-0000-0000-0000-000000000001', 'Blockchain AI', 'blockchain-ai', '#f59e0b', 'link', true),
+  ('00000000-0000-0000-0000-000000000001', 'Competitors', 'competitors', '#ef4444', 'target', true),
+  ('00000000-0000-0000-0000-000000000001', 'Partners', 'partners', '#10b981', 'handshake', true)
 ON CONFLICT (account_id, slug) DO NOTHING;
 
 -- Function to update updated_at timestamp
