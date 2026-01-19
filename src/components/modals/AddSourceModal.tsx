@@ -14,6 +14,7 @@ interface SourceInfo {
   username?: string;
   feedUrl?: string;
   subscriberCount?: number;
+  suggestedTopicId?: string;
 }
 
 interface AddSourceModalProps {
@@ -110,6 +111,10 @@ export default function AddSourceModal({
 
       setSourceInfo(data);
       setEditedName(data.name);
+      // Auto-select suggested topic if available
+      if (data.suggestedTopicId) {
+        setTopicId(data.suggestedTopicId);
+      }
     } catch (error) {
       console.error('Lookup error:', error);
       setLookupError('Failed to lookup URL. Please check the URL and try again.');

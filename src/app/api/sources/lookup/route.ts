@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin, getAccountId } from '@/lib/supabase';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
@@ -19,6 +20,78 @@ interface SourceInfo {
   username?: string;
   feedUrl?: string;
   subscriberCount?: number;
+  suggestedTopicId?: string;
+}
+
+interface Topic {
+  id: string;
+  name: string;
+  keywords?: string[];
+}
+
+// Suggest a topic based on source title and description
+async function suggestTopic(title: string, description?: string): Promise<string | undefined> {
+  const accountId = getAccountId();
+
+  // Fetch all topics for the account
+  const { data: topics } = await supabaseAdmin
+    .from('topics')
+    .select('id, name')
+    .eq('account_id', accountId);
+
+  if (!topics || topics.length === 0) return undefined;
+
+  // Combine title and description for matching
+  const textToMatch = `${title} ${description || ''}`.toLowerCase();
+
+  // Score each topic based on how well it matches
+  let bestMatch: { topicId: string; score: number } | null = null;
+
+  for (const topic of topics as Topic[]) {
+    const topicName = topic.name.toLowerCase();
+    let score = 0;
+
+    // Check if topic name appears in the text
+    if (textToMatch.includes(topicName)) {
+      score += 10;
+    }
+
+    // Check individual words from topic name
+    const topicWords = topicName.split(/\s+/).filter(w => w.length > 2);
+    for (const word of topicWords) {
+      if (textToMatch.includes(word)) {
+        score += 3;
+      }
+    }
+
+    // Common keyword associations
+    const keywordMap: Record<string, string[]> = {
+      'salesforce': ['crm', 'sfdc', 'apex', 'lightning', 'trailhead', 'dreamforce'],
+      'agentforce': ['agent', 'agentic', 'ai agent', 'autonomous'],
+      'ai': ['artificial intelligence', 'machine learning', 'ml', 'gpt', 'llm', 'claude', 'openai', 'gemini'],
+      'crypto': ['bitcoin', 'ethereum', 'blockchain', 'web3', 'defi', 'nft', 'cryptocurrency'],
+      'youtube': ['video', 'channel', 'creator'],
+      'partners': ['partner', 'isv', 'si', 'appexchange', 'consulting'],
+      'competitors': ['competitor', 'competition', 'market', 'dynamics', 'hubspot', 'zoho'],
+    };
+
+    // Check keyword associations
+    for (const [key, keywords] of Object.entries(keywordMap)) {
+      if (topicName.includes(key)) {
+        for (const keyword of keywords) {
+          if (textToMatch.includes(keyword)) {
+            score += 2;
+          }
+        }
+      }
+    }
+
+    if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+      bestMatch = { topicId: topic.id, score };
+    }
+  }
+
+  return bestMatch?.topicId;
 }
 
 // Decode HTML entities from API responses
@@ -178,16 +251,23 @@ async function lookupYouTube(url: string): Promise<NextResponse> {
     );
   }
 
+  const channelName = decodeHtmlEntities(channel.snippet.title);
+  const channelDescription = decodeHtmlEntities(channel.snippet.description)?.substring(0, 300);
+
+  // Suggest a topic based on channel name and description
+  const suggestedTopicId = await suggestTopic(channelName, channelDescription);
+
   const result: SourceInfo = {
     type: 'youtube',
-    name: decodeHtmlEntities(channel.snippet.title),
+    name: channelName,
     url: `https://www.youtube.com/channel/${channelId}`,
     imageUrl: channel.snippet.thumbnails?.high?.url ||
               channel.snippet.thumbnails?.medium?.url ||
               channel.snippet.thumbnails?.default?.url,
-    description: decodeHtmlEntities(channel.snippet.description)?.substring(0, 300),
+    description: channelDescription,
     channelId: channelId,
     subscriberCount: parseInt(channel.statistics?.subscriberCount || '0'),
+    suggestedTopicId,
   };
 
   return NextResponse.json(result, { headers: CORS_HEADERS });
@@ -423,11 +503,17 @@ async function lookupRSS(url: string): Promise<NextResponse> {
   }
 
   const feed = discoverData.feeds[0];
+  const feedName = decodeHtmlEntities(feed.title || discoverData.pageTitle || 'RSS Feed');
+
+  // Suggest a topic based on feed name and page title
+  const suggestedTopicId = await suggestTopic(feedName, discoverData.pageTitle);
+
   const result: SourceInfo = {
     type: 'rss',
-    name: decodeHtmlEntities(feed.title || discoverData.pageTitle || 'RSS Feed'),
+    name: feedName,
     url: url,
     feedUrl: feed.url,
+    suggestedTopicId,
   };
 
   return NextResponse.json(result, { headers: CORS_HEADERS });
