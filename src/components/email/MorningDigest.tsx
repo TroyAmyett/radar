@@ -21,24 +21,15 @@ interface ContentItem {
   topicColor?: string;
 }
 
-interface AdvisorHighlight {
-  name: string;
-  username: string;
-  content: string;
-  url: string;
-}
-
 interface MorningDigestProps {
   date: string;
   topContent: ContentItem[];
-  advisorHighlights: AdvisorHighlight[];
   aiInsight: string;
 }
 
 export default function MorningDigest({
   date,
   topContent,
-  advisorHighlights,
   aiInsight,
 }: MorningDigestProps) {
   return (
@@ -92,34 +83,6 @@ export default function MorningDigest({
               </div>
             ))}
           </Section>
-
-          <Hr style={styles.hr} />
-
-          {/* Advisor Highlights */}
-          {advisorHighlights.length > 0 && (
-            <Section style={styles.section}>
-              <Heading as="h2" style={styles.sectionTitle}>
-                Advisor Highlights
-              </Heading>
-              {advisorHighlights.map((advisor, index) => (
-                <div key={index} style={styles.advisorItem}>
-                  <div style={styles.advisorAvatar}>
-                    {advisor.name.charAt(0)}
-                  </div>
-                  <div style={styles.advisorDetails}>
-                    <Text style={styles.advisorName}>
-                      {advisor.name}{' '}
-                      <span style={styles.advisorHandle}>@{advisor.username}</span>
-                    </Text>
-                    <Text style={styles.advisorContent}>{advisor.content}</Text>
-                    <Link href={advisor.url} style={styles.advisorLink}>
-                      View →
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </Section>
-          )}
 
           {/* Footer */}
           <Section style={styles.footer}>
@@ -237,50 +200,6 @@ const styles = {
     color: 'rgba(255, 255, 255, 0.5)',
     fontSize: '12px',
     marginTop: '8px',
-  },
-  advisorItem: {
-    display: 'flex',
-    marginBottom: '20px',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: '12px',
-    padding: '16px',
-  },
-  advisorAvatar: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    backgroundColor: 'rgba(14, 165, 233, 0.2)',
-    color: '#0ea5e9',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: 'bold',
-    marginRight: '12px',
-    fontSize: '16px',
-  },
-  advisorDetails: {
-    flex: 1,
-  },
-  advisorName: {
-    color: '#ffffff',
-    fontSize: '14px',
-    fontWeight: '600',
-    margin: 0,
-  },
-  advisorHandle: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontWeight: 'normal',
-  },
-  advisorContent: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: '14px',
-    lineHeight: '1.5',
-    margin: '8px 0',
-  },
-  advisorLink: {
-    color: '#0ea5e9',
-    fontSize: '13px',
-    textDecoration: 'none',
   },
   footer: {
     textAlign: 'center' as const,

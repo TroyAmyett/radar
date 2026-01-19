@@ -94,47 +94,6 @@ export interface Database {
           updated_at?: string;
         };
       };
-      advisors: {
-        Row: {
-          id: string;
-          account_id: string;
-          topic_id: string | null;
-          name: string;
-          platform: 'twitter' | 'linkedin' | 'youtube';
-          username: string;
-          avatar_url: string | null;
-          bio: string | null;
-          is_active: boolean;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          account_id: string;
-          topic_id?: string | null;
-          name: string;
-          platform: 'twitter' | 'linkedin' | 'youtube';
-          username: string;
-          avatar_url?: string | null;
-          bio?: string | null;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          account_id?: string;
-          topic_id?: string | null;
-          name?: string;
-          platform?: 'twitter' | 'linkedin' | 'youtube';
-          username?: string;
-          avatar_url?: string | null;
-          bio?: string | null;
-          is_active?: boolean;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
       content_items: {
         Row: {
           id: string;
@@ -375,7 +334,6 @@ export interface Database {
 // Convenience types
 export type Topic = Database['public']['Tables']['topics']['Row'];
 export type Source = Database['public']['Tables']['sources']['Row'];
-export type Advisor = Database['public']['Tables']['advisors']['Row'];
 export type ContentItem = Database['public']['Tables']['content_items']['Row'];
 export type ContentInteraction = Database['public']['Tables']['content_interactions']['Row'];
 export type WhatsHotPost = Database['public']['Tables']['whats_hot_posts']['Row'];
@@ -383,7 +341,6 @@ export type EmailSubscriber = Database['public']['Tables']['email_subscribers'][
 
 export type TopicInsert = Database['public']['Tables']['topics']['Insert'];
 export type SourceInsert = Database['public']['Tables']['sources']['Insert'];
-export type AdvisorInsert = Database['public']['Tables']['advisors']['Insert'];
 export type ContentItemInsert = Database['public']['Tables']['content_items']['Insert'];
 export type ContentInteractionInsert = Database['public']['Tables']['content_interactions']['Insert'];
 export type WhatsHotPostInsert = Database['public']['Tables']['whats_hot_posts']['Insert'];
@@ -394,5 +351,4 @@ export interface ContentItemWithInteraction extends ContentItem {
   interaction?: ContentInteraction | null;
   topic?: Topic | null;
   source?: Source | null;
-  advisor?: Advisor | null;
 }

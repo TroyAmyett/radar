@@ -42,18 +42,6 @@ async function generateMorningDigest(accountId: string) {
     .order('published_at', { ascending: false })
     .limit(5);
 
-  // Get advisor content
-  const { data: advisorContent } = await supabase
-    .from('content_items')
-    .select(`
-      *,
-      advisor:advisors(*)
-    `)
-    .eq('account_id', accountId)
-    .not('advisor_id', 'is', null)
-    .gte('published_at', startOfDay(yesterday).toISOString())
-    .limit(3);
-
   // Generate AI insight
   const summaries = (content || []).map((item: { title: string; summary?: string; topic?: { name: string } }) => ({
     title: item.title,
@@ -73,19 +61,11 @@ async function generateMorningDigest(accountId: string) {
     topicColor: item.topic?.color,
   }));
 
-  const advisorHighlights = (advisorContent || []).map((item: { advisor?: { name: string; username: string }; content?: string; summary?: string; title: string; url: string }) => ({
-    name: item.advisor?.name || 'Unknown',
-    username: item.advisor?.username || '',
-    content: item.content || item.summary || item.title,
-    url: item.url,
-  }));
-
   // Render email HTML
   const html = await render(
     MorningDigest({
       date: format(today, 'MMMM d, yyyy'),
       topContent,
-      advisorHighlights,
       aiInsight,
     })
   );

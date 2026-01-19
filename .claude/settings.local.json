@@ -20,7 +20,9 @@
       "Bash(dir:*)",
       "Bash(git config:*)",
       "Bash(git remote add:*)",
-      "Bash(npx vercel:*)"
+      "Bash(npx vercel:*)",
+      "Bash(nslookup ilxgrlnwjtdpikpjocll.supabase.co)",
+      "Bash(set NODE_OPTIONS=--dns-result-order=ipv4first)"
     ]
   }
 }

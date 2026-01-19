@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
       *,
       topic:topics(*),
       source:sources(*),
-      advisor:advisors(*),
       interaction:content_interactions(*)
     `)
     .eq('account_id', accountId)

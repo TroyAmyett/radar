@@ -4,12 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/layout/Header';
 import CardStream from '@/components/CardStream';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { ContentItemWithInteraction, Advisor } from '@/types/database';
+import { ContentItemWithInteraction } from '@/types/database';
 import { Bookmark } from 'lucide-react';
 
 export default function SavedPage() {
   const [items, setItems] = useState<ContentItemWithInteraction[]>([]);
-  const [advisors, setAdvisors] = useState<Record<string, Advisor>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -23,15 +22,6 @@ export default function SavedPage() {
       const contentRes = await fetch(contentUrl);
       const contentData = await contentRes.json();
       setItems(contentData);
-
-      // Fetch advisors
-      const advisorsRes = await fetch('/api/advisors');
-      const advisorsData = await advisorsRes.json();
-      const advisorLookup: Record<string, Advisor> = {};
-      advisorsData.forEach((advisor: Advisor) => {
-        advisorLookup[advisor.id] = advisor;
-      });
-      setAdvisors(advisorLookup);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
@@ -147,7 +137,6 @@ export default function SavedPage() {
           ) : (
             <CardStream
               items={items}
-              advisors={advisors}
               isLoading={isLoading}
               onLike={handleLike}
               onSave={handleSave}

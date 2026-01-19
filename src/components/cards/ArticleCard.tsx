@@ -86,6 +86,25 @@ export default function ArticleCard({
         <h3 className="font-semibold text-lg mb-2 line-clamp-2">{item.title}</h3>
       </a>
 
+      {item.thumbnail_url && (
+        <a
+          href={item.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block mb-3"
+        >
+          <img
+            src={item.thumbnail_url}
+            alt={item.title}
+            className="w-full h-40 object-cover rounded-lg"
+            onError={(e) => {
+              // Hide image if it fails to load
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        </a>
+      )}
+
       {item.summary && (
         <p className="text-white/60 text-sm mb-3 line-clamp-3">{item.summary}</p>
       )}

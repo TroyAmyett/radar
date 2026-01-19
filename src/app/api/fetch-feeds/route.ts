@@ -7,6 +7,15 @@ const parser = new Parser({
   headers: {
     'User-Agent': 'Radar Intelligence Dashboard',
   },
+  customFields: {
+    item: [
+      ['media:content', 'media:content', { keepArray: true }],
+      ['media:thumbnail', 'media:thumbnail'],
+      ['media:group', 'media:group'],
+      ['enclosure', 'enclosure'],
+      ['image', 'image'],
+    ],
+  },
 });
 
 export async function POST(request: NextRequest) {
@@ -104,42 +113,77 @@ export async function POST(request: NextRequest) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractThumbnail(item: any): string | null {
+  // Helper to check if URL looks like an image
+  const isImageUrl = (url: string) => {
+    if (!url || typeof url !== 'string') return false;
+    // Match common image extensions or common CDN patterns
+    return url.match(/\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i) ||
+           url.includes('/images/') ||
+           url.includes('/img/') ||
+           url.includes('/media/') ||
+           url.includes('wp-content/uploads');
+  };
+
   // 1. Check enclosure (podcast/media RSS)
-  if (item.enclosure?.url) {
-    const url = item.enclosure.url;
-    if (typeof url === 'string' && url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-      return url;
-    }
+  if (item.enclosure?.url && isImageUrl(item.enclosure.url)) {
+    return item.enclosure.url;
+  }
+  // Also check enclosure as object with $ property
+  if (item.enclosure?.['$']?.url && isImageUrl(item.enclosure['$'].url)) {
+    return item.enclosure['$'].url;
   }
 
-  // 2. Check media:thumbnail (Media RSS)
-  if (item['media:thumbnail']?.['$']?.url) {
-    return item['media:thumbnail']['$'].url;
+  // 2. Check media:thumbnail (Media RSS) - various formats
+  if (item['media:thumbnail']) {
+    const thumb = item['media:thumbnail'];
+    if (thumb?.['$']?.url) return thumb['$'].url;
+    if (thumb?.url) return thumb.url;
+    if (typeof thumb === 'string') return thumb;
   }
 
   // 3. Check media:content (Media RSS)
   if (item['media:content']) {
     const mediaContent = Array.isArray(item['media:content'])
-      ? item['media:content'][0]
-      : item['media:content'];
-    if (mediaContent?.['$']?.url) {
-      const url = mediaContent['$'].url;
-      if (typeof url === 'string' && url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+      ? item['media:content']
+      : [item['media:content']];
+    for (const media of mediaContent) {
+      const url = media?.['$']?.url || media?.url;
+      if (url && isImageUrl(url)) {
         return url;
       }
     }
   }
 
-  // 4. Check content:encoded or description for <img> tags
-  const contentToCheck = item['content:encoded'] || item.content || item.description;
+  // 4. Check media:group (YouTube and others)
+  if (item['media:group']) {
+    const group = item['media:group'];
+    if (group['media:thumbnail']?.['$']?.url) {
+      return group['media:thumbnail']['$'].url;
+    }
+    if (group['media:content']?.[0]?.['$']?.url) {
+      const url = group['media:content'][0]['$'].url;
+      if (isImageUrl(url)) return url;
+    }
+  }
+
+  // 5. Check image field (some feeds use this)
+  if (item.image) {
+    if (typeof item.image === 'string') return item.image;
+    if (item.image?.url) return item.image.url;
+    if (item.image?.['$']?.url) return item.image['$'].url;
+  }
+
+  // 6. Check content:encoded or description for <img> tags
+  const contentToCheck = item['content:encoded'] || item.content || item.description || item.summary;
   if (typeof contentToCheck === 'string') {
-    const imgMatch = contentToCheck.match(/<img[^>]+src=["']([^"']+)["']/i);
-    if (imgMatch) {
+    // Try to find src attribute in img tag - handle various quote styles and spacing
+    const imgMatch = contentToCheck.match(/<img[^>]+src\s*=\s*["']([^"']+)["']/i);
+    if (imgMatch && imgMatch[1]) {
       return imgMatch[1];
     }
   }
 
-  // 5. Check for og:image in content
+  // 7. Check for og:image in content (rare but possible)
   if (typeof contentToCheck === 'string') {
     const ogMatch = contentToCheck.match(/property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
     if (ogMatch) {

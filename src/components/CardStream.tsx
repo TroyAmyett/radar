@@ -1,14 +1,12 @@
 'use client';
 
-import { ContentItemWithInteraction, Advisor } from '@/types/database';
+import { ContentItemWithInteraction } from '@/types/database';
 import ArticleCard from './cards/ArticleCard';
 import VideoCard from './cards/VideoCard';
-import AdvisorCard from './cards/AdvisorCard';
 import { Loader2 } from 'lucide-react';
 
 interface CardStreamProps {
   items: ContentItemWithInteraction[];
-  advisors?: Record<string, Advisor>;
   isLoading?: boolean;
   isRefreshing?: boolean;
   onLike?: (id: string) => void;
@@ -21,7 +19,6 @@ interface CardStreamProps {
 
 export default function CardStream({
   items,
-  advisors = {},
   isLoading = false,
   isRefreshing = false,
   onLike,
@@ -61,22 +58,6 @@ export default function CardStream({
   return (
     <div className="masonry-grid">
       {items.map((item) => {
-        const advisor = item.advisor_id ? advisors[item.advisor_id] : undefined;
-
-        if (item.type === 'tweet' || item.type === 'post') {
-          return (
-            <div key={item.id} className="masonry-item">
-              <AdvisorCard
-                item={item}
-                advisor={advisor}
-                onLike={onLike}
-                onSave={onSave}
-                onAddNote={onAddNote}
-              />
-            </div>
-          );
-        }
-
         if (item.type === 'video') {
           return (
             <div key={item.id} className="masonry-item">

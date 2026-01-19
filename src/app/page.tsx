@@ -8,7 +8,7 @@ import CardStream from '@/components/CardStream';
 import DeepDiveModal from '@/components/modals/DeepDiveModal';
 import PublishModal, { PublishData } from '@/components/modals/PublishModal';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { Topic, ContentItemWithInteraction, Advisor } from '@/types/database';
+import { Topic, ContentItemWithInteraction } from '@/types/database';
 import { RefreshCw } from 'lucide-react';
 
 // Only include active content types (post/tweet coming soon - X API is $100/month)
@@ -28,7 +28,6 @@ interface DeepDiveAnalysis {
 export default function Dashboard() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [items, setItems] = useState<ContentItemWithInteraction[]>([]);
-  const [advisors, setAdvisors] = useState<Record<string, Advisor>>({});
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedTypes, setSelectedTypes] = useState<ContentType[]>(ALL_CONTENT_TYPES);
   const [searchQuery, setSearchQuery] = useState('');
@@ -64,17 +63,6 @@ export default function Dashboard() {
       const contentRes = await fetch(contentUrl);
       const contentData = await contentRes.json();
       setItems(Array.isArray(contentData) ? contentData : []);
-
-      // Fetch advisors and build lookup
-      const advisorsRes = await fetch('/api/advisors');
-      const advisorsData = await advisorsRes.json();
-      const advisorLookup: Record<string, Advisor> = {};
-      if (Array.isArray(advisorsData)) {
-        advisorsData.forEach((advisor: Advisor) => {
-          advisorLookup[advisor.id] = advisor;
-        });
-      }
-      setAdvisors(advisorLookup);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
@@ -337,7 +325,6 @@ export default function Dashboard() {
 
           <CardStream
             items={filteredItems}
-            advisors={advisors}
             isLoading={isLoading}
             isRefreshing={isRefreshing}
             onLike={handleLike}
