@@ -86,6 +86,15 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // If topic_id was updated, also update all content items from this source
+  if ('topic_id' in allowedUpdates) {
+    await supabaseAdmin
+      .from('content_items')
+      .update({ topic_id: allowedUpdates.topic_id })
+      .eq('source_id', id)
+      .eq('account_id', accountId);
+  }
+
   return NextResponse.json(data);
 }
 

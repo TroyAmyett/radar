@@ -22,7 +22,15 @@
       "Bash(git remote add:*)",
       "Bash(npx vercel:*)",
       "Bash(nslookup ilxgrlnwjtdpikpjocll.supabase.co)",
-      "Bash(set NODE_OPTIONS=--dns-result-order=ipv4first)"
+      "Bash(set NODE_OPTIONS=--dns-result-order=ipv4first)",
+      "Bash(claude mcp add --transport stdio --scope user playwright -- cmd /c npx -y @playwright/mcp@latest)",
+      "Bash(claude mcp list:*)",
+      "Bash(claude mcp get:*)",
+      "Bash(claude mcp remove:*)",
+      "Bash(claude mcp add playwright --transport stdio --scope user -- npx -y @playwright/mcp@latest)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_snapshot"
     ]
   }
 }

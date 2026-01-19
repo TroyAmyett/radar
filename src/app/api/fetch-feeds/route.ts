@@ -204,12 +204,35 @@ function extractThumbnail(item: any): string | null {
   }
 
   // 6. Check content:encoded or description for <img> tags
+  // Skip small images like avatars - look for larger featured images
   const contentToCheck = item['content:encoded'] || item.content || item.description || item.summary;
   if (typeof contentToCheck === 'string') {
-    // Try to find src attribute in img tag - handle various quote styles and spacing
-    const imgMatch = contentToCheck.match(/<img[^>]+src\s*=\s*["']([^"']+)["']/i);
-    if (imgMatch && imgMatch[1]) {
-      return imgMatch[1];
+    // Find all img tags and filter out likely avatars/small images
+    const imgRegex = /<img[^>]+src\s*=\s*["']([^"']+)["'][^>]*>/gi;
+    let match;
+    while ((match = imgRegex.exec(contentToCheck)) !== null) {
+      const imgTag = match[0];
+      const imgUrl = match[1];
+
+      // Skip if URL looks like an avatar or profile image
+      if (imgUrl.match(/avatar|profile|author|gravatar|user[-_]?image|photo[-_]?\d+x\d+/i)) {
+        continue;
+      }
+
+      // Check for width/height attributes - skip small images (likely avatars)
+      const widthMatch = imgTag.match(/width\s*=\s*["']?(\d+)/i);
+      const heightMatch = imgTag.match(/height\s*=\s*["']?(\d+)/i);
+      if (widthMatch && heightMatch) {
+        const width = parseInt(widthMatch[1]);
+        const height = parseInt(heightMatch[1]);
+        // Skip images smaller than 200x200 (likely avatars/icons)
+        if (width < 200 || height < 200) {
+          continue;
+        }
+      }
+
+      // This looks like a real content image
+      return imgUrl;
     }
   }
 
