@@ -21,7 +21,7 @@ interface SourceInfo {
   subscriberCount?: number;
 }
 
-// Decode HTML entities from YouTube API responses
+// Decode HTML entities from API responses
 function decodeHtmlEntities(text: string): string {
   if (!text) return text;
   const entities: Record<string, string> = {
@@ -35,6 +35,14 @@ function decodeHtmlEntities(text: string): string {
     '&#47;': '/',
     '&apos;': "'",
     '&nbsp;': ' ',
+    '&raquo;': '»',
+    '&laquo;': '«',
+    '&ndash;': '–',
+    '&mdash;': '—',
+    '&copy;': '©',
+    '&reg;': '®',
+    '&trade;': '™',
+    '&hellip;': '…',
   };
   return text.replace(/&(?:#\d+|#x[\da-f]+|\w+);/gi, (match) => {
     if (entities[match]) return entities[match];
@@ -255,7 +263,7 @@ async function lookupRSS(url: string): Promise<NextResponse> {
   const feed = discoverData.feeds[0];
   const result: SourceInfo = {
     type: 'rss',
-    name: feed.title || discoverData.pageTitle || 'RSS Feed',
+    name: decodeHtmlEntities(feed.title || discoverData.pageTitle || 'RSS Feed'),
     url: url,
     feedUrl: feed.url,
   };

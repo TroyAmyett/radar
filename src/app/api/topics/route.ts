@@ -2,19 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, getAccountId } from '@/lib/supabase';
 
 export async function GET() {
-  const accountId = getAccountId();
+  try {
+    const accountId = getAccountId();
 
-  const { data, error } = await supabaseAdmin
-    .from('topics')
-    .select('*')
-    .eq('account_id', accountId)
-    .order('name');
+    const { data, error } = await supabaseAdmin
+      .from('topics')
+      .select('*')
+      .eq('account_id', accountId)
+      .order('name');
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error('Topics GET error:', err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
   }
-
-  return NextResponse.json(data);
 }
 
 export async function POST(request: NextRequest) {
