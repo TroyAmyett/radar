@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       channel_id: body.channel_id || null,
       username: body.username || null,
       topic_id: body.topic_id || null,
+      metadata: body.metadata || null,
     })
     .select()
     .single();

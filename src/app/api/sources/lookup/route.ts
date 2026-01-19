@@ -11,7 +11,7 @@ const CORS_HEADERS = {
 };
 
 interface SourceInfo {
-  type: 'youtube' | 'rss' | 'twitter';
+  type: 'youtube' | 'rss' | 'twitter' | 'polymarket';
   name: string;
   url: string;
   imageUrl?: string;
@@ -21,6 +21,9 @@ interface SourceInfo {
   feedUrl?: string;
   subscriberCount?: number;
   suggestedTopicId?: string;
+  // Polymarket-specific
+  polymarketTags?: string[];
+  polymarketExcludeSports?: boolean;
 }
 
 interface Topic {
@@ -146,6 +149,10 @@ export async function POST(request: NextRequest) {
 
     if (normalizedUrl.includes('twitter.com') || normalizedUrl.includes('x.com')) {
       return await lookupTwitter(url);
+    }
+
+    if (normalizedUrl.includes('polymarket.com')) {
+      return await lookupPolymarket(url);
     }
 
     // Default: try RSS discovery
@@ -286,14 +293,82 @@ async function lookupTwitter(url: string): Promise<NextResponse> {
 
   const username = match[1];
 
-  // Note: Twitter API requires authentication and is paid
-  // For now, return basic info that user can verify
+  // Skip common Twitter/X pages that aren't user profiles
+  const reservedUsernames = ['home', 'explore', 'search', 'notifications', 'messages', 'settings', 'i', 'compose'];
+  if (reservedUsernames.includes(username.toLowerCase())) {
+    return NextResponse.json(
+      { error: 'Please provide a Twitter/X profile URL (e.g., https://x.com/username)' },
+      { status: 400 }
+    );
+  }
+
+  // Use RSS.app to get Twitter feed as RSS (free tier)
+  // RSS.app format: https://rss.app/feeds/v1.1/twitter/{username}.xml
+  const rssAppFeedUrl = `https://rss.app/feeds/v1.1/twitter/${username}.xml`;
+
+  // Try to validate the feed exists and get profile info
+  try {
+    const feedResponse = await fetch(rssAppFeedUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Radar Feed Discoverer)',
+        'Accept': 'application/rss+xml, application/xml, text/xml',
+      },
+    });
+
+    if (feedResponse.ok) {
+      const feedText = await feedResponse.text();
+
+      // Extract profile info from feed
+      let displayName = `@${username}`;
+      let description = '';
+      let imageUrl = '';
+
+      // Try to extract title (usually includes display name)
+      const titleMatch = feedText.match(/<title>(?:<!\[CDATA\[)?([^\]<]+)(?:\]\]>)?<\/title>/i);
+      if (titleMatch) {
+        displayName = decodeHtmlEntities(titleMatch[1].trim());
+      }
+
+      // Try to extract description
+      const descMatch = feedText.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i);
+      if (descMatch) {
+        description = decodeHtmlEntities(descMatch[1].trim()).substring(0, 300);
+      }
+
+      // Try to extract image
+      const imageMatch = feedText.match(/<image>[\s\S]*?<url>([^<]+)<\/url>[\s\S]*?<\/image>/i);
+      if (imageMatch) {
+        imageUrl = imageMatch[1].trim();
+      }
+
+      // Suggest a topic based on profile
+      const suggestedTopicId = await suggestTopic(displayName, description);
+
+      const result: SourceInfo = {
+        type: 'rss', // Store as RSS type since we're using RSS.app
+        name: displayName,
+        url: `https://x.com/${username}`,
+        feedUrl: rssAppFeedUrl,
+        imageUrl: imageUrl || undefined,
+        description: description || `Posts from @${username} on X/Twitter`,
+        username: username,
+        suggestedTopicId,
+      };
+
+      return NextResponse.json(result, { headers: CORS_HEADERS });
+    }
+  } catch (error) {
+    console.error('RSS.app feed fetch error:', error);
+  }
+
+  // If RSS.app feed doesn't work, still return info but as twitter type
+  // This lets the user know it was detected but may not work
   const result: SourceInfo = {
     type: 'twitter',
     name: `@${username}`,
     url: `https://x.com/${username}`,
     username: username,
-    description: 'Twitter/X profile - name will be updated when content is fetched',
+    description: 'Twitter/X profile - RSS feed not available. X API requires paid subscription ($100/month).',
   };
 
   return NextResponse.json(result, { headers: CORS_HEADERS });
@@ -514,6 +589,47 @@ async function lookupRSS(url: string): Promise<NextResponse> {
     url: url,
     feedUrl: feed.url,
     suggestedTopicId,
+  };
+
+  return NextResponse.json(result, { headers: CORS_HEADERS });
+}
+
+async function lookupPolymarket(url: string): Promise<NextResponse> {
+  // Check if it's a specific event/market URL or the main site
+  const eventMatch = url.match(/polymarket\.com\/event\/([^/?]+)/);
+
+  if (eventMatch) {
+    // Specific event - fetch its details
+    const slug = eventMatch[1];
+    try {
+      const res = await fetch(`https://gamma-api.polymarket.com/events?slug=${slug}`);
+      const events = await res.json();
+
+      if (events && events.length > 0) {
+        const event = events[0];
+        return NextResponse.json({
+          type: 'polymarket',
+          name: event.title,
+          url: `https://polymarket.com/event/${slug}`,
+          imageUrl: event.image,
+          description: event.description?.substring(0, 300),
+        } as SourceInfo, { headers: CORS_HEADERS });
+      }
+    } catch (error) {
+      console.error('Polymarket event lookup error:', error);
+    }
+  }
+
+  // Main Polymarket URL or browse - offer to add as a feed
+  // Default to trending non-sports markets
+  const result: SourceInfo = {
+    type: 'polymarket',
+    name: 'Polymarket - Trending Markets',
+    url: 'https://polymarket.com',
+    imageUrl: 'https://polymarket.com/icons/favicon-196x196.png',
+    description: 'Prediction markets for politics, finance, geopolitics, and more. Sports excluded by default.',
+    polymarketTags: ['trending'],
+    polymarketExcludeSports: true,
   };
 
   return NextResponse.json(result, { headers: CORS_HEADERS });

@@ -161,5 +161,23 @@ body {
 @media (max-width: 768px) {
   .masonry-grid {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Touch-friendly tap targets on mobile */
+@media (max-width: 768px) {
+  .glass-card {
+    border-radius: 12px;
   }
 }

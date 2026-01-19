@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { X, Loader2, Link, Youtube, Rss, Twitter, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Loader2, Link, Youtube, Rss, Twitter, CheckCircle2, AlertCircle, TrendingUp } from 'lucide-react';
 import { Topic } from '@/types/database';
 
 interface SourceInfo {
-  type: 'youtube' | 'rss' | 'twitter';
+  type: 'youtube' | 'rss' | 'twitter' | 'polymarket';
   name: string;
   url: string;
   imageUrl?: string;
@@ -15,6 +15,9 @@ interface SourceInfo {
   feedUrl?: string;
   subscriberCount?: number;
   suggestedTopicId?: string;
+  // Polymarket-specific
+  polymarketTags?: string[];
+  polymarketExcludeSports?: boolean;
 }
 
 interface AddSourceModalProps {
@@ -22,13 +25,14 @@ interface AddSourceModalProps {
   onClose: () => void;
   onAdd: (source: {
     name: string;
-    type: 'rss' | 'youtube' | 'twitter';
+    type: 'rss' | 'youtube' | 'twitter' | 'polymarket';
     url: string;
     channel_id?: string;
     username?: string;
     topic_id?: string;
     image_url?: string;
     description?: string;
+    metadata?: Record<string, unknown>;
   }) => void;
   topics: Topic[];
 }
@@ -47,18 +51,21 @@ const typeIcons = {
   youtube: Youtube,
   rss: Rss,
   twitter: Twitter,
+  polymarket: TrendingUp,
 };
 
 const typeLabels = {
   youtube: 'YouTube Channel',
   rss: 'RSS Feed',
   twitter: 'X / Twitter',
+  polymarket: 'Polymarket',
 };
 
 const typeColors = {
   youtube: 'text-red-400',
   rss: 'text-orange-400',
   twitter: 'text-blue-400',
+  polymarket: 'text-purple-400',
 };
 
 export default function AddSourceModal({
@@ -78,6 +85,30 @@ export default function AddSourceModal({
   // Allow editing the auto-detected name
   const [editedName, setEditedName] = useState('');
 
+  // Polymarket-specific preferences
+  const [polymarketKeywords, setPolymarketKeywords] = useState('');
+  const [polymarketExcludeSports, setPolymarketExcludeSports] = useState(true);
+  const [polymarketCategories, setPolymarketCategories] = useState<string[]>([]);
+
+  // Available Polymarket categories
+  const POLYMARKET_CATEGORIES = [
+    { id: 'politics', label: 'Politics' },
+    { id: 'finance', label: 'Finance' },
+    { id: 'geopolitics', label: 'Geopolitics' },
+    { id: 'crypto', label: 'Crypto' },
+    { id: 'tech', label: 'Tech' },
+    { id: 'economy', label: 'Economy' },
+    { id: 'world', label: 'World' },
+    { id: 'elections', label: 'Elections' },
+    { id: 'earnings', label: 'Earnings' },
+  ];
+
+  // Popular Polymarket topics/tags
+  const POLYMARKET_TOPICS = [
+    'Trump', 'Fed', 'Iran', 'Israel', 'Tariffs', 'Ukraine',
+    'China', 'Bitcoin', 'Greenland', 'Venezuela', 'Russia',
+  ];
+
   const resetForm = useCallback(() => {
     setInputUrl('');
     setIsLookingUp(false);
@@ -86,6 +117,9 @@ export default function AddSourceModal({
     setTopicId('');
     setEditedName('');
     setSubmitError('');
+    setPolymarketKeywords('');
+    setPolymarketExcludeSports(true);
+    setPolymarketCategories([]);
   }, []);
 
   const lookupUrl = useCallback(async () => {
@@ -137,6 +171,12 @@ export default function AddSourceModal({
     setIsSubmitting(true);
     setSubmitError('');
 
+    // Parse keywords from comma-separated string
+    const keywords = polymarketKeywords
+      .split(',')
+      .map(k => k.trim().toLowerCase())
+      .filter(k => k.length > 0);
+
     const sourceData = {
       name: editedName || sourceInfo.name,
       type: sourceInfo.type,
@@ -146,6 +186,12 @@ export default function AddSourceModal({
       topic_id: topicId || undefined,
       image_url: sourceInfo.imageUrl,
       description: sourceInfo.description,
+      // Include Polymarket-specific settings in metadata
+      metadata: sourceInfo.type === 'polymarket' ? {
+        polymarketCategories: polymarketCategories.length > 0 ? polymarketCategories : undefined,
+        polymarketKeywords: keywords.length > 0 ? keywords : undefined,
+        polymarketExcludeSports: polymarketExcludeSports,
+      } : undefined,
     };
 
     console.log('Adding source with data:', sourceData);
@@ -238,10 +284,22 @@ export default function AddSourceModal({
             <div className="p-4 bg-white/5 rounded-lg border border-white/10 space-y-4">
               {/* Detected type badge */}
               <div className="flex items-center gap-2">
-                <TypeIcon className={`w-5 h-5 ${typeColors[sourceInfo.type]}`} />
-                <span className={`text-sm font-medium ${typeColors[sourceInfo.type]}`}>
-                  {typeLabels[sourceInfo.type]}
-                </span>
+                {/* Show Twitter icon for RSS.app Twitter feeds */}
+                {sourceInfo.feedUrl?.includes('rss.app/feeds/v1.1/twitter') ? (
+                  <>
+                    <Twitter className="w-5 h-5 text-blue-400" />
+                    <span className="text-sm font-medium text-blue-400">
+                      X / Twitter Feed
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <TypeIcon className={`w-5 h-5 ${typeColors[sourceInfo.type]}`} />
+                    <span className={`text-sm font-medium ${typeColors[sourceInfo.type]}`}>
+                      {typeLabels[sourceInfo.type]}
+                    </span>
+                  </>
+                )}
                 {sourceInfo.type === 'twitter' ? (
                   <span className="ml-auto px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">
                     Coming Soon
@@ -251,7 +309,7 @@ export default function AddSourceModal({
                 )}
               </div>
 
-              {/* Twitter/X limitation warning */}
+              {/* Twitter/X limitation warning - only show for pure twitter type (RSS.app failed) */}
               {sourceInfo.type === 'twitter' && (
                 <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                   <p className="text-sm text-yellow-400">
@@ -304,6 +362,95 @@ export default function AddSourceModal({
                   Feed: {sourceInfo.feedUrl}
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Polymarket preferences - only show for Polymarket sources */}
+          {sourceInfo?.type === 'polymarket' && (
+            <div className="space-y-4 p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+              <h4 className="text-sm font-medium text-purple-400">Filter Preferences</h4>
+
+              {/* Categories */}
+              <div>
+                <label className="block text-sm text-white/60 mb-2">Categories</label>
+                <div className="flex flex-wrap gap-2">
+                  {POLYMARKET_CATEGORIES.map((cat) => {
+                    const isSelected = polymarketCategories.includes(cat.id);
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          setPolymarketCategories(prev =>
+                            isSelected
+                              ? prev.filter(c => c !== cat.id)
+                              : [...prev, cat.id]
+                          );
+                        }}
+                        className={`px-3 py-1 text-sm rounded-full transition-all ${
+                          isSelected
+                            ? 'bg-purple-500 text-white'
+                            : 'bg-white/10 text-white/70 hover:bg-white/20'
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-white/40 mt-1">Select none for all categories</p>
+              </div>
+
+              {/* Topics/Keywords */}
+              <div>
+                <label className="block text-sm text-white/60 mb-2">Topics / Keywords</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {POLYMARKET_TOPICS.map((topic) => {
+                    const isSelected = polymarketKeywords.toLowerCase().includes(topic.toLowerCase());
+                    return (
+                      <button
+                        key={topic}
+                        type="button"
+                        onClick={() => {
+                          const current = polymarketKeywords.split(',').map(k => k.trim()).filter(k => k);
+                          if (isSelected) {
+                            const filtered = current.filter(k => k.toLowerCase() !== topic.toLowerCase());
+                            setPolymarketKeywords(filtered.join(', '));
+                          } else {
+                            setPolymarketKeywords([...current, topic].join(', '));
+                          }
+                        }}
+                        className={`px-3 py-1 text-sm rounded-full transition-all ${
+                          isSelected
+                            ? 'bg-purple-500 text-white'
+                            : 'bg-white/10 text-white/70 hover:bg-white/20'
+                        }`}
+                      >
+                        {topic}
+                      </button>
+                    );
+                  })}
+                </div>
+                <input
+                  type="text"
+                  value={polymarketKeywords}
+                  onChange={(e) => setPolymarketKeywords(e.target.value)}
+                  placeholder="Or type custom keywords: US, SPY, Bitcoin..."
+                  className="glass-input w-full text-sm"
+                />
+                <p className="text-xs text-white/40 mt-1">Comma-separated. Only markets matching these keywords will be shown.</p>
+              </div>
+
+              {/* Exclude sports toggle */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={polymarketExcludeSports}
+                  onChange={(e) => setPolymarketExcludeSports(e.target.checked)}
+                  className="w-4 h-4 rounded border-white/30 bg-white/10 text-purple-500 focus:ring-purple-500"
+                />
+                <span className="text-sm text-white/70">Exclude sports markets</span>
+              </label>
             </div>
           )}
 

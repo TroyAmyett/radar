@@ -28,7 +28,7 @@ interface DeepDiveAnalysis {
 export default function Dashboard() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [items, setItems] = useState<ContentItemWithInteraction[]>([]);
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<ContentType[]>(ALL_CONTENT_TYPES);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -53,10 +53,9 @@ export default function Dashboard() {
       const topicsData = await topicsRes.json();
       setTopics(Array.isArray(topicsData) ? topicsData : []);
 
-      // Fetch content
+      // Fetch content (we'll filter by topics client-side for multi-select)
       let contentUrl = '/api/content';
       const params = new URLSearchParams();
-      if (selectedTopic) params.set('topic', selectedTopic);
       if (searchQuery) params.set('search', searchQuery);
       if (params.toString()) contentUrl += '?' + params.toString();
 
@@ -68,7 +67,7 @@ export default function Dashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedTopic, searchQuery]);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchData();
@@ -85,17 +84,28 @@ export default function Dashboard() {
     autoFetchIfEmpty();
   }, [isLoading, items.length, hasFetchedOnce, isRefreshing]);
 
-  // Filter items by content type (client-side filtering)
+  // Filter items by content type and topics (client-side filtering)
   const filteredItems = useMemo(() => {
-    if (selectedTypes.length === ALL_CONTENT_TYPES.length) {
-      return items; // All selected, no filtering needed
-    }
     return items.filter((item) => {
-      // Map item types to our filter types
-      const itemType = item.type === 'tweet' ? 'post' : item.type;
-      return selectedTypes.includes(itemType as ContentType);
+      // Filter by content type
+      if (selectedTypes.length < ALL_CONTENT_TYPES.length) {
+        const itemType = item.type === 'tweet' ? 'post' : item.type;
+        if (!selectedTypes.includes(itemType as ContentType)) {
+          return false;
+        }
+      }
+
+      // Filter by selected topics (empty array means show all)
+      if (selectedTopics.length > 0) {
+        const itemTopicSlug = item.topic?.slug;
+        if (!itemTopicSlug || !selectedTopics.includes(itemTopicSlug)) {
+          return false;
+        }
+      }
+
+      return true;
     });
-  }, [items, selectedTypes]);
+  }, [items, selectedTypes, selectedTopics]);
 
   const handleToggleType = (type: ContentType) => {
     setSelectedTypes((prev) => {
@@ -117,13 +127,53 @@ export default function Dashboard() {
     }
   };
 
+  const handleSelectTopic = (topicSlug: string | null) => {
+    if (topicSlug === null) {
+      // "All" button - clear selection
+      setSelectedTopics([]);
+    } else {
+      // Toggle individual topic
+      setSelectedTopics((prev) => {
+        if (prev.includes(topicSlug)) {
+          return prev.filter((t) => t !== topicSlug);
+        }
+        return [...prev, topicSlug];
+      });
+    }
+  };
+
+  const handleToggleColor = (color: string) => {
+    const topicsWithColor = topics.filter((t) => t.color === color);
+    const topicSlugs = topicsWithColor.map((t) => t.slug);
+
+    setSelectedTopics((prev) => {
+      const allSelected = topicSlugs.every((slug) => prev.includes(slug));
+
+      if (allSelected) {
+        // Remove all topics of this color
+        return prev.filter((slug) => !topicSlugs.includes(slug));
+      } else {
+        // Add all topics of this color (without duplicates)
+        const newSelection = [...prev];
+        topicSlugs.forEach((slug) => {
+          if (!newSelection.includes(slug)) {
+            newSelection.push(slug);
+          }
+        });
+        return newSelection;
+      }
+    });
+  };
+
   const handleRefreshFeeds = async () => {
     setIsRefreshing(true);
     try {
-      // Fetch RSS feeds
-      await fetch('/api/fetch-feeds', { method: 'POST', body: JSON.stringify({}) });
-      // Fetch YouTube videos
-      await fetch('/api/fetch-youtube', { method: 'POST', body: JSON.stringify({}) });
+      // Fetch all source types in parallel
+      await Promise.all([
+        fetch('/api/fetch-feeds', { method: 'POST', body: JSON.stringify({}) }),
+        fetch('/api/fetch-youtube', { method: 'POST', body: JSON.stringify({}) }),
+        fetch('/api/fetch-polymarket', { method: 'POST', body: JSON.stringify({}) }),
+      ]);
       // Refresh content
       await fetchData();
     } catch (error) {
@@ -295,18 +345,20 @@ export default function Dashboard() {
       <div className="flex flex-col h-screen">
         <Header onSearch={setSearchQuery} />
 
-        <div className="flex-1 overflow-auto p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="flex-1 overflow-auto p-3 md:p-6">
+          {/* Mobile: stack vertically, Desktop: side by side */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <TopicFilter
               topics={topics}
-              selectedTopic={selectedTopic}
-              onSelectTopic={setSelectedTopic}
+              selectedTopics={selectedTopics}
+              onSelectTopic={handleSelectTopic}
+              onToggleColor={handleToggleColor}
             />
 
             <button
               onClick={handleRefreshFeeds}
               disabled={isRefreshing}
-              className="glass-button flex items-center gap-2"
+              className="glass-button flex items-center justify-center gap-2 w-full md:w-auto flex-shrink-0"
             >
               <RefreshCw
                 className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
@@ -315,7 +367,7 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4 md:mb-6">
             <ContentTypeFilter
               selectedTypes={selectedTypes}
               onToggleType={handleToggleType}

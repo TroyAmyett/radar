@@ -3,6 +3,7 @@
 import { ContentItemWithInteraction } from '@/types/database';
 import ArticleCard from './cards/ArticleCard';
 import VideoCard from './cards/VideoCard';
+import PredictionCard from './cards/PredictionCard';
 import { Loader2 } from 'lucide-react';
 
 interface CardStreamProps {
@@ -68,6 +69,20 @@ export default function CardStream({
                 onAddNote={onAddNote}
                 onDeepDive={onDeepDive}
                 onPublish={onPublish}
+                onDismiss={onDismiss}
+              />
+            </div>
+          );
+        }
+
+        if (item.type === 'prediction') {
+          return (
+            <div key={item.id} className="masonry-item">
+              <PredictionCard
+                item={item}
+                onLike={onLike}
+                onSave={onSave}
+                onAddNote={onAddNote}
                 onDismiss={onDismiss}
               />
             </div>

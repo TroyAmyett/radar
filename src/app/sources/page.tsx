@@ -59,13 +59,14 @@ export default function SourcesPage() {
 
   const handleAddSource = async (source: {
     name: string;
-    type: 'rss' | 'youtube' | 'twitter';
+    type: 'rss' | 'youtube' | 'twitter' | 'polymarket';
     url: string;
     channel_id?: string;
     username?: string;
     topic_id?: string;
     image_url?: string;
     description?: string;
+    metadata?: Record<string, unknown>;
   }) => {
     const res = await fetch('/api/sources', {
       method: 'POST',
@@ -82,7 +83,7 @@ export default function SourcesPage() {
 
     setSources((prev) => [newSource, ...prev]);
 
-    // Fetch content for the new source if it's RSS or YouTube
+    // Fetch content for the new source based on type
     if (source.type === 'rss') {
       fetch('/api/fetch-feeds', {
         method: 'POST',
@@ -91,6 +92,12 @@ export default function SourcesPage() {
       });
     } else if (source.type === 'youtube') {
       fetch('/api/fetch-youtube', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_id: newSource.id }),
+      });
+    } else if (source.type === 'polymarket') {
+      fetch('/api/fetch-polymarket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source_id: newSource.id }),

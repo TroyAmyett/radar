@@ -24,11 +24,11 @@ export default function ContentTypeFilter({
   const allSelected = selectedTypes.length === contentTypes.length;
 
   return (
-    <div className="flex items-center gap-3 text-sm">
-      <span className="text-white/40">Show:</span>
+    <div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm overflow-x-auto pb-1 scrollbar-hide">
+      <span className="text-white/40 flex-shrink-0">Show:</span>
 
       {/* All checkbox */}
-      <label className="flex items-center gap-1.5 cursor-pointer group">
+      <label className="flex items-center gap-1 md:gap-1.5 cursor-pointer group flex-shrink-0">
         <div
           className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
             allSelected
@@ -44,7 +44,7 @@ export default function ContentTypeFilter({
         </span>
       </label>
 
-      <span className="text-white/20">|</span>
+      <span className="text-white/20 flex-shrink-0">|</span>
 
       {/* Individual type checkboxes */}
       {contentTypes.map(({ type, label, icon: Icon, color, comingSoon }) => {
@@ -54,7 +54,7 @@ export default function ContentTypeFilter({
         if (comingSoon) return null;
 
         return (
-          <label key={type} className="flex items-center gap-1.5 cursor-pointer group">
+          <label key={type} className="flex items-center gap-1 md:gap-1.5 cursor-pointer group flex-shrink-0">
             <div
               className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
                 isSelected
