@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getAccountId } from '@/lib/supabase';
+import { supabaseAdminAdmin, getAccountId } from '@/lib/supabaseAdmin';
 
 export async function GET() {
   const accountId = getAccountId();
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('advisors')
     .select(`
       *,
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   const accountId = getAccountId();
   const body = await request.json();
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('advisors')
     .insert({
       account_id: accountId,
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('advisors')
     .update({
       name: body.name,
@@ -81,7 +81,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });
   }
 
-  const { error } = await supabase.from('advisors').delete().eq('id', id);
+  const { error } = await supabaseAdmin.from('advisors').delete().eq('id', id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

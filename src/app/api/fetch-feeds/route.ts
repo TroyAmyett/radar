@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getAccountId } from '@/lib/supabase';
+import { supabaseAdmin, getAccountId } from '@/lib/supabase';
 import Parser from 'rss-parser';
 
 const parser = new Parser({
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   const sourceId = body.source_id;
 
   // Get the source
-  let query = supabase
+  let query = supabaseAdmin
     .from('sources')
     .select('*')
     .eq('account_id', accountId)
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       for (const item of items) {
         // Check if item already exists
         const externalId = item.guid || item.link;
-        const { data: existing } = await supabase
+        const { data: existing } = await supabaseAdmin
           .from('content_items')
           .select('id')
           .eq('account_id', accountId)
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         const thumbnailUrl = extractThumbnail(item);
 
         // Insert new item
-        const { error: insertError } = await supabase
+        const { error: insertError } = await supabaseAdmin
           .from('content_items')
           .insert({
             account_id: accountId,
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Update last_fetched_at
-      await supabase
+      await supabaseAdmin
         .from('sources')
         .update({ last_fetched_at: new Date().toISOString() })
         .eq('id', source.id);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getAccountId } from '@/lib/supabase';
+import { supabaseAdmin, getAccountId } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   const accountId = getAccountId();
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '50');
   const offset = parseInt(searchParams.get('offset') || '0');
 
-  let query = supabase
+  let query = supabaseAdmin
     .from('content_items')
     .select(`
       *,
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     .range(offset, offset + limit - 1);
 
   if (topicSlug) {
-    const { data: topic } = await supabase
+    const { data: topic } = await supabaseAdmin
       .from('topics')
       .select('id')
       .eq('account_id', accountId)
@@ -75,7 +75,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   // Delete the content item (interactions will cascade delete due to FK)
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('content_items')
     .delete()
     .eq('id', id)

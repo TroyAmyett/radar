@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getAccountId } from '@/lib/supabase';
+import { supabaseAdmin, getAccountId } from '@/lib/supabase';
 import { getVideoTranscript } from '@/lib/youtube-transcript';
 import { summarizeTranscript } from '@/lib/gemini';
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Get YouTube sources
-  let query = supabase
+  let query = supabaseAdmin
     .from('sources')
     .select('*')
     .eq('account_id', accountId)
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         channelId = await extractChannelId(source.url);
         if (channelId) {
           // Update source with channel_id
-          await supabase
+          await supabaseAdmin
             .from('sources')
             .update({ channel_id: channelId })
             .eq('id', source.id);
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
         const externalId = video.id.videoId;
 
         // Check if already exists
-        const { data: existing } = await supabase
+        const { data: existing } = await supabaseAdmin
           .from('content_items')
           .select('id')
           .eq('account_id', accountId)
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
           // Fall back to YouTube description - already set above
         }
 
-        const { error: insertError } = await supabase
+        const { error: insertError } = await supabaseAdmin
           .from('content_items')
           .insert({
             account_id: accountId,
@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Update last_fetched_at
-      await supabase
+      await supabaseAdmin
         .from('sources')
         .update({ last_fetched_at: new Date().toISOString() })
         .eq('id', source.id);
