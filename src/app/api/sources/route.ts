@@ -43,7 +43,6 @@ export async function POST(request: NextRequest) {
       channel_id: body.channel_id || null,
       username: body.username || null,
       topic_id: body.topic_id || null,
-      image_url: body.image_url || null,
     })
     .select()
     .single();
@@ -67,7 +66,7 @@ export async function PATCH(request: NextRequest) {
 
   // Only allow updating certain fields
   const allowedUpdates: Record<string, unknown> = {};
-  const allowedFields = ['name', 'url', 'channel_id', 'username', 'topic_id', 'image_url'];
+  const allowedFields = ['name', 'url', 'channel_id', 'username', 'topic_id'];
 
   for (const field of allowedFields) {
     if (updates[field] !== undefined) {
