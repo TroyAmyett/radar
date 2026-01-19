@@ -297,7 +297,7 @@ export default function AddSourceModal({
               <div className="relative flex-1">
                 <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                 <input
-                  type="url"
+                  type="text"
                   value={inputUrl}
                   onChange={(e) => {
                     setInputUrl(e.target.value);
@@ -305,7 +305,7 @@ export default function AddSourceModal({
                     setLookupError('');
                   }}
                   onKeyDown={handleKeyDown}
-                  placeholder="https://youtube.com/@channel or blog URL"
+                  placeholder="youtube.com/@channel, blog URL, or polymarket.com"
                   className="glass-input w-full pl-10"
                   autoFocus
                 />
@@ -356,18 +356,24 @@ export default function AddSourceModal({
                 )}
                 {sourceInfo.type === 'twitter' ? (
                   <span className="ml-auto px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">
-                    Coming Soon
+                    Paid Service Required
                   </span>
                 ) : (
                   <CheckCircle2 className="w-4 h-4 text-green-400 ml-auto" />
                 )}
               </div>
 
-              {/* Twitter/X limitation warning - only show for pure twitter type (RSS.app failed) */}
+              {/* Twitter/X limitation warning */}
               {sourceInfo.type === 'twitter' && (
-                <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-                  <p className="text-sm text-yellow-400">
-                    X/Twitter API requires a paid subscription ($100/month). Posts won&apos;t be fetched automatically yet.
+                <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg space-y-2">
+                  <p className="text-sm text-yellow-400 font-medium">
+                    X/Twitter requires a paid service to monitor
+                  </p>
+                  <p className="text-xs text-yellow-400/80">
+                    Option 1: Create a feed at <a href="https://rss.app" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-300">rss.app</a> (paid), then paste the RSS feed URL here.
+                  </p>
+                  <p className="text-xs text-yellow-400/80">
+                    Option 2: X API integration coming in a future update.
                   </p>
                 </div>
               )}

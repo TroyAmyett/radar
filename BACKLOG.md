@@ -1,11 +1,12 @@
 # Radar Intelligence Dashboard - Backlog
 
 ## In Progress / Recently Completed
-- [x] X/Twitter via RSS.app integration (free tier)
+- [ ] ~~X/Twitter via RSS.app integration (free tier)~~ - **BLOCKED**: RSS.app free tier discontinued, requires paid account or X API ($100/month)
 - [x] Polymarket monitoring with categories/keywords/topics filtering
 - [x] Topic filter with colored icons and multi-select
 - [x] Auto-icon selection when creating topics
 - [x] Color group buttons to toggle topics by color
+- [x] Glassmorphism UI styles (Funnelists UI package)
 
 ## Backlog Items
 

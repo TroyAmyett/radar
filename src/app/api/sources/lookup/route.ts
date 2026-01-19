@@ -302,73 +302,17 @@ async function lookupTwitter(url: string): Promise<NextResponse> {
     );
   }
 
-  // Use RSS.app to get Twitter feed as RSS (free tier)
-  // RSS.app format: https://rss.app/feeds/v1.1/twitter/{username}.xml
-  const rssAppFeedUrl = `https://rss.app/feeds/v1.1/twitter/${username}.xml`;
+  // X/Twitter no longer provides free RSS feeds
+  // Free services like RSS.app free tier have been discontinued
+  // Options: X API ($100/month), RSS.app paid account, or user-provided feed URL
 
-  // Try to validate the feed exists and get profile info
-  try {
-    const feedResponse = await fetch(rssAppFeedUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Radar Feed Discoverer)',
-        'Accept': 'application/rss+xml, application/xml, text/xml',
-      },
-    });
-
-    if (feedResponse.ok) {
-      const feedText = await feedResponse.text();
-
-      // Extract profile info from feed
-      let displayName = `@${username}`;
-      let description = '';
-      let imageUrl = '';
-
-      // Try to extract title (usually includes display name)
-      const titleMatch = feedText.match(/<title>(?:<!\[CDATA\[)?([^\]<]+)(?:\]\]>)?<\/title>/i);
-      if (titleMatch) {
-        displayName = decodeHtmlEntities(titleMatch[1].trim());
-      }
-
-      // Try to extract description
-      const descMatch = feedText.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/i);
-      if (descMatch) {
-        description = decodeHtmlEntities(descMatch[1].trim()).substring(0, 300);
-      }
-
-      // Try to extract image
-      const imageMatch = feedText.match(/<image>[\s\S]*?<url>([^<]+)<\/url>[\s\S]*?<\/image>/i);
-      if (imageMatch) {
-        imageUrl = imageMatch[1].trim();
-      }
-
-      // Suggest a topic based on profile
-      const suggestedTopicId = await suggestTopic(displayName, description);
-
-      const result: SourceInfo = {
-        type: 'rss', // Store as RSS type since we're using RSS.app
-        name: displayName,
-        url: `https://x.com/${username}`,
-        feedUrl: rssAppFeedUrl,
-        imageUrl: imageUrl || undefined,
-        description: description || `Posts from @${username} on X/Twitter`,
-        username: username,
-        suggestedTopicId,
-      };
-
-      return NextResponse.json(result, { headers: CORS_HEADERS });
-    }
-  } catch (error) {
-    console.error('RSS.app feed fetch error:', error);
-  }
-
-  // If RSS.app feed doesn't work, still return info but as twitter type
-  // This lets the user know it was detected but may not work
+  // Return twitter type with helpful guidance
   const result: SourceInfo = {
     type: 'twitter',
     name: `@${username}`,
     url: `https://x.com/${username}`,
     username: username,
-    description: 'Twitter/X profile - RSS feed not available. X API requires paid subscription ($100/month).',
+    description: `X/Twitter requires a paid service to monitor. You can: 1) Use RSS.app (paid) to generate a feed URL, then paste that RSS URL here instead. 2) Wait for X API integration (coming in a future update).`,
   };
 
   return NextResponse.json(result, { headers: CORS_HEADERS });

@@ -5,16 +5,107 @@
 @tailwind utilities;
 
 :root {
-  --background: #0a0a0f;
-  --foreground: #ededed;
+  /* Dark color scheme for native form controls */
   color-scheme: dark;
+
+  /* Brand Colors - Funnelists UI */
+  --fl-color-primary: #0ea5e9;
+  --fl-color-primary-hover: #0284c7;
+  --fl-color-primary-active: #0369a1;
+
+  /* Background Colors - Funnelists UI */
+  --fl-color-bg-base: #0a0a0f;
+  --fl-color-bg-elevated: #111118;
+  --fl-color-bg-surface: #1a1a24;
+  --fl-color-bg-overlay: rgba(26, 26, 36, 0.95);
+
+  /* Border Colors - Funnelists UI */
+  --fl-color-border: rgba(255, 255, 255, 0.1);
+  --fl-color-border-hover: rgba(255, 255, 255, 0.2);
+  --fl-color-border-focus: #0ea5e9;
+
+  /* Text Colors - Funnelists UI */
+  --fl-color-text-primary: #ffffff;
+  --fl-color-text-secondary: #a1a1aa;
+  --fl-color-text-muted: #71717a;
+  --fl-color-text-inverse: #0a0a0f;
+
+  /* Status Colors - Funnelists UI */
+  --fl-color-success: #22c55e;
+  --fl-color-warning: #f59e0b;
+  --fl-color-error: #ef4444;
+  --fl-color-info: #0ea5e9;
+
+  /* Typography - Funnelists UI */
+  --fl-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --fl-font-size-2xl: 2rem;
+  --fl-font-size-xl: 1.5rem;
+  --fl-font-size-lg: 1.25rem;
+  --fl-font-size-md: 1rem;
+  --fl-font-size-sm: 0.875rem;
+  --fl-font-size-xs: 0.75rem;
+  --fl-font-weight-normal: 400;
+  --fl-font-weight-medium: 500;
+  --fl-font-weight-semibold: 600;
+  --fl-font-weight-bold: 700;
+
+  /* Spacing - Funnelists UI */
+  --fl-spacing-xs: 4px;
+  --fl-spacing-sm: 8px;
+  --fl-spacing-md: 16px;
+  --fl-spacing-lg: 24px;
+  --fl-spacing-xl: 32px;
+  --fl-spacing-2xl: 48px;
+
+  /* Border Radius - Funnelists UI */
+  --fl-radius-sm: 4px;
+  --fl-radius-md: 6px;
+  --fl-radius-lg: 8px;
+  --fl-radius-xl: 12px;
+  --fl-radius-2xl: 16px;
+  --fl-radius-full: 9999px;
+
+  /* Shadows - Funnelists UI */
+  --fl-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --fl-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --fl-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --fl-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+
+  /* Transitions - Funnelists UI */
+  --fl-transition-fast: 150ms ease;
+  --fl-transition-normal: 200ms ease;
+  --fl-transition-slow: 300ms ease;
+
+  /* Z-Index Scale - Funnelists UI */
+  --fl-z-dropdown: 100;
+  --fl-z-sticky: 200;
+  --fl-z-fixed: 300;
+  --fl-z-modal-backdrop: 400;
+  --fl-z-modal: 500;
+  --fl-z-popover: 600;
+  --fl-z-tooltip: 700;
+
+  /* Glass Effect Variables */
+  --fl-glass-bg: rgba(255, 255, 255, 0.05);
+  --fl-glass-bg-hover: rgba(255, 255, 255, 0.08);
+  --fl-glass-border: rgba(255, 255, 255, 0.1);
+  --fl-glass-border-hover: rgba(255, 255, 255, 0.15);
+  --fl-glass-blur: 12px;
+
+  /* Legacy aliases for backwards compatibility */
+  --background: var(--fl-color-bg-base);
+  --foreground: var(--fl-color-text-primary);
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: "Inter", system-ui, sans-serif;
+  color: var(--fl-color-text-primary);
+  background: var(--fl-color-bg-base);
+  font-family: var(--fl-font-family);
+  font-size: var(--fl-font-size-md);
+  line-height: 1.5;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Background gradient orbs */
@@ -51,64 +142,100 @@ body {
   left: -100px;
 }
 
-/* Glassmorphism utilities */
+/* Glassmorphism utilities - Funnelists UI compatible */
 @layer components {
   .glass {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--fl-glass-bg);
+    backdrop-filter: blur(var(--fl-glass-blur));
+    -webkit-backdrop-filter: blur(var(--fl-glass-blur));
+    border: 1px solid var(--fl-glass-border);
   }
 
   .glass-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    transition: all 0.2s ease;
+    background: var(--fl-glass-bg);
+    backdrop-filter: blur(var(--fl-glass-blur));
+    -webkit-backdrop-filter: blur(var(--fl-glass-blur));
+    border: 1px solid var(--fl-glass-border);
+    border-radius: var(--fl-radius-2xl);
+    box-shadow: var(--fl-shadow-md);
+    transition: all var(--fl-transition-normal);
   }
 
   .glass-card:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
+    background: var(--fl-glass-bg-hover);
+    border-color: var(--fl-glass-border-hover);
+    box-shadow: var(--fl-shadow-lg);
   }
 
   .glass-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--fl-spacing-sm);
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-weight: 500;
-    transition: all 0.2s ease;
+    border: 1px solid var(--fl-glass-border);
+    border-radius: var(--fl-radius-lg);
+    padding: var(--fl-spacing-sm) var(--fl-spacing-md);
+    font-weight: var(--fl-font-weight-medium);
+    font-size: var(--fl-font-size-sm);
+    transition: all var(--fl-transition-fast);
   }
 
   .glass-button:hover {
     background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: var(--fl-color-border-hover);
+  }
+
+  .glass-button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--fl-color-bg-base), 0 0 0 4px var(--fl-color-primary);
+  }
+
+  /* Primary button variant */
+  .glass-button-primary {
+    background: var(--fl-color-primary);
+    border-color: var(--fl-color-primary);
+    color: var(--fl-color-text-inverse);
+  }
+
+  .glass-button-primary:hover {
+    background: var(--fl-color-primary-hover);
+    border-color: var(--fl-color-primary-hover);
   }
 
   .glass-input {
-    background: rgba(255, 255, 255, 0.05);
+    width: 100%;
+    background: var(--fl-color-bg-elevated);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: var(--foreground);
-    transition: all 0.2s ease;
+    border: 1px solid var(--fl-color-border);
+    border-radius: var(--fl-radius-md);
+    padding: var(--fl-spacing-sm) var(--fl-spacing-md);
+    color: var(--fl-color-text-primary);
+    font-size: var(--fl-font-size-sm);
+    transition: all var(--fl-transition-fast);
+  }
+
+  .glass-input:hover:not(:disabled) {
+    border-color: var(--fl-color-border-hover);
   }
 
   .glass-input:focus {
     outline: none;
-    border-color: #0ea5e9;
-    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+    border-color: var(--fl-color-border-focus);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+  }
+
+  .glass-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--fl-color-bg-surface);
   }
 
   .glass-input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--fl-color-text-muted);
   }
 
   /* Style select dropdowns */
@@ -122,9 +249,40 @@ body {
   }
 
   select.glass-input option {
-    background: #1a1a24;
-    color: var(--foreground);
-    padding: 10px;
+    background: var(--fl-color-bg-surface);
+    color: var(--fl-color-text-primary);
+    padding: var(--fl-spacing-sm);
+  }
+
+  /* Panel component - matches @funnelists/ui Panel */
+  .fl-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--fl-color-bg-elevated);
+    border: 1px solid var(--fl-color-border);
+    border-radius: var(--fl-radius-lg);
+    overflow: hidden;
+  }
+
+  .fl-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--fl-spacing-md);
+    padding: var(--fl-spacing-md) var(--fl-spacing-lg);
+    border-bottom: 1px solid var(--fl-color-border);
+    background: var(--fl-color-bg-surface);
+  }
+
+  .fl-panel-title {
+    font-size: var(--fl-font-size-md);
+    font-weight: var(--fl-font-weight-semibold);
+    color: var(--fl-color-text-primary);
+  }
+
+  .fl-panel-content {
+    flex: 1;
+    padding: var(--fl-spacing-lg);
   }
 }
 
