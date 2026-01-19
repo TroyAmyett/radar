@@ -39,6 +39,11 @@
 - [ ] **Email alerts** - Configurable alerts for specific keywords/topics
 - [ ] **Slack/Discord integration** - Post highlights to channels
 
+### Data Management
+- [ ] **Auto-archive old content** - 7-day retention for non-hot/non-saved items to reduce server storage
+- [ ] **Manual archive/delete** - Allow users to bulk archive or permanently delete old content
+- [ ] **Export saved items** - Export liked/saved items to CSV or JSON
+
 ### Analytics
 - [ ] **Topic trends** - Show which topics are getting more content
 - [ ] **Source quality metrics** - Track which sources produce most liked/saved content
