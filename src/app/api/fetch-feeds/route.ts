@@ -14,6 +14,7 @@ const parser = new Parser({
       ['media:group', 'media:group'],
       ['enclosure', 'enclosure'],
       ['image', 'image'],
+      ['content:encoded', 'content:encoded'],
     ],
   },
 });
@@ -57,15 +58,24 @@ export async function POST(request: NextRequest) {
         const externalId = item.guid || item.link;
         const { data: existing } = await supabaseAdmin
           .from('content_items')
-          .select('id')
+          .select('id, thumbnail_url')
           .eq('account_id', accountId)
           .eq('external_id', externalId)
           .single();
 
-        if (existing) continue;
-
         // Extract thumbnail from various RSS formats
         const thumbnailUrl = extractThumbnail(item);
+
+        if (existing) {
+          // Update thumbnail if missing
+          if (!existing.thumbnail_url && thumbnailUrl) {
+            await supabaseAdmin
+              .from('content_items')
+              .update({ thumbnail_url: thumbnailUrl })
+              .eq('id', existing.id);
+          }
+          continue;
+        }
 
         // Insert new item
         const { error: insertError } = await supabaseAdmin
