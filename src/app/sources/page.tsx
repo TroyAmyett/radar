@@ -1,24 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/layout/Header';
 import AddSourceModal from '@/components/modals/AddSourceModal';
 import EditSourceModal from '@/components/modals/EditSourceModal';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Source, Topic } from '@/types/database';
-import { Plus, Rss, Youtube, Twitter, Trash2, RefreshCw, Pencil, LucideProps } from 'lucide-react';
+import { Plus, Rss, Youtube, Twitter, Trash2, RefreshCw, Pencil, TrendingUp, Check, LucideProps } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+
+type SourceType = 'rss' | 'youtube' | 'twitter' | 'polymarket';
 
 const typeIcons: Record<string, React.ComponentType<LucideProps>> = {
   rss: Rss,
   youtube: Youtube,
   twitter: Twitter,
+  polymarket: TrendingUp,
 };
 
 const typeColors: Record<string, string> = {
   rss: '#f97316',
   youtube: '#ef4444',
   twitter: '#3b82f6',
+  polymarket: '#a855f7',
+};
+
+const typeLabels: Record<string, string> = {
+  rss: 'RSS Feeds',
+  youtube: 'YouTube',
+  twitter: 'X/Twitter',
+  polymarket: 'Polymarket',
 };
 
 export default function SourcesPage() {
@@ -29,6 +40,10 @@ export default function SourcesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingSource, setEditingSource] = useState<Source | null>(null);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
+
+  // Filter state
+  const [selectedTypes, setSelectedTypes] = useState<SourceType[]>([]);
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -162,6 +177,33 @@ export default function SourcesPage() {
     }
   };
 
+  // Get available types from sources
+  const availableTypes = useMemo(() => {
+    const types = new Set(sources.map((s) => s.type));
+    return Array.from(types) as SourceType[];
+  }, [sources]);
+
+  // Filter sources by type and topic
+  const filteredSources = useMemo(() => {
+    return sources.filter((source) => {
+      // Filter by type
+      if (selectedTypes.length > 0 && !selectedTypes.includes(source.type as SourceType)) {
+        return false;
+      }
+      // Filter by topic
+      if (selectedTopicId && source.topic_id !== selectedTopicId) {
+        return false;
+      }
+      return true;
+    });
+  }, [sources, selectedTypes, selectedTopicId]);
+
+  const handleToggleType = (type: SourceType) => {
+    setSelectedTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  };
+
   return (
     <ProtectedRoute>
       <div className="flex flex-col h-screen">
@@ -185,6 +227,91 @@ export default function SourcesPage() {
             </button>
           </div>
 
+          {/* Filters */}
+          {sources.length > 0 && (
+            <div className="flex flex-col md:flex-row gap-3 mb-6">
+              {/* Type Filter */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-white/40 text-sm">Type:</span>
+                <button
+                  onClick={() => setSelectedTypes([])}
+                  className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                    selectedTypes.length === 0
+                      ? 'bg-accent text-white'
+                      : 'glass-button text-white/60 hover:text-white'
+                  }`}
+                >
+                  All
+                </button>
+                {availableTypes.map((type) => {
+                  const Icon = typeIcons[type] || Rss;
+                  const isSelected = selectedTypes.includes(type);
+                  const count = sources.filter((s) => s.type === type).length;
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => handleToggleType(type)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                        isSelected
+                          ? 'text-white'
+                          : 'glass-button text-white/60 hover:text-white'
+                      }`}
+                      style={{
+                        backgroundColor: isSelected ? typeColors[type] : undefined,
+                      }}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      <span>{typeLabels[type] || type}</span>
+                      <span className="text-white/50">({count})</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Topic Filter */}
+              {topics.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap md:ml-4 md:pl-4 md:border-l md:border-white/10">
+                  <span className="text-white/40 text-sm">Topic:</span>
+                  <button
+                    onClick={() => setSelectedTopicId(null)}
+                    className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                      selectedTopicId === null
+                        ? 'bg-accent text-white'
+                        : 'glass-button text-white/60 hover:text-white'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {topics.map((topic) => {
+                    const count = sources.filter((s) => s.topic_id === topic.id).length;
+                    if (count === 0) return null;
+                    return (
+                      <button
+                        key={topic.id}
+                        onClick={() => setSelectedTopicId(selectedTopicId === topic.id ? null : topic.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                          selectedTopicId === topic.id
+                            ? 'text-white'
+                            : 'glass-button text-white/60 hover:text-white'
+                        }`}
+                        style={{
+                          backgroundColor: selectedTopicId === topic.id ? topic.color || '#0ea5e9' : undefined,
+                        }}
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: topic.color || '#0ea5e9' }}
+                        />
+                        <span>{topic.name}</span>
+                        <span className="text-white/50">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <RefreshCw className="w-8 h-8 text-accent animate-spin" />
@@ -195,9 +322,19 @@ export default function SourcesPage() {
               <p className="text-lg">No sources yet</p>
               <p className="text-sm mt-1">Add RSS feeds, YouTube channels, or X accounts to get started</p>
             </div>
+          ) : filteredSources.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-white/40">
+              <Rss className="w-16 h-16 mb-4" />
+              <p className="text-lg">No sources match filters</p>
+              <p className="text-sm mt-1">Try adjusting your type or topic filters</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sources.map((source) => {
+            <>
+              <p className="text-white/40 text-sm mb-4">
+                Showing {filteredSources.length} of {sources.length} sources
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredSources.map((source) => {
                 const Icon = typeIcons[source.type] || Rss;
                 return (
                   <div key={source.id} className="glass-card p-4 group">
@@ -272,7 +409,8 @@ export default function SourcesPage() {
                   </div>
                 );
               })}
-            </div>
+              </div>
+            </>
           )}
         </div>
 

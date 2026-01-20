@@ -12,7 +12,7 @@ import { Topic, ContentItemWithInteraction } from '@/types/database';
 import { RefreshCw } from 'lucide-react';
 
 // Only include active content types (post/tweet coming soon - X API is $100/month)
-const ALL_CONTENT_TYPES: ContentType[] = ['video', 'article'];
+const ALL_CONTENT_TYPES: ContentType[] = ['video', 'article', 'prediction'];
 
 interface DeepDiveAnalysis {
   summary: string;

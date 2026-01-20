@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic } from '@/types/database';
-import { Settings, Plus, Palette, Mail, Clock, Save, Pencil, Trash2 } from 'lucide-react';
+import { Settings, Plus, Palette, Mail, Clock, Save, Pencil, Trash2, Twitter, ExternalLink, AlertCircle, CheckCircle } from 'lucide-react';
 
 // Expanded icon options with keyword associations for auto-selection
 const iconOptions = [
@@ -136,19 +136,26 @@ export default function SettingsPage() {
   const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [prefsSaved, setPrefsSaved] = useState(false);
 
+  // X (Twitter) connection state
+  const [xConnected, setXConnected] = useState(false);
+  const [xChecking, setXChecking] = useState(true);
+
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
     setIsLoading(true);
+    setXChecking(true);
     try {
-      const [topicsRes, prefsRes] = await Promise.all([
+      const [topicsRes, prefsRes, xStatusRes] = await Promise.all([
         fetch('/api/topics'),
         fetch('/api/preferences'),
+        fetch('/api/x-status'),
       ]);
       const topicsData = await topicsRes.json();
       const prefsData = await prefsRes.json();
+      const xStatusData = await xStatusRes.json();
 
       setTopics(Array.isArray(topicsData) ? topicsData : []);
       if (prefsData && !prefsData.error) {
@@ -161,10 +168,12 @@ export default function SettingsPage() {
           email_address: prefsData.email_address || null,
         });
       }
+      setXConnected(xStatusData?.connected || false);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
       setIsLoading(false);
+      setXChecking(false);
     }
   };
 
@@ -612,6 +621,68 @@ export default function SettingsPage() {
                 <Save className="w-4 h-4" />
                 {isSavingPrefs ? 'Saving...' : prefsSaved ? 'Saved!' : 'Save Digest Preferences'}
               </button>
+            </div>
+          </section>
+
+          {/* X (Twitter) Connection Section */}
+          <section className="glass-card p-6 mb-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-blue-500/20">
+                <Twitter className="w-5 h-5 text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">X (Twitter) Connection</h2>
+                <p className="text-white/60 text-sm">
+                  Connect your X account to post content directly
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
+                <div className="flex items-center gap-3">
+                  {xChecking ? (
+                    <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                  ) : xConnected ? (
+                    <CheckCircle className="w-5 h-5 text-green-400" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-amber-400" />
+                  )}
+                  <div>
+                    <p className="font-medium">
+                      {xChecking ? 'Checking connection...' : xConnected ? 'Connected' : 'Not Connected'}
+                    </p>
+                    <p className="text-white/60 text-sm">
+                      {xConnected
+                        ? 'Your X account is connected and ready to post'
+                        : 'X API credentials need to be configured'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {!xConnected && !xChecking && (
+                <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <p className="text-amber-200 text-sm mb-3">
+                    To enable posting to X, you need to configure API credentials in your environment variables:
+                  </p>
+                  <ul className="text-white/60 text-sm space-y-1 ml-4 list-disc">
+                    <li>X_API_KEY</li>
+                    <li>X_API_SECRET</li>
+                    <li>X_ACCESS_TOKEN</li>
+                    <li>X_ACCESS_SECRET</li>
+                  </ul>
+                  <a
+                    href="https://developer.x.com/en/portal/dashboard"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 mt-3 text-blue-400 hover:text-blue-300 text-sm"
+                  >
+                    <span>Get API credentials from X Developer Portal</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              )}
             </div>
           </section>
 

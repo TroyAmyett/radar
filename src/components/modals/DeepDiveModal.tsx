@@ -2,9 +2,6 @@
 
 import {
   X,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   CheckCircle,
   Tag,
   Lightbulb,
@@ -31,18 +28,6 @@ interface DeepDiveModalProps {
   isLoading: boolean;
 }
 
-function getSentimentColor(sentiment: number): string {
-  if (sentiment >= 0.3) return '#10b981';
-  if (sentiment <= -0.3) return '#ef4444';
-  return '#f59e0b';
-}
-
-function getSentimentIcon(sentiment: number) {
-  if (sentiment >= 0.3) return TrendingUp;
-  if (sentiment <= -0.3) return TrendingDown;
-  return Minus;
-}
-
 export default function DeepDiveModal({
   isOpen,
   onClose,
@@ -51,9 +36,6 @@ export default function DeepDiveModal({
   isLoading,
 }: DeepDiveModalProps) {
   if (!isOpen) return null;
-
-  const SentimentIcon = analysis ? getSentimentIcon(analysis.sentiment) : Minus;
-  const sentimentColor = analysis ? getSentimentColor(analysis.sentiment) : '#f59e0b';
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8">
@@ -83,33 +65,6 @@ export default function DeepDiveModal({
             <section>
               <h3 className="text-sm font-medium text-white/60 mb-2">Summary</h3>
               <p className="text-white/90 leading-relaxed">{analysis.summary}</p>
-            </section>
-
-            {/* Sentiment */}
-            <section>
-              <h3 className="text-sm font-medium text-white/60 mb-2">Sentiment</h3>
-              <div className="flex items-center gap-3">
-                <div
-                  className="p-2 rounded-lg"
-                  style={{ backgroundColor: `${sentimentColor}20` }}
-                >
-                  <SentimentIcon className="w-5 h-5" style={{ color: sentimentColor }} />
-                </div>
-                <div>
-                  <span className="font-medium" style={{ color: sentimentColor }}>
-                    {analysis.sentimentLabel}
-                  </span>
-                  <div className="w-32 h-2 bg-white/10 rounded-full mt-1 overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${((analysis.sentiment + 1) / 2) * 100}%`,
-                        backgroundColor: sentimentColor,
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
             </section>
 
             {/* Key Points */}

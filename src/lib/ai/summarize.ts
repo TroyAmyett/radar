@@ -84,6 +84,10 @@ export async function generateDeepDive(
 ): Promise<DeepDiveAnalysis> {
   const contentText = content || title;
 
+  // For videos, use more content since transcripts are longer and more detailed
+  const maxContentLength = type === 'video' ? 12000 : 4000;
+  const contentType = type === 'video' ? 'video transcript' : type;
+
   try {
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
@@ -91,12 +95,12 @@ export async function generateDeepDive(
       messages: [
         {
           role: 'user',
-          content: `Perform a deep analysis of this ${type} content and provide a comprehensive JSON response:
+          content: `Perform a deep analysis of this ${contentType} and provide a comprehensive JSON response:
 
 Title: ${title}
-${author ? `Author: ${author}` : ''}
+${author ? `Author/Channel: ${author}` : ''}
 
-Content: ${contentText.substring(0, 4000)}
+${type === 'video' ? 'Transcript' : 'Content'}: ${contentText.substring(0, maxContentLength)}
 
 Provide a JSON response with exactly this structure:
 {

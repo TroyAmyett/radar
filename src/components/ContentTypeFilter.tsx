@@ -1,8 +1,8 @@
 'use client';
 
-import { Youtube, FileText, Twitter, Check } from 'lucide-react';
+import { Youtube, FileText, Twitter, TrendingUp, Check } from 'lucide-react';
 
-export type ContentType = 'video' | 'article' | 'post' | 'tweet';
+export type ContentType = 'video' | 'article' | 'post' | 'tweet' | 'prediction';
 
 interface ContentTypeFilterProps {
   selectedTypes: ContentType[];
@@ -13,6 +13,7 @@ interface ContentTypeFilterProps {
 const contentTypes: { type: ContentType; label: string; icon: typeof Youtube; color: string; comingSoon?: boolean }[] = [
   { type: 'video', label: 'Videos', icon: Youtube, color: '#ef4444' },
   { type: 'article', label: 'Articles', icon: FileText, color: '#f97316' },
+  { type: 'prediction', label: 'Predictions', icon: TrendingUp, color: '#a855f7' },
   { type: 'post', label: 'Posts', icon: Twitter, color: '#3b82f6', comingSoon: true },
 ];
 

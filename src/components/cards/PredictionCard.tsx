@@ -79,7 +79,7 @@ export default function PredictionCard({
       {onDismiss && (
         <button
           onClick={() => onDismiss(item.id)}
-          className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/5 hover:bg-red-500/80 text-white/40 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+          className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/5 hover:bg-red-500/80 text-white/40 hover:text-white transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
           title="Dismiss"
         >
           <X className="w-4 h-4" />

@@ -1,10 +1,26 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import AppLayout from '@/components/layout/AppLayout';
 
 export const metadata: Metadata = {
-  title: 'Radar - Intelligence Dashboard',
-  description: 'Your personal intelligence dashboard for tracking AI, tech, and thought leaders',
+  title: 'Funnelists Radar',
+  description: 'AI-powered intelligence monitoring',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Radar',
+  },
+  icons: {
+    apple: '/apple-touch-icon.png',
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#0a0a0f',
 };
 
 export default function RootLayout({

@@ -113,6 +113,21 @@ export default function SavedPage() {
     }
   };
 
+  const handleDismiss = async (id: string) => {
+    try {
+      // Unsave the item first
+      await fetch('/api/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content_item_id: id, action: 'save' }),
+      });
+      // Remove from local state
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (error) {
+      console.error('Failed to dismiss:', error);
+    }
+  };
+
   return (
     <ProtectedRoute>
       <div className="flex flex-col h-screen">
@@ -141,6 +156,7 @@ export default function SavedPage() {
               onLike={handleLike}
               onSave={handleSave}
               onAddNote={handleAddNote}
+              onDismiss={handleDismiss}
             />
           )}
         </div>

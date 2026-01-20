@@ -71,7 +71,7 @@ export default function VideoCard({
       {onDismiss && (
         <button
           onClick={() => onDismiss(item.id)}
-          className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/60 hover:bg-red-500/80 text-white/60 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+          className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/60 hover:bg-red-500/80 text-white/60 hover:text-white transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
           title="Dismiss"
         >
           <X className="w-4 h-4" />
@@ -194,7 +194,7 @@ export default function VideoCard({
           <button
             onClick={handleCreateTask}
             className="p-2 rounded-lg hover:bg-blue-500/20 text-white/50 hover:text-blue-400 transition-all"
-            title="Create Task in AgentPM"
+            title="Create Task - Opens AgentPM to create a research task from this content"
           >
             <ClipboardList className="w-4 h-4" />
           </button>
@@ -202,7 +202,7 @@ export default function VideoCard({
           <button
             onClick={handleSaveToNotes}
             className="p-2 rounded-lg hover:bg-yellow-500/20 text-white/50 hover:text-yellow-400 transition-all"
-            title="Save to Notes"
+            title="Save to Notes - Opens AgentPM NoteTaker with this content"
           >
             <FileText className="w-4 h-4" />
           </button>
