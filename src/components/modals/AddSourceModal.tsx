@@ -176,12 +176,15 @@ export default function AddSourceModal({
   const handleQuickAdd = useCallback((type: 'youtube' | 'rss' | 'twitter' | 'polymarket') => {
     const defaultUrls: Record<string, string> = {
       polymarket: 'polymarket.com',
+      youtube: 'youtube.com/@',
     };
 
     if (defaultUrls[type]) {
       setInputUrl(defaultUrls[type]);
-      // Auto-lookup for types with default URLs
-      lookupUrl(defaultUrls[type]);
+      // Auto-lookup for types with default URLs (but not YouTube - user needs to type handle)
+      if (type !== 'youtube') {
+        lookupUrl(defaultUrls[type]);
+      }
     }
   }, [lookupUrl]);
 
@@ -263,12 +266,18 @@ export default function AddSourceModal({
           Paste any YouTube, Twitter/X, blog URL, or polymarket.com
         </p>
 
-        {/* Source type hints - Polymarket is clickable */}
+        {/* Source type hints - YouTube and Polymarket are clickable */}
         <div className="flex flex-wrap gap-2 mb-6">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full text-xs text-white/50">
-            <Youtube className="w-3.5 h-3.5 text-red-400" />
+          <button
+            type="button"
+            onClick={() => handleQuickAdd('youtube')}
+            disabled={isLookingUp}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-500/20 hover:bg-red-500/30 rounded-full text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer border border-red-500/30"
+            title="Click to add YouTube channel - just type the @handle"
+          >
+            <Youtube className="w-3.5 h-3.5" />
             YouTube
-          </span>
+          </button>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full text-xs text-white/50">
             <Rss className="w-3.5 h-3.5 text-orange-400" />
             RSS / Blogs
@@ -305,7 +314,7 @@ export default function AddSourceModal({
                     setLookupError('');
                   }}
                   onKeyDown={handleKeyDown}
-                  placeholder="youtube.com/@channel, blog URL, or polymarket.com"
+                  placeholder="Paste URL or type @channelname after clicking YouTube"
                   className="glass-input w-full pl-10"
                   autoFocus
                 />
