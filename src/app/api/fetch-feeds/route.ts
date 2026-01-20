@@ -84,7 +84,12 @@ export async function POST(request: NextRequest) {
           .single();
 
         // Extract thumbnail from various RSS formats
-        const thumbnailUrl = extractThumbnail(item);
+        let thumbnailUrl = extractThumbnail(item);
+
+        // If no thumbnail found in RSS, try fetching og:image from the article
+        if (!thumbnailUrl && item.link) {
+          thumbnailUrl = await fetchOgImage(item.link);
+        }
 
         if (existing) {
           // Update thumbnail if missing
@@ -245,4 +250,57 @@ function extractThumbnail(item: any): string | null {
   }
 
   return null;
+}
+
+// Fetch og:image from the actual article page
+async function fetchOgImage(url: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Radar Intelligence Dashboard',
+      },
+    });
+    clearTimeout(timeout);
+
+    if (!response.ok) return null;
+
+    // Only read first 50KB to find meta tags (they're in <head>)
+    const reader = response.body?.getReader();
+    if (!reader) return null;
+
+    let html = '';
+    const decoder = new TextDecoder();
+
+    while (html.length < 50000) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      html += decoder.decode(value, { stream: true });
+
+      // Check if we've passed </head> - no need to read more
+      if (html.includes('</head>')) break;
+    }
+    reader.cancel();
+
+    // Look for og:image meta tag
+    const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+                   html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    if (ogMatch) {
+      return ogMatch[1];
+    }
+
+    // Fallback to twitter:image
+    const twitterMatch = html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i) ||
+                        html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i);
+    if (twitterMatch) {
+      return twitterMatch[1];
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
 }
