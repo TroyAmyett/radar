@@ -15,6 +15,21 @@ async function logCronJobComplete(logId: string | null, status: string, response
 }
 
 export async function GET(request: NextRequest) {
+  return handleRequest(request, null);
+}
+
+export async function POST(request: NextRequest) {
+  let logId: string | null = null;
+  try {
+    const body = await request.json();
+    logId = body.log_id || null;
+  } catch {
+    // No body or invalid JSON
+  }
+  return handleRequest(request, logId);
+}
+
+async function handleRequest(request: NextRequest, logId: string | null) {
   // Verify cron secret in production
   const headersList = await headers();
   const authHeader = headersList.get('authorization');
@@ -23,8 +38,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Get log_id from query params if provided by pg_cron
-  const logId = request.nextUrl.searchParams.get('log_id');
+  if (!logId) {
+    logId = request.nextUrl.searchParams.get('log_id');
+  }
 
   try {
     // Get all users with digest enabled for daily
@@ -103,6 +119,3 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  return GET(request);
-}

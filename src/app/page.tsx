@@ -318,7 +318,11 @@ export default function Dashboard() {
 
   const handleDismiss = async (id: string) => {
     try {
-      await fetch(`/api/content?id=${id}`, { method: 'DELETE' });
+      await fetch('/api/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content_item_id: id, action: 'dismiss' }),
+      });
       // Remove from local state
       setItems((prev) => prev.filter((item) => item.id !== id));
     } catch (error) {

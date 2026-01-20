@@ -30,6 +30,9 @@ export async function POST(request: NextRequest) {
     case 'save':
       updates.is_saved = existing ? !existing.is_saved : true;
       break;
+    case 'dismiss':
+      updates.is_dismissed = true;
+      break;
     case 'note':
       updates.notes = value;
       break;

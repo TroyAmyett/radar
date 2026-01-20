@@ -53,10 +53,13 @@ export async function GET(request: NextRequest) {
       : item.interaction,
   }));
 
-  // Filter by saved if needed
-  let filteredData = transformedData;
+  // Filter out dismissed items and filter by saved if needed
+  let filteredData = transformedData?.filter(
+    (item) => !item.interaction?.is_dismissed
+  );
+
   if (savedOnly) {
-    filteredData = transformedData?.filter(
+    filteredData = filteredData?.filter(
       (item) => item.interaction?.is_saved
     );
   }
