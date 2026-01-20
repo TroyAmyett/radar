@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, getAccountId } from '@/lib/supabase';
 
+// Business color: cyan (#0ea5e9), Personal color: amber (#f59e0b)
 const DEFAULT_TOPICS = [
-  { name: 'Agentforce', slug: 'agentforce', color: '#0ea5e9', icon: 'bot' },
-  { name: 'AI Tools', slug: 'ai-tools', color: '#8b5cf6', icon: 'sparkles' },
-  { name: 'Blockchain AI', slug: 'blockchain-ai', color: '#f59e0b', icon: 'link' },
-  { name: 'Competitors', slug: 'competitors', color: '#ef4444', icon: 'target' },
-  { name: 'Partners', slug: 'partners', color: '#10b981', icon: 'handshake' },
+  // Business topics (cyan)
+  { name: 'My Brand', slug: 'my-brand', color: '#0ea5e9', icon: 'building' },
+  { name: 'Competitors', slug: 'competitors', color: '#0ea5e9', icon: 'target' },
+  { name: 'Partners', slug: 'partners', color: '#0ea5e9', icon: 'handshake' },
+  { name: 'Industry', slug: 'industry', color: '#0ea5e9', icon: 'trending-up' },
+  // Personal topics (amber)
+  { name: 'Interests', slug: 'interests', color: '#f59e0b', icon: 'star' },
+  { name: 'Learning', slug: 'learning', color: '#f59e0b', icon: 'book-open' },
 ];
 
 export async function POST() {
