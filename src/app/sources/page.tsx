@@ -6,7 +6,7 @@ import AddSourceModal from '@/components/modals/AddSourceModal';
 import EditSourceModal from '@/components/modals/EditSourceModal';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Source, Topic } from '@/types/database';
-import { Plus, Rss, Youtube, Twitter, Trash2, RefreshCw, Pencil, TrendingUp, Check, LucideProps } from 'lucide-react';
+import { Plus, Rss, Youtube, Twitter, Trash2, RefreshCw, Pencil, TrendingUp, LucideProps } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 type SourceType = 'rss' | 'youtube' | 'twitter' | 'polymarket';
