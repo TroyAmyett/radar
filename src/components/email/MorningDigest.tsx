@@ -9,6 +9,7 @@ import {
   Heading,
   Hr,
   Preview,
+  Img,
 } from '@react-email/components';
 
 interface ContentItem {
@@ -16,7 +17,9 @@ interface ContentItem {
   title: string;
   summary: string;
   url: string;
+  originalUrl?: string;
   author?: string;
+  thumbnailUrl?: string;
   topic?: string;
   topicColor?: string;
 }
@@ -25,12 +28,16 @@ interface MorningDigestProps {
   date: string;
   topContent: ContentItem[];
   aiInsight: string;
+  settingsUrl?: string;
 }
+
+const DEFAULT_SETTINGS_URL = 'https://radar.funnelists.com/settings';
 
 export default function MorningDigest({
   date,
   topContent,
   aiInsight,
+  settingsUrl = DEFAULT_SETTINGS_URL,
 }: MorningDigestProps) {
   return (
     <Html>
@@ -72,6 +79,16 @@ export default function MorningDigest({
                       {item.topic}
                     </span>
                   )}
+                  {item.thumbnailUrl && (
+                    <Link href={item.url}>
+                      <Img
+                        src={item.thumbnailUrl}
+                        alt={item.title}
+                        width={540}
+                        style={styles.contentImage}
+                      />
+                    </Link>
+                  )}
                   <Link href={item.url} style={styles.contentTitle}>
                     {item.title}
                   </Link>
@@ -89,7 +106,7 @@ export default function MorningDigest({
             <Text style={styles.footerText}>
               You&apos;re receiving this because you subscribed to Radar digests.
             </Text>
-            <Link href="#" style={styles.footerLink}>
+            <Link href={settingsUrl} style={styles.footerLink}>
               Manage preferences
             </Link>
           </Section>
@@ -200,6 +217,13 @@ const styles = {
     color: 'rgba(255, 255, 255, 0.5)',
     fontSize: '12px',
     marginTop: '8px',
+  },
+  contentImage: {
+    width: '100%',
+    maxWidth: '540px',
+    height: 'auto',
+    borderRadius: '8px',
+    marginBottom: '12px',
   },
   footer: {
     textAlign: 'center' as const,

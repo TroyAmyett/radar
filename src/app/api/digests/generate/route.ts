@@ -50,13 +50,18 @@ async function generateMorningDigest(accountId: string) {
   }));
   const aiInsight = await generateDigestInsight(summaries);
 
-  // Format data for email
-  const topContent = (content || []).map((item: { id: string; title: string; summary?: string; url: string; author?: string; topic?: { name: string; color: string } }) => ({
+  // Get base URL for viewer links
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://radar.funnelists.com';
+
+  // Format data for email - link to our viewer page for SEO
+  const topContent = (content || []).map((item: { id: string; title: string; summary?: string; url: string; author?: string; thumbnail_url?: string; topic?: { name: string; color: string } }) => ({
     id: item.id,
     title: item.title,
     summary: item.summary || '',
-    url: item.url,
+    url: `${baseUrl}/view/${item.id}`,
+    originalUrl: item.url,
     author: item.author,
+    thumbnailUrl: item.thumbnail_url,
     topic: item.topic?.name,
     topicColor: item.topic?.color,
   }));
@@ -131,13 +136,18 @@ async function generateWeeklyDigest(accountId: string) {
   }));
   const weekSummary = await generateDigestInsight(summaries);
 
-  // Top content
-  const topContent = (content || []).slice(0, 5).map((item: { id: string; title: string; summary?: string; url: string; author?: string; topic?: { name: string; color: string } }) => ({
+  // Get base URL for viewer links
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://radar.funnelists.com';
+
+  // Top content - link to our viewer page for SEO
+  const topContent = (content || []).slice(0, 5).map((item: { id: string; title: string; summary?: string; url: string; author?: string; thumbnail_url?: string; topic?: { name: string; color: string } }) => ({
     id: item.id,
     title: item.title,
     summary: item.summary || '',
-    url: item.url,
+    url: `${baseUrl}/view/${item.id}`,
+    originalUrl: item.url,
     author: item.author,
+    thumbnailUrl: item.thumbnail_url,
     topic: item.topic?.name,
     topicColor: item.topic?.color,
   }));

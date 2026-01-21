@@ -9,6 +9,7 @@ import {
   Heading,
   Hr,
   Preview,
+  Img,
 } from '@react-email/components';
 
 interface ContentItem {
@@ -16,7 +17,9 @@ interface ContentItem {
   title: string;
   summary: string;
   url: string;
+  originalUrl?: string;
   author?: string;
+  thumbnailUrl?: string;
   topic?: string;
   topicColor?: string;
 }
@@ -34,7 +37,10 @@ interface WeeklyDigestProps {
   topContent: ContentItem[];
   totalItems: number;
   savedItems: number;
+  settingsUrl?: string;
 }
+
+const DEFAULT_SETTINGS_URL = 'https://radar.funnelists.com/settings';
 
 export default function WeeklyDigest({
   weekRange,
@@ -43,6 +49,7 @@ export default function WeeklyDigest({
   topContent,
   totalItems,
   savedItems,
+  settingsUrl = DEFAULT_SETTINGS_URL,
 }: WeeklyDigestProps) {
   return (
     <Html>
@@ -126,6 +133,16 @@ export default function WeeklyDigest({
                       {item.topic}
                     </span>
                   )}
+                  {item.thumbnailUrl && (
+                    <Link href={item.url}>
+                      <Img
+                        src={item.thumbnailUrl}
+                        alt={item.title}
+                        width={540}
+                        style={styles.contentImage}
+                      />
+                    </Link>
+                  )}
                   <Link href={item.url} style={styles.contentTitle}>
                     {item.title}
                   </Link>
@@ -140,7 +157,7 @@ export default function WeeklyDigest({
             <Text style={styles.footerText}>
               You&apos;re receiving this weekly digest because you subscribed to Radar.
             </Text>
-            <Link href="#" style={styles.footerLink}>
+            <Link href={settingsUrl} style={styles.footerLink}>
               Manage preferences
             </Link>
           </Section>
@@ -300,6 +317,13 @@ const styles = {
     fontSize: '14px',
     lineHeight: '1.5',
     margin: 0,
+  },
+  contentImage: {
+    width: '100%',
+    maxWidth: '540px',
+    height: 'auto',
+    borderRadius: '8px',
+    marginBottom: '12px',
   },
   footer: {
     textAlign: 'center' as const,

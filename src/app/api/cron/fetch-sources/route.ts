@@ -57,6 +57,7 @@ async function handleRequest(request: NextRequest, logId: string | null) {
       accounts: uniqueAccounts.length,
       rssResults: [] as object[],
       youtubeResults: [] as object[],
+      polymarketResults: [] as object[],
     };
 
     // Fetch for each account
@@ -78,6 +79,15 @@ async function handleRequest(request: NextRequest, logId: string | null) {
       });
       const ytResult = await ytResponse.json();
       results.youtubeResults.push({ accountId, ...ytResult });
+
+      // Fetch Polymarket predictions
+      const polyResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/fetch-polymarket`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account_id: accountId }),
+      });
+      const polyResult = await polyResponse.json();
+      results.polymarketResults.push({ accountId, ...polyResult });
     }
 
     const responseBody = {
