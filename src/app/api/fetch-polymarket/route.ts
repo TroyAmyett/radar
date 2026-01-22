@@ -70,10 +70,10 @@ function formatVolume(volume: string | undefined): string {
 }
 
 export async function POST(request: NextRequest) {
-  const accountId = getAccountId();
-
   try {
     const body = await request.json().catch(() => ({}));
+    // Use account_id from body (cron job) or fall back to default
+    const accountId = body.account_id || getAccountId();
     const sourceId = body.source_id;
 
     // Get Polymarket sources

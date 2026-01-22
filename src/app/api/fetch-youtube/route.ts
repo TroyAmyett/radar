@@ -57,8 +57,9 @@ interface YouTubeVideoDetails {
 }
 
 export async function POST(request: NextRequest) {
-  const accountId = getAccountId();
   const body = await request.json();
+  // Use account_id from body (cron job) or fall back to default
+  const accountId = body.account_id || getAccountId();
   const sourceId = body.source_id;
 
   if (!YOUTUBE_API_KEY) {
