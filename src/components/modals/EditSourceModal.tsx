@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Loader2, Youtube, Rss, Twitter } from 'lucide-react';
+import { X, Loader2, Youtube, Rss, Twitter, TrendingUp } from 'lucide-react';
 import { Source, Topic } from '@/types/database';
 
 interface EditSourceModalProps {
@@ -16,19 +16,34 @@ const typeIcons = {
   youtube: Youtube,
   rss: Rss,
   twitter: Twitter,
+  polymarket: TrendingUp,
 };
 
 const typeLabels = {
   youtube: 'YouTube Channel',
   rss: 'RSS Feed',
   twitter: 'X / Twitter',
+  polymarket: 'Polymarket',
 };
 
 const typeColors = {
   youtube: 'text-red-400',
   rss: 'text-orange-400',
   twitter: 'text-blue-400',
+  polymarket: 'text-purple-400',
 };
+
+const POLYMARKET_CATEGORIES = [
+  { id: 'politics', label: 'Politics' },
+  { id: 'finance', label: 'Finance' },
+  { id: 'geopolitics', label: 'Geopolitics' },
+  { id: 'crypto', label: 'Crypto' },
+  { id: 'tech', label: 'Tech' },
+  { id: 'economy', label: 'Economy' },
+  { id: 'world', label: 'World' },
+  { id: 'elections', label: 'Elections' },
+  { id: 'earnings', label: 'Earnings' },
+];
 
 export default function EditSourceModal({
   isOpen,
@@ -44,6 +59,11 @@ export default function EditSourceModal({
   const [topicId, setTopicId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Polymarket-specific settings
+  const [polymarketKeywords, setPolymarketKeywords] = useState('');
+  const [polymarketExcludeSports, setPolymarketExcludeSports] = useState(true);
+  const [polymarketCategories, setPolymarketCategories] = useState<string[]>([]);
+
   // Reset form when source changes
   useEffect(() => {
     if (source) {
@@ -52,6 +72,23 @@ export default function EditSourceModal({
       setChannelId(source.channel_id || '');
       setUsername(source.username || '');
       setTopicId(source.topic_id || '');
+
+      // Load Polymarket settings from metadata
+      const metadata = source.metadata as {
+        polymarketKeywords?: string[];
+        polymarketExcludeSports?: boolean;
+        polymarketCategories?: string[];
+      } | null;
+
+      if (metadata) {
+        setPolymarketKeywords(metadata.polymarketKeywords?.join(', ') || '');
+        setPolymarketExcludeSports(metadata.polymarketExcludeSports !== false);
+        setPolymarketCategories(metadata.polymarketCategories || []);
+      } else {
+        setPolymarketKeywords('');
+        setPolymarketExcludeSports(true);
+        setPolymarketCategories([]);
+      }
     }
   }, [source]);
 
@@ -61,6 +98,12 @@ export default function EditSourceModal({
     e.preventDefault();
     setIsSaving(true);
 
+    // Parse keywords from comma-separated string
+    const keywords = polymarketKeywords
+      .split(',')
+      .map(k => k.trim().toLowerCase())
+      .filter(k => k.length > 0);
+
     try {
       await onSave({
         id: source.id,
@@ -69,6 +112,12 @@ export default function EditSourceModal({
         channel_id: channelId || undefined,
         username: username || undefined,
         topic_id: topicId || undefined,
+        // Include Polymarket settings in metadata
+        metadata: source.type === 'polymarket' ? {
+          polymarketCategories: polymarketCategories.length > 0 ? polymarketCategories : undefined,
+          polymarketKeywords: keywords.length > 0 ? keywords : undefined,
+          polymarketExcludeSports: polymarketExcludeSports,
+        } : source.metadata,
       });
       onClose();
     } catch (error) {
@@ -76,6 +125,14 @@ export default function EditSourceModal({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    setPolymarketCategories(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(c => c !== categoryId)
+        : [...prev, categoryId]
+    );
   };
 
   const TypeIcon = typeIcons[source.type as keyof typeof typeIcons] || Rss;
@@ -161,6 +218,68 @@ export default function EditSourceModal({
                 />
               </div>
             </div>
+          )}
+
+          {/* Polymarket Settings */}
+          {source.type === 'polymarket' && (
+            <>
+              {/* Exclude Sports */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="excludeSports"
+                  checked={polymarketExcludeSports}
+                  onChange={(e) => setPolymarketExcludeSports(e.target.checked)}
+                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-primary focus:ring-primary"
+                />
+                <label htmlFor="excludeSports" className="text-sm text-white/80">
+                  Exclude sports markets
+                </label>
+              </div>
+
+              {/* Categories */}
+              <div>
+                <label className="block text-sm text-white/60 mb-2">
+                  Categories (optional)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {POLYMARKET_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => toggleCategory(cat.id)}
+                      className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                        polymarketCategories.includes(cat.id)
+                          ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50'
+                          : 'glass-button'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-white/40 mt-2">
+                  Leave empty to include all categories
+                </p>
+              </div>
+
+              {/* Keywords */}
+              <div>
+                <label className="block text-sm text-white/60 mb-2">
+                  Keywords filter (optional)
+                </label>
+                <input
+                  type="text"
+                  value={polymarketKeywords}
+                  onChange={(e) => setPolymarketKeywords(e.target.value)}
+                  placeholder="trump, fed, bitcoin, ..."
+                  className="glass-input w-full"
+                />
+                <p className="text-xs text-white/40 mt-1">
+                  Comma-separated. Only show markets containing these words.
+                </p>
+              </div>
+            </>
           )}
 
           {/* Topic */}
