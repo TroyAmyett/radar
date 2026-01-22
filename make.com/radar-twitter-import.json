@@ -1,0 +1,116 @@
+{
+  "name": "Radar - Twitter/X Import",
+  "description": "Fetches tweets from specified X/Twitter accounts and sends them to Radar",
+  "flow": [
+    {
+      "id": 1,
+      "module": "twitter:searchTweets",
+      "version": 2,
+      "parameters": {
+        "__IMTCONN__": "{{connection.twitter}}"
+      },
+      "mapper": {
+        "query": "from:{{1.username}} -is:retweet -is:reply",
+        "maxResults": 10,
+        "tweetFields": ["created_at", "author_id", "text", "public_metrics", "attachments"],
+        "userFields": ["name", "username", "profile_image_url"],
+        "mediaFields": ["url", "preview_image_url"],
+        "expansions": ["author_id", "attachments.media_keys"]
+      },
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0
+        },
+        "expect": [
+          {
+            "name": "username",
+            "type": "text",
+            "label": "Twitter Username (without @)",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "module": "builtin:BasicIterator",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "array": "{{1.data}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": 3,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://radar.funnelists.com/api/ingest/tweets",
+        "method": "POST",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer {{parameters.ingestApiKey}}"
+          },
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "bodyType": "raw",
+        "contentType": "application/json",
+        "data": "{{json(emptyobject; \"tweets\"; array(emptyobject; \"id\"; 2.id; \"text\"; 2.text; \"author_name\"; 2.author.name; \"author_username\"; 2.author.username; \"author_profile_image\"; 2.author.profile_image_url; \"created_at\"; 2.created_at; \"url\"; concat(\"https://x.com/\"; 2.author.username; \"/status/\"; 2.id); \"media_url\"; ifempty(2.attachments.media.0.url; 2.attachments.media.0.preview_image_url); \"metrics\"; emptyobject; \"likes\"; 2.public_metrics.like_count; \"retweets\"; 2.public_metrics.retweet_count; \"replies\"; 2.public_metrics.reply_count); \"account_id\"; parameters.accountId; \"topic_id\"; parameters.topicId)}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0
+        },
+        "expect": [
+          {
+            "name": "ingestApiKey",
+            "type": "text",
+            "label": "Radar Ingest API Key",
+            "required": true
+          },
+          {
+            "name": "accountId",
+            "type": "text",
+            "label": "Radar Account ID",
+            "required": true
+          },
+          {
+            "name": "topicId",
+            "type": "text",
+            "label": "Radar Topic ID (optional)",
+            "required": false
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false
+    },
+    "designer": {
+      "orphans": []
+    }
+  }
+}
