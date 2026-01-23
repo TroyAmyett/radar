@@ -47,10 +47,10 @@ function isSportsEvent(event: PolymarketEvent): boolean {
 }
 
 function formatOdds(event: PolymarketEvent): string {
-  if (!event.markets || event.markets.length === 0) return '';
+  if (!event.markets || !Array.isArray(event.markets) || event.markets.length === 0) return '';
 
   const market = event.markets[0];
-  if (!market.outcomes || !market.outcomePrices) return '';
+  if (!market || !Array.isArray(market.outcomes) || !Array.isArray(market.outcomePrices)) return '';
 
   // Format odds for display
   const oddsDisplay = market.outcomes.map((outcome, i) => {
