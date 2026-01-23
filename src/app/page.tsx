@@ -139,8 +139,9 @@ export default function Dashboard() {
 
   const handleSelectTopic = (topicSlug: string | null) => {
     if (topicSlug === null) {
-      // "All" button - reset to all mode with no exclusions
-      setIsAllMode(true);
+      // "All" button - switch to selection mode with nothing selected
+      // User can then click topics to add them
+      setIsAllMode(false);
       setExcludedTopics([]);
       setSelectedTopics([]);
     } else if (isAllMode) {

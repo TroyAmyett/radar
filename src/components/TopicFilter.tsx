@@ -113,8 +113,8 @@ export default function TopicFilter({
     return Array.from(colors);
   }, [topics]);
 
-  // "All" is active when in all mode with no exclusions
-  const allActive = isAllMode && excludedTopics.length === 0;
+  // "All" is active when showing all content (either initial state or selection mode with nothing selected)
+  const allActive = (isAllMode && excludedTopics.length === 0) || (!isAllMode && selectedTopics.length === 0);
 
   return (
     <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
@@ -164,11 +164,9 @@ export default function TopicFilter({
         className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full whitespace-nowrap transition-all text-sm md:text-base ${
           allActive
             ? 'ring-2 ring-white bg-white/20 text-white'
-            : isAllMode
-            ? 'ring-2 ring-accent/50 bg-accent/10 text-white'
             : 'glass-button text-white/70 hover:text-white'
         }`}
-        title={isAllMode ? 'Click to reset (show all)' : 'Click to show all'}
+        title={allActive ? 'Showing all - click topics to filter' : 'Click to clear selection and show all'}
       >
         <LayoutGrid className="w-3.5 md:w-4 h-3.5 md:h-4" />
         <span className="font-medium">All</span>
@@ -192,10 +190,7 @@ export default function TopicFilter({
                 ? 'ring-2 ring-white bg-white/20 text-white'
                 : 'text-white/70 hover:text-white'
             }`}
-            title={isAllMode
-              ? isExcluded ? `Click to show ${topic.name}` : `Click to hide ${topic.name}`
-              : isSelected ? `Click to remove ${topic.name}` : `Click to show only ${topic.name}`
-            }
+            title={isSelected ? `Click to remove ${topic.name} from filter` : `Click to show only ${topic.name}`}
           >
             <Icon className="w-3.5 md:w-4 h-3.5 md:h-4" style={{ color: isExcluded ? '#666' : topicColor }} />
             <span className="font-medium">{topic.name}</span>
