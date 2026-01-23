@@ -96,8 +96,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!sources || sources.length === 0) {
-      return NextResponse.json({ message: 'No Polymarket sources to fetch' });
+      console.log('[fetch-polymarket] No Polymarket sources found for account:', accountId);
+      return NextResponse.json({
+        message: 'No Polymarket sources to fetch',
+        debug: { accountId, sourceIdFilter: sourceId || 'none' }
+      });
     }
+
+    console.log(`[fetch-polymarket] Found ${sources.length} Polymarket source(s) for account ${accountId}`);
 
     let totalFetched = 0;
     let totalInserted = 0;
@@ -120,6 +126,7 @@ export async function POST(request: NextRequest) {
         }
 
         const events: PolymarketEvent[] = await eventsRes.json();
+        console.log(`[fetch-polymarket] Fetched ${events.length} events from GAMMA API`);
         totalFetched += events.length;
 
         // Get filter preferences from metadata
@@ -163,6 +170,8 @@ export async function POST(request: NextRequest) {
             });
           });
         }
+
+        console.log(`[fetch-polymarket] After filtering: ${filteredEvents.length} events (excludeSports=${excludeSports}, keywords=${keywords.length}, categories=${categories.length})`);
 
         for (const event of filteredEvents) {
           // Check if we already have this event
@@ -239,10 +248,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    console.log(`[fetch-polymarket] Complete: fetched=${totalFetched}, inserted=${totalInserted}`);
+
     return NextResponse.json({
       success: true,
       fetched: totalFetched,
       inserted: totalInserted,
+      sourcesProcessed: sources.length,
     });
 
   } catch (error) {

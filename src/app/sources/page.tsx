@@ -168,6 +168,12 @@ export default function SourcesPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ source_id: source.id }),
         });
+      } else if (source.type === 'polymarket') {
+        await fetch('/api/fetch-polymarket', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source_id: source.id }),
+        });
       }
       await fetchData();
     } catch (error) {
