@@ -30,6 +30,8 @@ import {
 interface TopicFilterProps {
   topics: Topic[];
   selectedTopics: string[];
+  excludedTopics?: string[];
+  isAllMode?: boolean;
   onSelectTopic: (topicSlug: string | null) => void;
   onToggleColor?: (color: string) => void;
 }
@@ -97,6 +99,8 @@ function getIconComponent(iconName: string): React.ComponentType<LucideProps> {
 export default function TopicFilter({
   topics,
   selectedTopics,
+  excludedTopics = [],
+  isAllMode = true,
   onSelectTopic,
   onToggleColor,
 }: TopicFilterProps) {
@@ -109,7 +113,8 @@ export default function TopicFilter({
     return Array.from(colors);
   }, [topics]);
 
-  const allSelected = selectedTopics.length === 0;
+  // "All" is active when in all mode with no exclusions
+  const allActive = isAllMode && excludedTopics.length === 0;
 
   return (
     <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
@@ -118,26 +123,34 @@ export default function TopicFilter({
         <>
           {uniqueColors.map((color) => {
             const topicsWithColor = topics.filter(t => t.color === color);
-            const allColorTopicsSelected = topicsWithColor.every(t =>
-              selectedTopics.includes(t.slug)
-            );
-            const someColorTopicsSelected = topicsWithColor.some(t =>
-              selectedTopics.includes(t.slug)
-            );
+
+            // In All mode: check if excluded. In Selection mode: check if selected
+            const allColorTopicsActive = isAllMode
+              ? topicsWithColor.every(t => !excludedTopics.includes(t.slug))
+              : topicsWithColor.every(t => selectedTopics.includes(t.slug));
+            const someColorTopicsActive = isAllMode
+              ? topicsWithColor.some(t => !excludedTopics.includes(t.slug))
+              : topicsWithColor.some(t => selectedTopics.includes(t.slug));
+            const allColorTopicsExcluded = isAllMode && topicsWithColor.every(t => excludedTopics.includes(t.slug));
 
             return (
               <button
                 key={color}
                 onClick={() => onToggleColor(color)}
                 className={`w-7 md:w-8 h-7 md:h-8 rounded-full flex-shrink-0 transition-all ${
-                  allColorTopicsSelected
+                  allColorTopicsExcluded
+                    ? 'opacity-30 ring-2 ring-red-500/50'
+                    : allColorTopicsActive && !isAllMode
                     ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-900'
-                    : someColorTopicsSelected
+                    : someColorTopicsActive && !isAllMode
                     ? 'ring-2 ring-white/50 ring-offset-1 ring-offset-gray-900'
                     : 'opacity-60 hover:opacity-100'
                 }`}
                 style={{ backgroundColor: color }}
-                title={`Toggle ${topicsWithColor.map(t => t.name).join(', ')}`}
+                title={isAllMode
+                  ? `Click to ${allColorTopicsExcluded ? 'show' : 'hide'} ${topicsWithColor.map(t => t.name).join(', ')}`
+                  : `Toggle ${topicsWithColor.map(t => t.name).join(', ')}`
+                }
               />
             );
           })}
@@ -149,10 +162,13 @@ export default function TopicFilter({
       <button
         onClick={() => onSelectTopic(null)}
         className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full whitespace-nowrap transition-all text-sm md:text-base ${
-          allSelected
+          allActive
             ? 'ring-2 ring-white bg-white/20 text-white'
+            : isAllMode
+            ? 'ring-2 ring-accent/50 bg-accent/10 text-white'
             : 'glass-button text-white/70 hover:text-white'
         }`}
+        title={isAllMode ? 'Click to reset (show all)' : 'Click to show all'}
       >
         <LayoutGrid className="w-3.5 md:w-4 h-3.5 md:h-4" />
         <span className="font-medium">All</span>
@@ -162,6 +178,7 @@ export default function TopicFilter({
       {topics.map((topic) => {
         const Icon = getIconComponent(topic.icon || '');
         const isSelected = selectedTopics.includes(topic.slug);
+        const isExcluded = excludedTopics.includes(topic.slug);
         const topicColor = topic.color || '#0ea5e9';
 
         return (
@@ -169,12 +186,18 @@ export default function TopicFilter({
             key={topic.id}
             onClick={() => onSelectTopic(topic.slug)}
             className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full whitespace-nowrap transition-all glass-button hover:bg-white/10 text-sm md:text-base ${
-              isSelected
+              isExcluded
+                ? 'opacity-40 line-through ring-1 ring-red-500/30'
+                : isSelected
                 ? 'ring-2 ring-white bg-white/20 text-white'
                 : 'text-white/70 hover:text-white'
             }`}
+            title={isAllMode
+              ? isExcluded ? `Click to show ${topic.name}` : `Click to hide ${topic.name}`
+              : isSelected ? `Click to remove ${topic.name}` : `Click to show only ${topic.name}`
+            }
           >
-            <Icon className="w-3.5 md:w-4 h-3.5 md:h-4" style={{ color: topicColor }} />
+            <Icon className="w-3.5 md:w-4 h-3.5 md:h-4" style={{ color: isExcluded ? '#666' : topicColor }} />
             <span className="font-medium">{topic.name}</span>
           </button>
         );
