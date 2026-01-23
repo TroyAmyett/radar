@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     let totalInserted = 0;
     let totalUpdated = 0;
     let totalFilteredOut = 0;
-    let insertErrors: string[] = [];
+    const insertErrors: string[] = [];
     let debugInfo: Record<string, unknown> = {};
 
     for (const source of sources) {
