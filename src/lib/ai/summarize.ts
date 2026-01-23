@@ -4,6 +4,32 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Strip HTML tags and decode common entities for cleaner AI analysis
+function stripHtml(html: string): string {
+  if (!html) return '';
+
+  // Decode common HTML entities
+  let text = html
+    .replace(/&#160;/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+
+  // Remove HTML tags
+  text = text.replace(/<[^>]*>/g, ' ');
+
+  // Clean up whitespace
+  text = text.replace(/\s+/g, ' ').trim();
+
+  return text;
+}
+
 export interface ContentSummary {
   summary: string;
   keyPoints: string[];
@@ -26,7 +52,8 @@ export async function generateSummary(
   content: string | null,
   type: string
 ): Promise<ContentSummary> {
-  const contentText = content || title;
+  // Strip HTML from content for cleaner AI analysis
+  const contentText = stripHtml(content || title);
 
   try {
     const message = await anthropic.messages.create({
@@ -67,9 +94,9 @@ Respond only with valid JSON, no other text.`,
     };
   } catch (error) {
     console.error('Failed to generate summary:', error);
-    // Return a fallback
+    // Return a fallback with HTML stripped
     return {
-      summary: content?.substring(0, 200) || title,
+      summary: stripHtml(content || title).substring(0, 200),
       keyPoints: [],
       sentiment: 0,
     };
@@ -82,7 +109,8 @@ export async function generateDeepDive(
   type: string,
   author?: string | null
 ): Promise<DeepDiveAnalysis> {
-  const contentText = content || title;
+  // Strip HTML from content for cleaner AI analysis
+  const contentText = stripHtml(content || title);
 
   // For videos, use more content since transcripts are longer and more detailed
   const maxContentLength = type === 'video' ? 12000 : 4000;
@@ -138,7 +166,7 @@ Respond only with valid JSON, no other text.`,
   } catch (error) {
     console.error('Failed to generate deep dive:', error);
     return {
-      summary: content?.substring(0, 300) || title,
+      summary: stripHtml(content || title).substring(0, 300),
       keyPoints: [],
       sentiment: 0,
       sentimentLabel: 'Unknown',
