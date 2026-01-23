@@ -198,7 +198,12 @@ export async function POST(request: NextRequest) {
 
         console.log(`[fetch-polymarket] After filtering: ${filteredEvents.length} events (excludeSports=${excludeSports}, keywords=${keywords.length}, categories=${categories.length})`);
 
+        let loopIterations = 0;
+        let checkErrorCount = 0;
+        let noExistingCount = 0;
+
         for (const event of filteredEvents) {
+          loopIterations++;
           // Check if we already have this event - use maybeSingle() for cleaner 0-or-1 handling
           const { data: existing, error: checkError } = await supabaseAdmin
             .from('content_items')
@@ -208,9 +213,14 @@ export async function POST(request: NextRequest) {
             .maybeSingle();
 
           if (checkError) {
+            checkErrorCount++;
             console.error(`[fetch-polymarket] Error checking for existing event ${event.id}:`, checkError);
             insertErrors.push(`Check error for ${event.id}: ${checkError.message}`);
             continue;
+          }
+
+          if (!existing) {
+            noExistingCount++;
           }
 
           if (existing) {
@@ -270,6 +280,14 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Add loop tracking to debug info
+        debugInfo = {
+          ...debugInfo,
+          loopIterations,
+          checkErrorCount,
+          noExistingCount,
+        };
+
         // Update last fetched timestamp
         await supabaseAdmin
           .from('sources')
@@ -278,6 +296,10 @@ export async function POST(request: NextRequest) {
 
       } catch (error) {
         console.error(`Error processing Polymarket source ${source.id}:`, error);
+        debugInfo = {
+          ...debugInfo,
+          processingError: String(error),
+        };
       }
     }
 
