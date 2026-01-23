@@ -8,7 +8,6 @@ import CardStream from '@/components/CardStream';
 import DeepDiveModal from '@/components/modals/DeepDiveModal';
 import PublishModal, { PublishData } from '@/components/modals/PublishModal';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { useAuth } from '@/hooks/useAuth';
 import { Topic, ContentItemWithInteraction } from '@/types/database';
 import { RefreshCw } from 'lucide-react';
 
@@ -27,7 +26,6 @@ interface DeepDiveAnalysis {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [items, setItems] = useState<ContentItemWithInteraction[]>([]);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]); // Topics to INCLUDE (when not in all mode)
@@ -214,13 +212,13 @@ export default function Dashboard() {
   const handleRefreshFeeds = async () => {
     setIsRefreshing(true);
     try {
-      // Pass account_id from authenticated user
-      const body = user?.id ? JSON.stringify({ account_id: user.id }) : JSON.stringify({});
+      // Don't pass account_id - let API use the default hardcoded account
+      // (Sources are created with the hardcoded account_id, so fetching must use the same)
       // Fetch all source types in parallel
       await Promise.all([
-        fetch('/api/fetch-feeds', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }),
-        fetch('/api/fetch-youtube', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }),
-        fetch('/api/fetch-polymarket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }),
+        fetch('/api/fetch-feeds', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }),
+        fetch('/api/fetch-youtube', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }),
+        fetch('/api/fetch-polymarket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }),
       ]);
       // Refresh content
       await fetchData();

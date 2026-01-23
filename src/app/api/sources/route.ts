@@ -67,7 +67,7 @@ export async function PATCH(request: NextRequest) {
 
   // Only allow updating certain fields
   const allowedUpdates: Record<string, unknown> = {};
-  const allowedFields = ['name', 'url', 'channel_id', 'username', 'topic_id'];
+  const allowedFields = ['name', 'url', 'channel_id', 'username', 'topic_id', 'metadata'];
 
   for (const field of allowedFields) {
     if (updates[field] !== undefined) {
