@@ -446,11 +446,16 @@ export default function AddSourceModal({
           {/* Polymarket preferences - only show for Polymarket sources */}
           {sourceInfo?.type === 'polymarket' && (
             <div className="space-y-4 p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-              <h4 className="text-sm font-medium text-purple-400">Filter Preferences</h4>
+              <div>
+                <h4 className="text-sm font-medium text-purple-400">Filter Preferences</h4>
+                <p className="text-xs text-white/50 mt-1">
+                  Leave empty to see all markets. Select categories and/or keywords to filter.
+                </p>
+              </div>
 
               {/* Categories */}
               <div>
-                <label className="block text-sm text-white/60 mb-2">Categories</label>
+                <label className="block text-sm text-white/60 mb-2">Categories (optional)</label>
                 <div className="flex flex-wrap gap-2">
                   {POLYMARKET_CATEGORIES.map((cat) => {
                     const isSelected = polymarketCategories.includes(cat.id);
@@ -476,12 +481,11 @@ export default function AddSourceModal({
                     );
                   })}
                 </div>
-                <p className="text-xs text-white/40 mt-1">Select none for all categories</p>
               </div>
 
               {/* Topics/Keywords */}
               <div>
-                <label className="block text-sm text-white/60 mb-2">Topics / Keywords</label>
+                <label className="block text-sm text-white/60 mb-2">Keywords (optional)</label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {POLYMARKET_TOPICS.map((topic) => {
                     const isSelected = polymarketKeywords.toLowerCase().includes(topic.toLowerCase());
@@ -513,10 +517,16 @@ export default function AddSourceModal({
                   type="text"
                   value={polymarketKeywords}
                   onChange={(e) => setPolymarketKeywords(e.target.value)}
-                  placeholder="Or type custom keywords: US, SPY, Bitcoin..."
+                  placeholder="Or type custom: tariffs, AI, economy..."
                   className="glass-input w-full text-sm"
                 />
-                <p className="text-xs text-white/40 mt-1">Comma-separated. Only markets matching these keywords will be shown.</p>
+              </div>
+
+              {/* How filters work explanation */}
+              <div className="p-3 bg-white/5 rounded-lg">
+                <p className="text-xs text-white/50">
+                  <strong className="text-white/70">How it works:</strong> Markets matching <em>any</em> selected category or <em>any</em> keyword will be shown. Leave both empty to see all trending markets.
+                </p>
               </div>
 
               {/* Exclude sports toggle */}
@@ -527,7 +537,7 @@ export default function AddSourceModal({
                   onChange={(e) => setPolymarketExcludeSports(e.target.checked)}
                   className="w-4 h-4 rounded border-white/30 bg-white/10 text-purple-500 focus:ring-purple-500"
                 />
-                <span className="text-sm text-white/70">Exclude sports markets</span>
+                <span className="text-sm text-white/70">Exclude sports markets (NBA, NFL, etc.)</span>
               </label>
             </div>
           )}
