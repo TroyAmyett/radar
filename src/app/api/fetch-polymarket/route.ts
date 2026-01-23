@@ -107,6 +107,10 @@ export async function POST(request: NextRequest) {
 
     let totalFetched = 0;
     let totalInserted = 0;
+    let totalUpdated = 0;
+    let totalFilteredOut = 0;
+    let insertErrors: string[] = [];
+    let debugInfo: Record<string, unknown> = {};
 
     for (const source of sources) {
       try {
@@ -177,16 +181,36 @@ export async function POST(request: NextRequest) {
           });
         }
 
+        const afterSportsFilter = excludeSports ? events.filter(event => !isSportsEvent(event)).length : events.length;
+        totalFilteredOut = events.length - filteredEvents.length;
+
+        debugInfo = {
+          ...debugInfo,
+          rawEventsFromAPI: events.length,
+          afterSportsFilter,
+          afterAllFilters: filteredEvents.length,
+          excludeSports,
+          keywordsCount: keywords.length,
+          categoriesCount: categories.length,
+          sourceMetadata: metadata,
+        };
+
         console.log(`[fetch-polymarket] After filtering: ${filteredEvents.length} events (excludeSports=${excludeSports}, keywords=${keywords.length}, categories=${categories.length})`);
 
         for (const event of filteredEvents) {
-          // Check if we already have this event
-          const { data: existing } = await supabaseAdmin
+          // Check if we already have this event - use maybeSingle() for cleaner 0-or-1 handling
+          const { data: existing, error: checkError } = await supabaseAdmin
             .from('content_items')
             .select('id')
             .eq('account_id', accountId)
             .eq('external_id', `polymarket:${event.id}`)
-            .single();
+            .maybeSingle();
+
+          if (checkError) {
+            console.error(`[fetch-polymarket] Error checking for existing event ${event.id}:`, checkError);
+            insertErrors.push(`Check error for ${event.id}: ${checkError.message}`);
+            continue;
+          }
 
           if (existing) {
             // Update odds if they changed
@@ -204,6 +228,7 @@ export async function POST(request: NextRequest) {
                 },
               })
               .eq('id', existing.id);
+            totalUpdated++;
             continue;
           }
 
@@ -238,6 +263,7 @@ export async function POST(request: NextRequest) {
 
           if (insertError) {
             console.error('Failed to insert Polymarket event:', insertError);
+            insertErrors.push(`Insert error for ${event.id}: ${insertError.message}`);
           } else {
             totalInserted++;
           }
@@ -254,13 +280,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`[fetch-polymarket] Complete: fetched=${totalFetched}, inserted=${totalInserted}`);
+    console.log(`[fetch-polymarket] Complete: fetched=${totalFetched}, inserted=${totalInserted}, updated=${totalUpdated}`);
 
     return NextResponse.json({
       success: true,
       fetched: totalFetched,
       inserted: totalInserted,
+      updated: totalUpdated,
+      filteredOut: totalFilteredOut,
       sourcesProcessed: sources.length,
+      errors: insertErrors.length > 0 ? insertErrors : undefined,
+      debug: debugInfo,
     });
 
   } catch (error) {
