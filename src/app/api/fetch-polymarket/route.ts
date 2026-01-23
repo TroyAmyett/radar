@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, getAccountId } from '@/lib/supabase';
 
-// v2 - with detailed debugging
 const GAMMA_API = 'https://gamma-api.polymarket.com';
 
 // Sports-related tag patterns to filter out
