@@ -39,12 +39,12 @@ export default function PredictionCard({
 
   // Parse market data from metadata
   const metadata = item.metadata as { markets?: MarketData[]; volume?: string; endDate?: string } | null;
-  const markets = metadata?.markets || [];
+  const markets = Array.isArray(metadata?.markets) ? metadata.markets : [];
   const firstMarket = markets[0];
 
   // Parse odds from the summary or market data
   const parseOdds = (): { outcome: string; probability: number; color: string }[] => {
-    if (firstMarket?.outcomes && firstMarket?.outcomePrices) {
+    if (firstMarket && Array.isArray(firstMarket.outcomes) && Array.isArray(firstMarket.outcomePrices)) {
       return firstMarket.outcomes.map((outcome, i) => {
         const price = parseFloat(firstMarket.outcomePrices?.[i] || '0');
         const probability = Math.round(price * 100);

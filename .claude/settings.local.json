@@ -36,7 +36,8 @@
       "mcp__playwright__browser_click",
       "mcp__playwright__browser_evaluate",
       "Bash(python3 -m json.tool:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "mcp__playwright__browser_console_messages"
     ]
   }
 }
