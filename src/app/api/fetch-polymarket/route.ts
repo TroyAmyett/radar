@@ -148,26 +148,32 @@ export async function POST(request: NextRequest) {
           filteredEvents = filteredEvents.filter(event => !isSportsEvent(event));
         }
 
-        // Filter by keywords if any are specified
-        if (keywords.length > 0) {
+        // Filter by keywords OR categories (if any specified)
+        // An event passes if it matches ANY keyword OR ANY category
+        if (keywords.length > 0 || categories.length > 0) {
           filteredEvents = filteredEvents.filter(event => {
-            const textToCheck = `${event.title} ${event.description || ''}`.toLowerCase();
-            return keywords.some(keyword => textToCheck.includes(keyword.toLowerCase()));
-          });
-        }
-
-        // Filter by categories if any are specified
-        if (categories.length > 0) {
-          filteredEvents = filteredEvents.filter(event => {
-            // Check event tags against selected categories
-            const eventTags = event.tags?.map(t => t.slug.toLowerCase()) || [];
             const eventText = `${event.title} ${event.description || ''}`.toLowerCase();
+            const eventTags = event.tags?.map(t => t.slug.toLowerCase()) || [];
 
-            return categories.some(cat => {
-              // Match by tag or by text content
-              return eventTags.some(tag => tag.includes(cat)) ||
-                     eventText.includes(cat);
-            });
+            // Check keywords
+            const matchesKeyword = keywords.length === 0 ||
+              keywords.some(keyword => eventText.includes(keyword.toLowerCase()));
+
+            // Check categories
+            const matchesCategory = categories.length === 0 ||
+              categories.some(cat => {
+                return eventTags.some(tag => tag.includes(cat)) ||
+                       eventText.includes(cat);
+              });
+
+            // Pass if matches keywords OR categories (or both)
+            // If only keywords specified, must match keyword
+            // If only categories specified, must match category
+            // If both specified, must match at least one of either
+            if (keywords.length > 0 && categories.length > 0) {
+              return matchesKeyword || matchesCategory;
+            }
+            return matchesKeyword && matchesCategory;
           });
         }
 
