@@ -100,7 +100,7 @@ export default function Sidebar() {
             <span className="font-semibold text-white">Upgrade to AgentPM</span>
           </div>
           <p className="text-xs text-white/60">
-            Get AI project management, NoteTaker, and more powerful tools.
+            Get AI planning, agentic project management and more powerful tools.
           </p>
         </a>
       </div>
