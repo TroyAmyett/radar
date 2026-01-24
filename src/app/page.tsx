@@ -105,11 +105,12 @@ export default function Dashboard() {
           return false;
         }
       } else {
-        // Selection mode: show ONLY selected topics
-        if (selectedTopics.length > 0) {
-          if (!itemTopicSlug || !selectedTopics.includes(itemTopicSlug)) {
-            return false;
-          }
+        // Selection mode: show ONLY selected topics (empty selection = show nothing)
+        if (selectedTopics.length === 0) {
+          return false;
+        }
+        if (!itemTopicSlug || !selectedTopics.includes(itemTopicSlug)) {
+          return false;
         }
       }
 
@@ -139,11 +140,18 @@ export default function Dashboard() {
 
   const handleSelectTopic = (topicSlug: string | null) => {
     if (topicSlug === null) {
-      // "All" button - switch to selection mode with nothing selected
-      // User can then click topics to add them
-      setIsAllMode(false);
-      setExcludedTopics([]);
-      setSelectedTopics([]);
+      // "All" button - toggle between modes
+      if (isAllMode) {
+        // Currently showing all - switch to selection mode with nothing selected
+        setIsAllMode(false);
+        setExcludedTopics([]);
+        setSelectedTopics([]);
+      } else {
+        // Currently in selection mode - switch back to All mode (show everything)
+        setIsAllMode(true);
+        setExcludedTopics([]);
+        setSelectedTopics([]);
+      }
     } else if (isAllMode) {
       // In All mode: clicking a topic EXCLUDES it
       setExcludedTopics((prev) => {

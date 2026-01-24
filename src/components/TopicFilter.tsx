@@ -113,8 +113,8 @@ export default function TopicFilter({
     return Array.from(colors);
   }, [topics]);
 
-  // "All" is active when showing all content (either initial state or selection mode with nothing selected)
-  const allActive = (isAllMode && excludedTopics.length === 0) || (!isAllMode && selectedTopics.length === 0);
+  // "All" is active only when in All mode showing everything (no exclusions)
+  const allActive = isAllMode && excludedTopics.length === 0;
 
   return (
     <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
@@ -166,7 +166,7 @@ export default function TopicFilter({
             ? 'ring-2 ring-white bg-white/20 text-white'
             : 'glass-button text-white/70 hover:text-white'
         }`}
-        title={allActive ? 'Showing all - click topics to filter' : 'Click to clear selection and show all'}
+        title={allActive ? 'Click to clear and select specific topics' : 'Click to show all topics'}
       >
         <LayoutGrid className="w-3.5 md:w-4 h-3.5 md:h-4" />
         <span className="font-medium">All</span>
