@@ -45,7 +45,7 @@ export default function Sidebar() {
   const MobileMenuButton = () => (
     <button
       onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-      className="md:hidden fixed top-3 left-3 z-[60] p-2 rounded-lg glass border border-white/10 hover:bg-white/10 transition-colors"
+      className="lg:hidden fixed top-3 left-3 z-[60] p-2 rounded-lg glass border border-white/10 hover:bg-white/10 transition-colors"
       aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
     >
       {mobileMenuOpen ? (
@@ -115,14 +115,14 @@ export default function Sidebar() {
       {/* Mobile overlay */}
       {mobileMenuOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
       {/* Mobile sidebar (slide-in drawer) */}
       <aside
-        className={`md:hidden fixed left-0 top-0 h-full w-64 glass border-r border-white/10 p-4 pt-16 z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${
+        className={`lg:hidden fixed left-0 top-0 h-full w-64 glass border-r border-white/10 p-4 pt-16 z-50 transform transition-transform duration-300 ease-in-out flex flex-col ${
           mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -130,7 +130,7 @@ export default function Sidebar() {
       </aside>
 
       {/* Desktop sidebar (always visible) */}
-      <aside className="hidden md:flex md:flex-col fixed left-0 top-0 h-full w-64 glass border-r border-white/10 p-4 z-50">
+      <aside className="hidden lg:flex lg:flex-col fixed left-0 top-0 h-full w-64 glass border-r border-white/10 p-4 z-50">
         <SidebarContent />
       </aside>
     </>
