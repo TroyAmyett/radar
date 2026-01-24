@@ -1,6 +1,7 @@
 'use client';
 
 import Sidebar from './Sidebar';
+import Footer from './Footer';
 import { SidebarProvider, useSidebar } from './SidebarContext';
 
 interface StandaloneLayoutProps {
@@ -14,13 +15,16 @@ function StandaloneLayoutContent({ children }: StandaloneLayoutProps) {
     <>
       <Sidebar />
       {/* No margin on mobile (sidebar is hidden), dynamic margin on desktop */}
-      <main
-        className={`ml-0 min-h-screen transition-all duration-300 ${
+      <div
+        className={`ml-0 min-h-screen flex flex-col transition-all duration-300 ${
           collapsed ? 'md:ml-16' : 'md:ml-64'
         }`}
       >
-        {children}
-      </main>
+        <main className="flex-1">
+          {children}
+        </main>
+        <Footer />
+      </div>
     </>
   );
 }
