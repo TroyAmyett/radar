@@ -44,7 +44,6 @@ export default function Header({ onSearch }: HeaderProps) {
     }
   };
 
-  const userInitial = user?.email?.charAt(0).toUpperCase() || 'U';
   const userEmail = user?.email || 'User';
 
   return (
@@ -71,7 +70,7 @@ export default function Header({ onSearch }: HeaderProps) {
               className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
             >
               <div className="w-8 md:w-9 h-8 md:h-9 rounded-full bg-accent/20 flex items-center justify-center">
-                <span className="text-accent font-semibold text-xs md:text-sm">{userInitial}</span>
+                <User className="w-4 md:w-5 h-4 md:h-5 text-accent" />
               </div>
               <ChevronDown
                 className={`w-4 h-4 text-white/60 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
@@ -84,7 +83,7 @@ export default function Header({ onSearch }: HeaderProps) {
                 <div className="px-4 py-3 border-b border-white/10">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center">
-                      <span className="text-accent font-semibold">{userInitial}</span>
+                      <User className="w-5 h-5 text-accent" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate">{userEmail}</p>
@@ -122,7 +121,7 @@ export default function Header({ onSearch }: HeaderProps) {
           </div>
         ) : (
           <div className="w-8 md:w-9 h-8 md:h-9 rounded-full bg-accent/20 flex items-center justify-center">
-            <span className="text-accent font-semibold text-xs md:text-sm">{userInitial}</span>
+            <User className="w-4 md:w-5 h-4 md:h-5 text-accent" />
           </div>
         )}
       </div>
