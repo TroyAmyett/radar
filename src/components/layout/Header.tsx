@@ -2,6 +2,7 @@
 
 import { Search, LogOut, User } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
@@ -12,6 +13,8 @@ interface HeaderProps {
 export default function Header({ onSearch }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
   const router = useRouter();
@@ -22,6 +25,7 @@ export default function Header({ onSearch }: HeaderProps) {
   };
 
   const handleSignOut = async () => {
+    setMenuOpen(false);
     try {
       await signOut();
       router.push('/login');
@@ -30,10 +34,27 @@ export default function Header({ onSearch }: HeaderProps) {
     }
   };
 
+  const toggleMenu = () => {
+    if (!menuOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+    setMenuOpen(!menuOpen);
+  };
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(target)
+      ) {
         setMenuOpen(false);
       }
     };
@@ -44,6 +65,29 @@ export default function Header({ onSearch }: HeaderProps) {
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpen]);
+
+  // Update position on scroll/resize
+  useEffect(() => {
+    const updatePosition = () => {
+      if (menuOpen && buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        setMenuPosition({
+          top: rect.bottom + 8,
+          right: window.innerWidth - rect.right,
+        });
+      }
+    };
+
+    if (menuOpen) {
+      window.addEventListener('scroll', updatePosition);
+      window.addEventListener('resize', updatePosition);
+    }
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition);
+      window.removeEventListener('resize', updatePosition);
     };
   }, [menuOpen]);
 
@@ -62,16 +106,25 @@ export default function Header({ onSearch }: HeaderProps) {
         </div>
       </form>
 
-      <div className="relative flex-shrink-0" ref={menuRef}>
+      <div className="flex-shrink-0">
         <button
-          onClick={() => setMenuOpen(!menuOpen)}
+          ref={buttonRef}
+          onClick={toggleMenu}
           className="w-8 md:w-9 h-8 md:h-9 rounded-full bg-accent/20 flex items-center justify-center hover:bg-accent/30 transition-colors"
         >
           <User className="w-4 md:w-5 h-4 md:h-5 text-accent" />
         </button>
 
-        {menuOpen && (
-          <div className="absolute right-0 top-full mt-2 w-48 py-2 rounded-lg bg-gray-900/95 border border-white/20 shadow-2xl z-[9999]">
+        {menuOpen && typeof document !== 'undefined' && createPortal(
+          <div
+            ref={menuRef}
+            className="fixed w-48 py-2 rounded-lg bg-gray-900 border border-white/20 shadow-2xl"
+            style={{
+              top: menuPosition.top,
+              right: menuPosition.right,
+              zIndex: 99999,
+            }}
+          >
             {user?.email && (
               <div className="px-4 py-2 border-b border-white/10">
                 <p className="text-xs text-white/60 truncate">{user.email}</p>
@@ -79,12 +132,13 @@ export default function Header({ onSearch }: HeaderProps) {
             )}
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-white/70 hover:text-white hover:bg-white/10 transition-colors"
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out</span>
             </button>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </header>
