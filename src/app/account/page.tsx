@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { getCurrentSubscription, type Subscription } from '@/lib/subscription';
 import { createClient } from '@/lib/supabase/client';
+import { formatDate } from '@/lib/timezone';
 
 // Types
 interface ApiKey {
@@ -745,7 +746,7 @@ function BillingTab({ subscription }: { subscription: Subscription | null }) {
 
         {subscription?.current_period_end && (
           <div className="text-white/40 text-sm">
-            {subscription.status === 'active' ? 'Renews' : 'Expires'}: {new Date(subscription.current_period_end).toLocaleDateString()}
+            {subscription.status === 'active' ? 'Renews' : 'Expires'}: {formatDate(subscription.current_period_end)}
           </div>
         )}
       </div>

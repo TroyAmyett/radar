@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink, Clock, User, Calendar, Bookmark, Heart, Share2, TrendingUp } from 'lucide-react';
 import { ContentItemWithInteraction } from '@/types/database';
+import { formatDate } from '@/lib/timezone';
 
 export default function ContentViewerPage() {
   const params = useParams();
@@ -217,7 +218,7 @@ export default function ContentViewerPage() {
           {item.published_at && (
             <span className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              {new Date(item.published_at).toLocaleDateString()}
+              {formatDate(item.published_at)}
             </span>
           )}
           {item.duration && (

@@ -21,17 +21,21 @@ export async function getCurrentSubscription(): Promise<Subscription> {
     throw new Error('Not authenticated');
   }
 
-  // Get user's current account
-  const { data: userAccount, error: userAccountError } = await supabase
+  // Get user's current account (prefer primary, or first active)
+  const { data: userAccounts, error: userAccountError } = await supabase
     .from('user_accounts')
-    .select('account_id')
+    .select('account_id, is_primary')
     .eq('user_id', user.id)
     .eq('status', 'active')
-    .single();
+    .order('is_primary', { ascending: false })
+    .limit(10);
 
-  if (userAccountError || !userAccount) {
+  if (userAccountError || !userAccounts || userAccounts.length === 0) {
     throw new Error('No active account found');
   }
+
+  // Use primary account if exists, otherwise first account
+  const userAccount = userAccounts.find(a => a.is_primary) || userAccounts[0];
 
   // Get account's subscription
   const { data: subscription, error: subscriptionError } = await supabase

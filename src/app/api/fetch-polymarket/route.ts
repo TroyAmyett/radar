@@ -5,15 +5,25 @@ const GAMMA_API = 'https://gamma-api.polymarket.com';
 
 // Sports-related tag patterns to filter out
 const SPORTS_PATTERNS = [
+  // Major leagues
   /\bnba\b/i, /\bnfl\b/i, /\bnhl\b/i, /\bmlb\b/i, /\bmls\b/i,
-  /\bncaa\b/i, /\bcbb\b/i, /\bcfb\b/i,
+  /\bncaa\b/i, /\bcbb\b/i, /\bcfb\b/i, /\bafc\b/i, /\buefa\b/i, /\bfifa\b/i,
+  // Sports
   /basketball/i, /football/i, /baseball/i, /hockey/i, /soccer/i,
-  /tennis/i, /golf/i, /boxing/i, /mma\b/i, /ufc\b/i,
-  /olympics/i, /world cup/i, /super bowl/i,
+  /tennis/i, /golf/i, /boxing/i, /mma\b/i, /ufc\b/i, /wrestling/i,
+  /cricket/i, /rugby/i, /volleyball/i, /swimming/i,
+  // Events
+  /olympics/i, /world cup/i, /super bowl/i, /grand slam/i, /championship/i,
+  // Teams
   /lakers/i, /celtics/i, /warriors/i, /bulls/i, /heat/i,
   /yankees/i, /dodgers/i, /patriots/i, /chiefs/i,
+  // Motorsports
   /motorsport/i, /f1\b/i, /formula 1/i, /nascar/i,
-  /premier league/i, /la liga/i, /bundesliga/i, /serie a/i,
+  // Soccer leagues
+  /premier league/i, /la liga/i, /bundesliga/i, /serie a/i, /ligue 1/i,
+  // Esports (optional - user may want these)
+  /counter-strike/i, /\bcs2?\b/i, /dota/i, /league of legends/i, /\blol\b/i,
+  /valorant/i, /overwatch/i, /esports/i, /\bbo3\b/i, /\bbo5\b/i,
 ];
 
 interface PolymarketEvent {
@@ -45,15 +55,32 @@ function isSportsEvent(event: PolymarketEvent): boolean {
   return SPORTS_PATTERNS.some(pattern => pattern.test(textToCheck));
 }
 
+// Helper to safely get array from potential JSON string
+function safeArray(val: unknown): string[] {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch { /* ignore */ }
+  }
+  return [];
+}
+
 function formatOdds(event: PolymarketEvent): string {
   if (!event.markets || !Array.isArray(event.markets) || event.markets.length === 0) return '';
 
   const market = event.markets[0];
-  if (!market || !Array.isArray(market.outcomes) || !Array.isArray(market.outcomePrices)) return '';
+  if (!market) return '';
 
-  // Format odds for display
-  const oddsDisplay = market.outcomes.map((outcome, i) => {
-    const price = parseFloat(market.outcomePrices[i] || '0');
+  const outcomes = safeArray(market.outcomes);
+  const prices = safeArray(market.outcomePrices);
+
+  if (outcomes.length === 0 || prices.length === 0) return '';
+
+  // Format odds for display (only first 2 outcomes - Yes/No or primary options)
+  const oddsDisplay = outcomes.slice(0, 2).map((outcome, i) => {
+    const price = parseFloat(prices[i] || '0');
     const percentage = Math.round(price * 100);
     return `${outcome}: ${percentage}%`;
   }).join(' | ');

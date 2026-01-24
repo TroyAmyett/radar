@@ -65,16 +65,33 @@ export default function PredictionCard({
   const volume24hr = formatNumber(metadata?.volume24hr);
   const liquidity = formatNumber(metadata?.liquidity);
 
+  // Helper to parse potential JSON strings
+  const parseJsonOrArray = (val: unknown): string[] => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) return parsed;
+      } catch { /* ignore */ }
+    }
+    return [];
+  };
+
   // Parse odds from the summary or market data
   const parseOdds = (): { outcome: string; probability: number; color: string }[] => {
-    if (firstMarket && Array.isArray(firstMarket.outcomes) && Array.isArray(firstMarket.outcomePrices)) {
-      return firstMarket.outcomes.map((outcome, i) => {
-        const price = parseFloat(firstMarket.outcomePrices?.[i] || '0');
-        const probability = Math.round(price * 100);
-        // Color based on probability
-        const color = probability >= 50 ? 'text-green-400' : 'text-red-400';
-        return { outcome, probability, color };
-      });
+    if (firstMarket) {
+      const outcomes = parseJsonOrArray(firstMarket.outcomes);
+      const prices = parseJsonOrArray(firstMarket.outcomePrices);
+
+      if (outcomes.length > 0 && prices.length > 0) {
+        return outcomes.map((outcome, i) => {
+          const price = parseFloat(prices[i] || '0');
+          const probability = Math.round(price * 100);
+          // Color based on probability
+          const color = probability >= 50 ? 'text-green-400' : 'text-red-400';
+          return { outcome, probability, color };
+        });
+      }
     }
 
     // Fallback: parse from summary string like "Yes: 62% | No: 38%"
