@@ -119,7 +119,7 @@ export default function Header({ onSearch }: HeaderProps) {
           {menuOpen && typeof document !== 'undefined' && createPortal(
             <div
               ref={menuRef}
-              className="fixed w-48 py-2 rounded-lg bg-gray-900 border border-white/20 shadow-2xl"
+              className="fixed w-48 py-2 rounded-lg bg-[#111118] border border-white/20 shadow-2xl"
               style={{
                 top: menuPosition.top,
                 right: menuPosition.right,
