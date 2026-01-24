@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Bell, LogOut, Settings, ChevronDown, User } from 'lucide-react';
+import { Search, Bell, LogOut, ChevronDown, User } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -48,7 +48,7 @@ export default function Header({ onSearch }: HeaderProps) {
   const userEmail = user?.email || 'User';
 
   return (
-    <header className="glass border-b border-white/10 px-3 md:px-6 py-3 md:py-4 flex items-center justify-between gap-3">
+    <header className="glass border-b border-white/10 px-3 md:px-6 py-3 md:py-4 flex items-center justify-between gap-3 sticky top-0 z-[100]">
       <form onSubmit={handleSearch} className="flex-1 max-w-xl min-w-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5 text-white/40" />
@@ -102,21 +102,12 @@ export default function Header({ onSearch }: HeaderProps) {
                   <button
                     onClick={() => {
                       setIsMenuOpen(false);
-                      router.push('/settings');
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 transition-colors"
-                  >
-                    <Settings className="w-4 h-4" />
-                    Settings
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsMenuOpen(false);
+                      // TODO: Link to Funnelists account management
                     }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 transition-colors"
                   >
                     <User className="w-4 h-4" />
-                    Account
+                    Manage Account
                   </button>
                 </div>
 
