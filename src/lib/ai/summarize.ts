@@ -1,8 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+import { getApiKey } from '@/lib/apiKeyManager';
 
 // Strip HTML tags and decode common entities for cleaner AI analysis
 function stripHtml(html: string): string {
@@ -56,6 +53,10 @@ export async function generateSummary(
   const contentText = stripHtml(content || title);
 
   try {
+    // Get API key dynamically based on user's tier
+    const apiKey = await getApiKey('anthropic');
+    const anthropic = new Anthropic({ apiKey });
+
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 500,
@@ -117,6 +118,10 @@ export async function generateDeepDive(
   const contentType = type === 'video' ? 'video transcript' : type;
 
   try {
+    // Get API key dynamically based on user's tier
+    const apiKey = await getApiKey('anthropic');
+    const anthropic = new Anthropic({ apiKey });
+
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1500,
@@ -182,6 +187,10 @@ export async function generateDigestInsight(
   contentSummaries: Array<{ title: string; summary: string; topic?: string }>
 ): Promise<string> {
   try {
+    // Get API key dynamically based on user's tier
+    const apiKey = await getApiKey('anthropic');
+    const anthropic = new Anthropic({ apiKey });
+
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 300,

@@ -1,28 +1,15 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-let genAI: GoogleGenerativeAI | null = null;
-
-function getGeminiClient() {
-  if (!GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY is not configured');
-  }
-
-  if (!genAI) {
-    genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  }
-
-  return genAI;
-}
+import { getApiKey } from '@/lib/apiKeyManager';
 
 export async function summarizeTranscript(
   transcript: string,
   videoTitle: string
 ): Promise<string> {
   try {
-    const client = getGeminiClient();
-    const model = client.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Get API key dynamically based on user's tier
+    const apiKey = await getApiKey('gemini');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `You are summarizing a YouTube video transcript for a content intelligence dashboard.
 
@@ -61,8 +48,10 @@ export async function summarizeContent(
   contentType: 'article' | 'video' | 'tweet' | 'post'
 ): Promise<string> {
   try {
-    const client = getGeminiClient();
-    const model = client.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Get API key dynamically based on user's tier
+    const apiKey = await getApiKey('gemini');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `You are summarizing ${contentType} content for a content intelligence dashboard.
 

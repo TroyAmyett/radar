@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, LogOut, User } from 'lucide-react';
+import { Search, LogOut, User, Settings } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -131,6 +131,17 @@ export default function Header({ onSearch }: HeaderProps) {
                   <p className="text-sm text-white/60 truncate">{user.email}</p>
                 </div>
               )}
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  router.push('/account');
+                }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                data-testid="config-button"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Config</span>
+              </button>
               <button
                 onClick={handleSignOut}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"

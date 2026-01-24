@@ -5,7 +5,15 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Client for browser (with RLS)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Uses shared storage key for session sharing across all Funnelists apps
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    storageKey: 'funnelists-auth', // Shared across all Funnelists apps
+  },
+});
 
 // Server-side client that bypasses RLS
 // Use this in API routes where you're already filtering by account_id
