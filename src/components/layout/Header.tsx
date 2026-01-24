@@ -2,6 +2,7 @@
 
 import { Search, LogOut, ChevronDown, User } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -12,9 +13,17 @@ interface HeaderProps {
 export default function Header({ onSearch }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  // Track when component is mounted for portal
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isEmbedded = process.env.NEXT_PUBLIC_RADAR_MODE === 'embedded';
 
@@ -26,7 +35,10 @@ export default function Header({ onSearch }: HeaderProps) {
   // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedOutsideMenu = menuRef.current && !menuRef.current.contains(target);
+      const clickedOutsideButton = buttonRef.current && !buttonRef.current.contains(target);
+      if (clickedOutsideMenu && clickedOutsideButton) {
         setIsMenuOpen(false);
       }
     }
@@ -66,7 +78,17 @@ export default function Header({ onSearch }: HeaderProps) {
         {!isEmbedded ? (
           <div className="relative" ref={menuRef}>
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              ref={buttonRef}
+              onClick={() => {
+                if (!isMenuOpen && buttonRef.current) {
+                  const rect = buttonRef.current.getBoundingClientRect();
+                  setMenuPosition({
+                    top: rect.bottom + 8,
+                    right: window.innerWidth - rect.right,
+                  });
+                }
+                setIsMenuOpen(!isMenuOpen);
+              }}
               className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-white/10 transition-colors"
             >
               <div className="w-8 lg:w-9 h-8 lg:h-9 rounded-full bg-accent/20 flex items-center justify-center">
@@ -77,8 +99,12 @@ export default function Header({ onSearch }: HeaderProps) {
               />
             </button>
 
-            {isMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-[#1a1a2e] rounded-xl border border-white/10 shadow-2xl overflow-hidden z-[9999]">
+            {isMenuOpen && mounted && createPortal(
+              <div
+                ref={menuRef}
+                className="fixed w-64 bg-[#1a1a2e] rounded-xl border border-white/10 shadow-2xl overflow-hidden z-[9999]"
+                style={{ top: menuPosition.top, right: menuPosition.right }}
+              >
                 {/* User Info */}
                 <div className="px-4 py-3 border-b border-white/10">
                   <div className="flex items-center gap-3">
@@ -120,7 +146,8 @@ export default function Header({ onSearch }: HeaderProps) {
                     Sign Out
                   </button>
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         ) : (
