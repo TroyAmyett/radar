@@ -1,23 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import {
-  Settings,
   Key,
   Link2,
   Users,
   CreditCard,
-  ChevronRight,
   Plus,
   Trash2,
   Eye,
   EyeOff,
   CheckCircle,
-  AlertCircle,
-  ExternalLink,
   Loader2
 } from 'lucide-react';
 import { getCurrentSubscription, type Subscription } from '@/lib/subscription';
@@ -58,7 +53,6 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
 ];
 
 export default function AccountConfigurationPage() {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabId>('api-keys');
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -170,7 +164,6 @@ function ApiKeysTab({ subscription }: { subscription: Subscription | null }) {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
 
   const providers = [
     { id: 'anthropic', name: 'Anthropic (Claude)', description: 'Used for AI summaries and analysis' },
@@ -628,11 +621,11 @@ function TeamTab() {
         console.warn('Team members query:', error.message);
       } else if (data) {
         // For now just show user IDs - full user info requires admin access
-        setMembers(data.map((m: any) => ({
+        setMembers(data.map((m: { id: string; user_id: string; role: string; status: string }) => ({
           id: m.id,
           email: m.user_id === user.id ? (user.email || 'You') : `User ${m.user_id.slice(0, 8)}...`,
-          role: m.role,
-          status: m.status
+          role: m.role as TeamMember['role'],
+          status: m.status as TeamMember['status']
         })));
       }
     } catch (error) {

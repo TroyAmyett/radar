@@ -33,7 +33,7 @@ export async function createServerClient() {
           refresh_token: session.refresh_token || '',
         });
       }
-    } catch (e) {
+    } catch {
       // Invalid session cookie, continue without auth
     }
   }
