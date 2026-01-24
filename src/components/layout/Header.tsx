@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, LogOut } from 'lucide-react';
+import { Search, LogOut, User } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -47,9 +47,6 @@ export default function Header({ onSearch }: HeaderProps) {
     };
   }, [menuOpen]);
 
-  // Get user initial
-  const userInitial = user?.email?.charAt(0).toUpperCase() || 'U';
-
   return (
     <header className="glass border-b border-white/10 px-3 md:px-6 py-3 md:py-4 flex items-center justify-between gap-3">
       <form onSubmit={handleSearch} className="flex-1 max-w-xl min-w-0">
@@ -70,11 +67,11 @@ export default function Header({ onSearch }: HeaderProps) {
           onClick={() => setMenuOpen(!menuOpen)}
           className="w-8 md:w-9 h-8 md:h-9 rounded-full bg-accent/20 flex items-center justify-center hover:bg-accent/30 transition-colors"
         >
-          <span className="text-accent font-semibold text-xs md:text-sm">{userInitial}</span>
+          <User className="w-4 md:w-5 h-4 md:h-5 text-accent" />
         </button>
 
         {menuOpen && (
-          <div className="absolute right-0 top-full mt-2 w-48 py-2 rounded-lg glass border border-white/10 shadow-xl z-[100]">
+          <div className="absolute right-0 top-full mt-2 w-48 py-2 rounded-lg bg-gray-900/95 border border-white/20 shadow-2xl z-[9999]">
             {user?.email && (
               <div className="px-4 py-2 border-b border-white/10">
                 <p className="text-xs text-white/60 truncate">{user.email}</p>
