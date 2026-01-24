@@ -6,6 +6,9 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
+// Check if running in embedded mode (inside AgentPM)
+const isEmbedded = process.env.NEXT_PUBLIC_RADAR_MODE === 'embedded';
+
 interface HeaderProps {
   onSearch?: (query: string) => void;
 }
@@ -106,7 +109,8 @@ export default function Header({ onSearch }: HeaderProps) {
         </div>
       </form>
 
-      {user && (
+      {/* Hide user menu when embedded in AgentPM - parent app handles user context */}
+      {user && !isEmbedded && (
         <div className="flex-shrink-0">
           <button
             ref={buttonRef}

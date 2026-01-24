@@ -164,11 +164,13 @@ export async function POST(request: NextRequest) {
         const metadata = source.metadata as {
           polymarketExcludeSports?: boolean;
           polymarketKeywords?: string[];
+          polymarketExcludeKeywords?: string[];
           polymarketCategories?: string[];
         } | null;
 
         const excludeSports = metadata?.polymarketExcludeSports !== false;
         const keywords = metadata?.polymarketKeywords || [];
+        const excludeKeywords = metadata?.polymarketExcludeKeywords || [];
         const categories = metadata?.polymarketCategories || [];
 
         // Filter events based on preferences
@@ -177,6 +179,14 @@ export async function POST(request: NextRequest) {
         // Filter out sports if configured
         if (excludeSports) {
           filteredEvents = filteredEvents.filter(event => !isSportsEvent(event));
+        }
+
+        // Filter out events matching exclude keywords (e.g., "Elon", "Trump")
+        if (excludeKeywords.length > 0) {
+          filteredEvents = filteredEvents.filter(event => {
+            const eventText = `${event.title} ${event.description || ''}`.toLowerCase();
+            return !excludeKeywords.some(keyword => eventText.includes(keyword.toLowerCase()));
+          });
         }
 
         // Filter by keywords OR categories (if any specified)
@@ -217,6 +227,7 @@ export async function POST(request: NextRequest) {
           afterSportsFilter,
           afterAllFilters: filteredEvents.length,
           excludeSports,
+          excludeKeywordsCount: excludeKeywords.length,
           keywordsCount: keywords.length,
           categoriesCount: categories.length,
           sourceMetadata: metadata,
