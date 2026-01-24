@@ -31,7 +31,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <div className="bg-gradient-orbs" />
         <AppLayout>
           {children}
         </AppLayout>
