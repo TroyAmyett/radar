@@ -92,7 +92,7 @@ export default function Header({ onSearch }: HeaderProps) {
   }, [menuOpen]);
 
   return (
-    <header className="glass border-b border-white/10 px-3 md:px-6 py-3 md:py-4 flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-40 glass border-b border-white/10 px-3 md:px-6 py-3 md:py-4 flex items-center justify-between gap-3">
       <form onSubmit={handleSearch} className="flex-1 max-w-xl min-w-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5 text-white/40" />
