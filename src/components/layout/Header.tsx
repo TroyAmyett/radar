@@ -14,7 +14,7 @@ export default function Header({ onSearch }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
-  const menuRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { user, signOut } = useAuth();
   const router = useRouter();
@@ -34,17 +34,21 @@ export default function Header({ onSearch }: HeaderProps) {
 
   // Close menu when clicking outside
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
       const target = event.target as Node;
-      const clickedOutsideMenu = menuRef.current && !menuRef.current.contains(target);
-      const clickedOutsideButton = buttonRef.current && !buttonRef.current.contains(target);
-      if (clickedOutsideMenu && clickedOutsideButton) {
+      const clickedOutsideDropdown = !dropdownRef.current || !dropdownRef.current.contains(target);
+      const clickedOutsideButton = !buttonRef.current || !buttonRef.current.contains(target);
+      if (clickedOutsideDropdown && clickedOutsideButton) {
         setIsMenuOpen(false);
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -76,7 +80,7 @@ export default function Header({ onSearch }: HeaderProps) {
       <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
         {/* User Menu - only show in standalone mode */}
         {!isEmbedded ? (
-          <div className="relative" ref={menuRef}>
+          <div className="relative">
             <button
               ref={buttonRef}
               onClick={() => {
@@ -101,7 +105,7 @@ export default function Header({ onSearch }: HeaderProps) {
 
             {isMenuOpen && mounted && createPortal(
               <div
-                ref={menuRef}
+                ref={dropdownRef}
                 className="fixed w-64 bg-[#1a1a2e] rounded-xl border border-white/10 shadow-2xl overflow-hidden z-[9999]"
                 style={{ top: menuPosition.top, right: menuPosition.right }}
               >
@@ -118,26 +122,17 @@ export default function Header({ onSearch }: HeaderProps) {
                   </div>
                 </div>
 
-                {/* Menu Items */}
+                {/* Logout */}
                 <div className="py-1">
                   <button
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      // TODO: Link to Funnelists account management
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLogout();
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 transition-colors"
-                  >
-                    <div className="w-10 flex items-center justify-center">
-                      <User className="w-4 h-4" />
-                    </div>
-                    Manage Account
-                  </button>
-                </div>
-
-                {/* Logout */}
-                <div className="border-t border-white/10 py-1">
-                  <button
-                    onClick={handleLogout}
+                    onTouchEnd={(e) => {
+                      e.stopPropagation();
+                      handleLogout();
+                    }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                   >
                     <div className="w-10 flex items-center justify-center">
