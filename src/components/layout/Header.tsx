@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Bell, LogOut, ChevronDown, User } from 'lucide-react';
+import { Search, LogOut, ChevronDown, User } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -63,10 +63,6 @@ export default function Header({ onSearch }: HeaderProps) {
       </form>
 
       <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-        <button className="glass-button p-2 md:p-2.5 rounded-full">
-          <Bell className="w-4 md:w-5 h-4 md:h-5 text-white/70" />
-        </button>
-
         {/* User Menu - only show in standalone mode */}
         {!isEmbedded ? (
           <div className="relative" ref={menuRef}>
