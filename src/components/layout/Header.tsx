@@ -78,7 +78,7 @@ export default function Header({ onSearch }: HeaderProps) {
             </button>
 
             {isMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-[#1a1a2e] rounded-xl border border-white/10 shadow-2xl overflow-hidden z-[9999]">
+              <div className="fixed md:absolute right-2 md:right-0 top-14 md:top-full md:mt-2 w-[calc(100vw-16px)] md:w-64 max-w-64 bg-[#1a1a2e] rounded-xl border border-white/10 shadow-2xl overflow-hidden z-[9999]">
                 {/* User Info */}
                 <div className="px-4 py-3 border-b border-white/10">
                   <div className="flex items-center gap-3">
@@ -101,7 +101,9 @@ export default function Header({ onSearch }: HeaderProps) {
                     }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-white/80 hover:bg-white/10 transition-colors"
                   >
-                    <User className="w-4 h-4" />
+                    <div className="w-10 flex items-center justify-center">
+                      <User className="w-4 h-4" />
+                    </div>
                     Manage Account
                   </button>
                 </div>
@@ -112,7 +114,9 @@ export default function Header({ onSearch }: HeaderProps) {
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <div className="w-10 flex items-center justify-center">
+                      <LogOut className="w-4 h-4" />
+                    </div>
                     Sign Out
                   </button>
                 </div>
