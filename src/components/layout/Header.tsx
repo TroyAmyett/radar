@@ -106,41 +106,43 @@ export default function Header({ onSearch }: HeaderProps) {
         </div>
       </form>
 
-      <div className="flex-shrink-0">
-        <button
-          ref={buttonRef}
-          onClick={toggleMenu}
-          className="w-8 md:w-9 h-8 md:h-9 rounded-full bg-accent/20 flex items-center justify-center hover:bg-accent/30 transition-colors"
-        >
-          <User className="w-4 md:w-5 h-4 md:h-5 text-accent" />
-        </button>
-
-        {menuOpen && typeof document !== 'undefined' && createPortal(
-          <div
-            ref={menuRef}
-            className="fixed w-48 py-2 rounded-lg bg-gray-900 border border-white/20 shadow-2xl"
-            style={{
-              top: menuPosition.top,
-              right: menuPosition.right,
-              zIndex: 99999,
-            }}
+      {user && (
+        <div className="flex-shrink-0">
+          <button
+            ref={buttonRef}
+            onClick={toggleMenu}
+            className="w-8 md:w-9 h-8 md:h-9 rounded-full bg-accent/20 flex items-center justify-center hover:bg-accent/30 transition-colors"
           >
-            {user?.email && (
-              <div className="px-4 py-2 border-b border-white/10">
-                <p className="text-xs text-white/60 truncate">{user.email}</p>
-              </div>
-            )}
-            <button
-              onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            <User className="w-4 md:w-5 h-4 md:h-5 text-accent" />
+          </button>
+
+          {menuOpen && typeof document !== 'undefined' && createPortal(
+            <div
+              ref={menuRef}
+              className="fixed w-48 py-2 rounded-lg bg-gray-900 border border-white/20 shadow-2xl"
+              style={{
+                top: menuPosition.top,
+                right: menuPosition.right,
+                zIndex: 99999,
+              }}
             >
-              <LogOut className="w-4 h-4" />
-              <span>Sign Out</span>
-            </button>
-          </div>,
-          document.body
-        )}
-      </div>
+              {user.email && (
+                <div className="px-4 py-2 border-b border-white/10">
+                  <p className="text-xs text-white/60 truncate">{user.email}</p>
+                </div>
+              )}
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>,
+            document.body
+          )}
+        </div>
+      )}
     </header>
   );
 }
