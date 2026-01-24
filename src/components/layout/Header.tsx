@@ -83,7 +83,7 @@ export default function Header({ onSearch }: HeaderProps) {
             </button>
 
             {isMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 glass rounded-xl border border-white/10 shadow-xl overflow-hidden z-50">
+              <div className="fixed right-4 top-16 w-64 glass rounded-xl border border-white/10 shadow-xl overflow-hidden z-[9999]">
                 {/* User Info */}
                 <div className="px-4 py-3 border-b border-white/10">
                   <div className="flex items-center gap-3">
