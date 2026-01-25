@@ -27,6 +27,8 @@ interface PredictionMetadata {
   liquidity?: string;
   endDate?: string;
   lastUpdated?: string;
+  currentYesPrice?: number;
+  previousYesPrice?: number;
 }
 
 // Format large numbers nicely
@@ -79,6 +81,23 @@ export default function PredictionCard({
   const totalVolume = formatNumber(metadata?.volume);
   const volume24hr = formatNumber(metadata?.volume24hr);
   const liquidity = formatNumber(metadata?.liquidity);
+
+  // Calculate price delta (change since last update)
+  const priceDelta = useMemo(() => {
+    if (metadata?.currentYesPrice !== undefined && metadata?.previousYesPrice !== undefined) {
+      const current = metadata.currentYesPrice;
+      const previous = metadata.previousYesPrice;
+      const delta = Math.round((current - previous) * 100);
+      if (delta !== 0) {
+        return {
+          value: delta,
+          label: delta > 0 ? `+${delta}%` : `${delta}%`,
+          isPositive: delta > 0,
+        };
+      }
+    }
+    return null;
+  }, [metadata?.currentYesPrice, metadata?.previousYesPrice]);
 
   // Parse and sort odds - sorted by probability (highest first)
   const odds = useMemo(() => {
@@ -208,14 +227,28 @@ export default function PredictionCard({
           </div>
         )}
 
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block group-hover:text-accent transition-colors"
-        >
-          <h3 className="font-semibold text-lg mb-3 line-clamp-2">{item.title}</h3>
-        </a>
+        <div className="flex items-start gap-2 mb-3">
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 group-hover:text-accent transition-colors"
+          >
+            <h3 className="font-semibold text-lg line-clamp-2">{item.title}</h3>
+          </a>
+          {priceDelta && (
+            <span
+              className={`flex-shrink-0 px-1.5 py-0.5 rounded text-xs font-bold ${
+                priceDelta.isPositive
+                  ? 'bg-green-500/20 text-green-400'
+                  : 'bg-red-500/20 text-red-400'
+              }`}
+              title="Price change since last update"
+            >
+              {priceDelta.label}
+            </span>
+          )}
+        </div>
 
         {/* Odds display - different layouts based on market type */}
 

@@ -261,7 +261,25 @@ export async function POST(request: NextRequest) {
           }
 
           if (existing) {
-            // Update odds if they changed
+            // Fetch current item to get previous price for delta calculation
+            const { data: currentItem } = await supabaseAdmin
+              .from('content_items')
+              .select('metadata')
+              .eq('id', existing.id)
+              .single();
+
+            // Get previous Yes price from stored metadata
+            const currentMetadata = currentItem?.metadata as Record<string, unknown> | null;
+            const previousYesPrice = currentMetadata?.currentYesPrice as number | undefined;
+
+            // Calculate current Yes price from new data
+            const newMarket = event.markets?.[0];
+            const newPrices = safeArray(newMarket?.outcomePrices);
+            const newOutcomes = safeArray(newMarket?.outcomes);
+            const yesIdx = newOutcomes.findIndex(o => o.toLowerCase() === 'yes');
+            const currentYesPrice = yesIdx >= 0 ? parseFloat(newPrices[yesIdx] || '0') : null;
+
+            // Update odds with price delta tracking
             const oddsString = formatOdds(event);
             await supabaseAdmin
               .from('content_items')
@@ -272,7 +290,11 @@ export async function POST(request: NextRequest) {
                   volume24hr: event.volume24hr,
                   liquidity: event.liquidity,
                   markets: event.markets,
+                  endDate: event.endDate,
                   lastUpdated: new Date().toISOString(),
+                  // Price tracking for delta display
+                  currentYesPrice,
+                  previousYesPrice: previousYesPrice ?? currentYesPrice, // Use current if no previous
                 },
               })
               .eq('id', existing.id);
@@ -342,11 +364,57 @@ export async function POST(request: NextRequest) {
 
     console.log(`[fetch-polymarket] Complete: fetched=${totalFetched}, inserted=${totalInserted}, updated=${totalUpdated}`);
 
+    // Cleanup: Delete resolved/expired predictions and old dismissed items
+    let cleanedUp = 0;
+    try {
+      const now = new Date().toISOString();
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      // Delete resolved predictions (endDate passed)
+      const { count: resolvedCount } = await supabaseAdmin
+        .from('content_items')
+        .delete({ count: 'exact' })
+        .eq('type', 'prediction')
+        .not('metadata->endDate', 'is', null)
+        .lt('metadata->endDate', now);
+
+      cleanedUp += resolvedCount || 0;
+
+      // Delete old dismissed predictions (dismissed > 7 days ago)
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { count: dismissedCount } = await supabaseAdmin
+        .from('content_items')
+        .delete({ count: 'exact' })
+        .eq('type', 'prediction')
+        .eq('is_dismissed', true)
+        .lt('updated_at', sevenDaysAgo);
+
+      cleanedUp += dismissedCount || 0;
+
+      // Delete stale predictions (>30 days old, no interactions)
+      // Only delete if no likes/saves
+      const { count: staleCount } = await supabaseAdmin
+        .from('content_items')
+        .delete({ count: 'exact' })
+        .eq('type', 'prediction')
+        .lt('published_at', thirtyDaysAgo)
+        .is('metadata->lastUpdated', null); // Never updated = stale
+
+      cleanedUp += staleCount || 0;
+
+      if (cleanedUp > 0) {
+        console.log(`[fetch-polymarket] Cleaned up ${cleanedUp} old/resolved predictions`);
+      }
+    } catch (cleanupError) {
+      console.error('[fetch-polymarket] Cleanup error:', cleanupError);
+    }
+
     return NextResponse.json({
       success: true,
       fetched: totalFetched,
       inserted: totalInserted,
       updated: totalUpdated,
+      cleanedUp,
       filteredOut: totalFilteredOut,
       sourcesProcessed: sources.length,
       errors: insertErrors.length > 0 ? insertErrors : undefined,
