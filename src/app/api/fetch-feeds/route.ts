@@ -39,11 +39,18 @@ const parser: Parser<unknown, CustomItem> = new Parser({
   },
 });
 
+// Content older than 30 days is not considered current news
+const CONTENT_MAX_AGE_DAYS = 30;
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
   // Use account_id from body (cron job) or fall back to default
   const accountId = body.account_id || getAccountId();
   const sourceId = body.source_id;
+
+  // Calculate cutoff date for filtering old content
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - CONTENT_MAX_AGE_DAYS);
 
   // Get the source
   let query = supabaseAdmin
@@ -75,6 +82,14 @@ export async function POST(request: NextRequest) {
       const items = feed.items.slice(0, 20); // Limit to 20 most recent items
 
       for (const item of items) {
+        // Skip items older than 30 days - not considered current news
+        if (item.pubDate) {
+          const publishedDate = new Date(item.pubDate);
+          if (publishedDate < cutoffDate) {
+            continue;
+          }
+        }
+
         // Check if item already exists
         const externalId = item.guid || item.link;
         const { data: existing } = await supabaseAdmin

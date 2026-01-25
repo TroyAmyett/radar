@@ -3,6 +3,9 @@ import { supabaseAdmin, getAccountId } from '@/lib/supabase';
 
 const GAMMA_API = 'https://gamma-api.polymarket.com';
 
+// Content older than 30 days is not considered current news
+const CONTENT_MAX_AGE_DAYS = 30;
+
 // Sports-related tag patterns to filter out
 const SPORTS_PATTERNS = [
   // Major leagues
@@ -132,6 +135,10 @@ export async function POST(request: NextRequest) {
 
     console.log(`[fetch-polymarket] Found ${sources.length} Polymarket source(s) for account ${accountId}`);
 
+    // Calculate cutoff date for filtering old content
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - CONTENT_MAX_AGE_DAYS);
+
     let totalFetched = 0;
     let totalInserted = 0;
     let totalUpdated = 0;
@@ -241,6 +248,15 @@ export async function POST(request: NextRequest) {
 
         for (const event of filteredEvents) {
           loopIterations++;
+
+          // Skip events with startDate older than 30 days - not considered current
+          if (event.startDate) {
+            const eventDate = new Date(event.startDate);
+            if (eventDate < cutoffDate) {
+              continue;
+            }
+          }
+
           // Check if we already have this event - use maybeSingle() for cleaner 0-or-1 handling
           const { data: existing, error: checkError } = await supabaseAdmin
             .from('content_items')

@@ -5,6 +5,15 @@ import { render } from '@react-email/components';
 import MorningDigest from '@/components/email/MorningDigest';
 import WeeklyDigest from '@/components/email/WeeklyDigest';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, subDays } from 'date-fns';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getApiKey } from '@/lib/apiKeyManager';
+
+interface DiscoveredSource {
+  name: string;
+  url: string;
+  type: 'rss' | 'youtube';
+  reason: string;
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -22,6 +31,35 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Failed to generate digest:', error);
     return NextResponse.json({ error: 'Failed to generate digest' }, { status: 500 });
+  }
+}
+
+// Get source recommendations for a topic
+async function getSourceRecommendations(topicName: string): Promise<DiscoveredSource[]> {
+  try {
+    const apiKey = await getApiKey('gemini');
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const prompt = `Find 2-3 high-quality content sources (blogs or YouTube channels) for "${topicName}".
+
+For each source provide:
+1. Name
+2. URL (for YouTube use channel URL like https://www.youtube.com/@channelname)
+3. Type: "rss" for blogs or "youtube" for channels
+4. Brief reason (1 sentence) why it's valuable
+
+Respond in JSON format only:
+{"sources": [{"name": "...", "url": "...", "type": "rss" or "youtube", "reason": "..."}]}`;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text().trim();
+    const jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const parsed = JSON.parse(jsonText);
+    return parsed.sources || [];
+  } catch (error) {
+    console.error('Failed to get source recommendations:', error);
+    return [];
   }
 }
 
@@ -66,12 +104,50 @@ async function generateMorningDigest(accountId: string) {
     topicColor: item.topic?.color,
   }));
 
+  // Get source recommendations based on user's topics
+  let recommendedSources: { name: string; url: string; type: 'rss' | 'youtube'; reason: string; addUrl: string }[] = [];
+  try {
+    // Get user's topics
+    const { data: topics } = await supabase
+      .from('topics')
+      .select('name')
+      .eq('account_id', accountId)
+      .limit(5);
+
+    if (topics && topics.length > 0) {
+      // Pick a random topic for variety
+      const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+      const sources = await getSourceRecommendations(randomTopic.name);
+
+      // Format with one-click add URLs
+      recommendedSources = sources.slice(0, 3).map((source) => {
+        const addData = btoa(JSON.stringify({
+          name: source.name,
+          url: source.url,
+          type: source.type,
+          reason: source.reason,
+        }));
+        return {
+          name: source.name,
+          url: source.url,
+          type: source.type,
+          reason: source.reason,
+          addUrl: `${baseUrl}/sources?add=${addData}`,
+        };
+      });
+    }
+  } catch (error) {
+    console.error('Failed to get source recommendations for digest:', error);
+    // Continue without recommendations
+  }
+
   // Render email HTML
   const html = await render(
     MorningDigest({
       date: format(today, 'MMMM d, yyyy'),
       topContent,
       aiInsight,
+      recommendedSources,
     })
   );
 

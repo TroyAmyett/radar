@@ -88,11 +88,18 @@ function parseYouTubeRSS(xml: string): RSSVideo[] {
   return videos;
 }
 
+// Content older than 30 days is not considered current news
+const CONTENT_MAX_AGE_DAYS = 30;
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
   // Use account_id from body (cron job) or fall back to default
   const accountId = body.account_id || getAccountId();
   const sourceId = body.source_id;
+
+  // Calculate cutoff date for filtering old content
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - CONTENT_MAX_AGE_DAYS);
 
   // Get YouTube sources
   let query = supabaseAdmin
@@ -160,6 +167,14 @@ export async function POST(request: NextRequest) {
 
       // RSS typically returns 15 most recent videos
       for (const video of videos.slice(0, 10)) {
+        // Skip videos older than 30 days - not considered current news
+        if (video.publishedAt) {
+          const publishedDate = new Date(video.publishedAt);
+          if (publishedDate < cutoffDate) {
+            continue;
+          }
+        }
+
         const externalId = video.videoId;
 
         // Check if already exists

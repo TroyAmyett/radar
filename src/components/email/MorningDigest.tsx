@@ -24,11 +24,20 @@ interface ContentItem {
   topicColor?: string;
 }
 
+interface RecommendedSource {
+  name: string;
+  url: string;
+  type: 'rss' | 'youtube';
+  reason: string;
+  addUrl: string; // One-click add URL
+}
+
 interface MorningDigestProps {
   date: string;
   topContent: ContentItem[];
   aiInsight: string;
   settingsUrl?: string;
+  recommendedSources?: RecommendedSource[];
 }
 
 const DEFAULT_SETTINGS_URL = 'https://radar.funnelists.com/settings';
@@ -38,6 +47,7 @@ export default function MorningDigest({
   topContent,
   aiInsight,
   settingsUrl = DEFAULT_SETTINGS_URL,
+  recommendedSources = [],
 }: MorningDigestProps) {
   return (
     <Html>
@@ -100,6 +110,35 @@ export default function MorningDigest({
               </div>
             ))}
           </Section>
+
+          {/* Recommended Sources */}
+          {recommendedSources.length > 0 && (
+            <>
+              <Hr style={styles.hr} />
+              <Section style={styles.section}>
+                <Heading as="h2" style={styles.sectionTitle}>
+                  Recommended Sources
+                </Heading>
+                <Text style={styles.recommendedIntro}>
+                  Based on your topics, you might find these sources valuable:
+                </Text>
+                {recommendedSources.map((source) => (
+                  <div key={source.url} style={styles.sourceItem}>
+                    <div style={styles.sourceIcon}>
+                      {source.type === 'youtube' ? '📺' : '📰'}
+                    </div>
+                    <div style={styles.sourceDetails}>
+                      <Text style={styles.sourceName}>{source.name}</Text>
+                      <Text style={styles.sourceReason}>{source.reason}</Text>
+                      <Link href={source.addUrl} style={styles.sourceAddLink}>
+                        + Add to Radar
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </Section>
+            </>
+          )}
 
           {/* Footer */}
           <Section style={styles.footer}>
@@ -238,6 +277,45 @@ const styles = {
   footerLink: {
     color: '#0ea5e9',
     fontSize: '12px',
+    textDecoration: 'none',
+  },
+  recommendedIntro: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: '14px',
+    marginBottom: '16px',
+  },
+  sourceItem: {
+    display: 'flex',
+    marginBottom: '16px',
+    padding: '16px',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: '8px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+  },
+  sourceIcon: {
+    fontSize: '24px',
+    marginRight: '12px',
+    minWidth: '32px',
+  },
+  sourceDetails: {
+    flex: 1,
+  },
+  sourceName: {
+    color: '#ffffff',
+    fontSize: '15px',
+    fontWeight: '600',
+    margin: '0 0 4px 0',
+  },
+  sourceReason: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: '13px',
+    lineHeight: '1.4',
+    margin: '0 0 8px 0',
+  },
+  sourceAddLink: {
+    color: '#0ea5e9',
+    fontSize: '13px',
+    fontWeight: '500',
     textDecoration: 'none',
   },
 };

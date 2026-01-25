@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, getAccountId } from '@/lib/supabase';
+import { MAX_SOURCES_PER_USER, WARN_SOURCES_THRESHOLD } from '@/lib/constants';
 
 export async function GET() {
   const accountId = getAccountId();
@@ -17,7 +18,16 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data);
+  // Return sources with count info for UI display
+  const count = data?.length || 0;
+  return NextResponse.json({
+    sources: data,
+    count,
+    max: MAX_SOURCES_PER_USER,
+    warn: WARN_SOURCES_THRESHOLD,
+    atLimit: count >= MAX_SOURCES_PER_USER,
+    nearLimit: count >= WARN_SOURCES_THRESHOLD,
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -29,6 +39,19 @@ export async function POST(request: NextRequest) {
     console.error('Missing required fields:', { name: body.name, type: body.type, url: body.url });
     return NextResponse.json(
       { error: 'Name, type, and URL are required' },
+      { status: 400 }
+    );
+  }
+
+  // Check source limit before inserting
+  const { count: currentCount } = await supabaseAdmin
+    .from('sources')
+    .select('*', { count: 'exact', head: true })
+    .eq('account_id', accountId);
+
+  if (currentCount !== null && currentCount >= MAX_SOURCES_PER_USER) {
+    return NextResponse.json(
+      { error: `You've reached the maximum of ${MAX_SOURCES_PER_USER} sources. Please remove some sources before adding new ones.` },
       { status: 400 }
     );
   }

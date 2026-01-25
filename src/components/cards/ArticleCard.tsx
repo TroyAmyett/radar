@@ -138,7 +138,7 @@ export default function ArticleCard({
         </a>
 
         {item.summary && (
-          <p className="text-white/60 text-sm mb-3 line-clamp-2">{item.summary}</p>
+          <p className="text-white/60 text-sm mb-3 line-clamp-4">{item.summary}</p>
         )}
 
         <div className="flex items-center justify-between text-white/40 text-xs mb-3">

@@ -130,6 +130,10 @@ export default function VideoCard({
           <h3 className="font-semibold mb-2 line-clamp-2">{item.title}</h3>
         </a>
 
+        {item.summary && (
+          <p className="text-white/60 text-sm mb-3 line-clamp-4">{item.summary}</p>
+        )}
+
         <div className="flex items-center justify-between text-white/40 text-xs mb-3">
           {item.author && <span>{item.author}</span>}
           {item.published_at && (
