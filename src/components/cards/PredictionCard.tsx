@@ -14,6 +14,8 @@ interface PredictionCardProps {
 }
 
 interface MarketData {
+  question?: string;
+  groupItemTitle?: string;
   outcomes?: string[];
   outcomePrices?: string[];
 }
@@ -111,10 +113,47 @@ export default function PredictionCard({
     return results.sort((a, b) => b.probability - a.probability);
   }, [firstMarket, item.summary]);
 
+  // Parse multi-question markets (multiple Yes/No sub-questions under one event)
+  const multiQuestionData = useMemo(() => {
+    if (markets.length <= 1) return null;
+
+    // Check if this is a multi-question format (multiple markets, each with Yes/No)
+    const questions = markets.map(market => {
+      const outcomes = parseJsonOrArray(market.outcomes);
+      const prices = parseJsonOrArray(market.outcomePrices);
+
+      // Must have Yes/No outcomes
+      const yesIdx = outcomes.findIndex(o => o.toLowerCase() === 'yes');
+      const noIdx = outcomes.findIndex(o => o.toLowerCase() === 'no');
+
+      if (yesIdx === -1 || noIdx === -1) return null;
+
+      const yesPrice = parseFloat(prices[yesIdx] || '0');
+      const noPrice = parseFloat(prices[noIdx] || '0');
+      const predictedYes = yesPrice >= noPrice;
+      const confidence = Math.round(Math.max(yesPrice, noPrice) * 100);
+
+      // Get the question/title for this market
+      const title = market.groupItemTitle || market.question || '';
+
+      return {
+        title,
+        predictedYes,
+        confidence,
+      };
+    }).filter(Boolean) as { title: string; predictedYes: boolean; confidence: number }[];
+
+    // Only return if we have multiple valid questions
+    return questions.length > 1 ? questions : null;
+  }, [markets]);
+
   // Determine if this is a simple Yes/No market or a multi-candidate market
-  const isSimpleYesNo = odds.length === 2 &&
+  const isSimpleYesNo = !multiQuestionData && odds.length === 2 &&
     odds.some(o => o.outcome.toLowerCase() === 'yes') &&
     odds.some(o => o.outcome.toLowerCase() === 'no');
+
+  const isMultiQuestion = multiQuestionData !== null;
+  const isMultiCandidate = !isMultiQuestion && !isSimpleYesNo && odds.length > 0;
 
   return (
     <article className="glass-card overflow-hidden group relative">
@@ -178,8 +217,10 @@ export default function PredictionCard({
           <h3 className="font-semibold text-lg mb-3 line-clamp-2">{item.title}</h3>
         </a>
 
-        {/* Odds display - different layouts for Yes/No vs multi-candidate */}
-        {odds.length > 0 && isSimpleYesNo && (
+        {/* Odds display - different layouts based on market type */}
+
+        {/* Simple Yes/No market */}
+        {isSimpleYesNo && (
           <div className="flex gap-2 mb-3">
             {odds.slice(0, 2).map((odd, i) => (
               <div
@@ -195,8 +236,38 @@ export default function PredictionCard({
           </div>
         )}
 
+        {/* Multi-question market (multiple Yes/No sub-questions) */}
+        {isMultiQuestion && multiQuestionData && (
+          <div className="mb-3 space-y-1">
+            {multiQuestionData.slice(0, 5).map((q, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 p-1.5 rounded-lg bg-white/5"
+              >
+                {/* Question title */}
+                <span className="flex-1 text-sm text-white/80 truncate">
+                  {q.title}
+                </span>
+                {/* Yes/No indicator */}
+                <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                  q.predictedYes
+                    ? 'bg-green-500/20 text-green-400'
+                    : 'bg-red-500/20 text-red-400'
+                }`}>
+                  {q.predictedYes ? 'Yes' : 'No'}
+                </span>
+              </div>
+            ))}
+            {multiQuestionData.length > 5 && (
+              <div className="text-xs text-white/40 text-center pt-1">
+                +{multiQuestionData.length - 5} more questions
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Multi-candidate market - show ranked list */}
-        {odds.length > 0 && !isSimpleYesNo && (
+        {isMultiCandidate && (
           <div className="mb-3 space-y-1.5">
             {odds.slice(0, 4).map((odd, i) => (
               <div
