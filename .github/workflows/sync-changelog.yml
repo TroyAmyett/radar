@@ -39,7 +39,7 @@ jobs:
 
           const supabaseUrl = process.env.SUPABASE_URL;
           const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-const product = process.env.CHANGELOG_PRODUCT || 'radar';
+          const product = process.env.CHANGELOG_PRODUCT || 'radar';
 
           if (!supabaseUrl || !supabaseKey) {
             console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
