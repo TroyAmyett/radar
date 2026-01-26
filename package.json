@@ -3,14 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
-    "@google/generative-ai": "^0.24.1",
     "@react-email/components": "^1.0.4",
     "@supabase/supabase-js": "^2.90.1",
     "date-fns": "^4.1.0",

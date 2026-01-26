@@ -197,7 +197,7 @@ export default function PredictionCard({
           <img
             src={item.thumbnail_url}
             alt={item.title}
-            className="w-full h-40 object-cover"
+            className="w-full aspect-video object-cover"
           />
           {/* Polymarket badge overlay */}
           <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded-full bg-purple-500/90 backdrop-blur-sm">

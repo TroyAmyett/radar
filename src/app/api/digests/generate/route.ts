@@ -5,8 +5,7 @@ import { render } from '@react-email/components';
 import MorningDigest from '@/components/email/MorningDigest';
 import WeeklyDigest from '@/components/email/WeeklyDigest';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, subDays } from 'date-fns';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getApiKey } from '@/lib/apiKeyManager';
+import Anthropic from '@anthropic-ai/sdk';
 
 interface DiscoveredSource {
   name: string;
@@ -34,12 +33,16 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Get source recommendations for a topic
+// Get source recommendations for a topic using Anthropic
 async function getSourceRecommendations(topicName: string): Promise<DiscoveredSource[]> {
   try {
-    const apiKey = await getApiKey('gemini');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      console.error('ANTHROPIC_API_KEY not configured');
+      return [];
+    }
+
+    const anthropic = new Anthropic({ apiKey });
 
     const prompt = `Find 2-3 high-quality content sources (blogs or YouTube channels) for "${topicName}".
 
@@ -52,8 +55,13 @@ For each source provide:
 Respond in JSON format only:
 {"sources": [{"name": "...", "url": "...", "type": "rss" or "youtube", "reason": "..."}]}`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const text = message.content[0].type === 'text' ? message.content[0].text : '';
     const jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const parsed = JSON.parse(jsonText);
     return parsed.sources || [];

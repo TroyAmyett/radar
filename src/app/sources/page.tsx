@@ -358,25 +358,25 @@ function SourcesPageContent() {
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setIsDiscoverModalOpen(true)}
-                className="glass-button flex items-center gap-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/30"
-              >
-                <Sparkles className="w-5 h-5" />
-                <span>Discover</span>
-              </button>
-
-              <button
                 onClick={() => setIsAddModalOpen(true)}
                 disabled={limits.atLimit}
                 className={`glass-button flex items-center gap-2 ${
                   limits.atLimit
                     ? 'opacity-50 cursor-not-allowed bg-white/10'
-                    : 'bg-accent hover:bg-accent/80'
+                    : 'bg-white/10 hover:bg-white/20 border border-white/20'
                 }`}
                 title={limits.atLimit ? `Maximum ${limits.max} sources reached` : 'Add a new source'}
               >
                 <Plus className="w-5 h-5" />
                 <span>Add Source</span>
+              </button>
+
+              <button
+                onClick={() => setIsDiscoverModalOpen(true)}
+                className="glass-button flex items-center gap-2 bg-accent/20 hover:bg-accent/30 text-accent border border-accent/30"
+              >
+                <Sparkles className="w-5 h-5" />
+                <span>Discover</span>
               </button>
             </div>
           </div>

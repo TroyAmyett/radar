@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { getApiKey } from '@/lib/apiKeyManager';
+import Anthropic from '@anthropic-ai/sdk';
 
 interface DiscoveredSource {
   name: string;
@@ -27,10 +26,17 @@ export async function POST(request: NextRequest) {
 
     const searchTerm = query || topic;
 
-    // Get API key dynamically
-    const apiKey = await getApiKey('gemini');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Use Anthropic API key from environment
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      console.error('ANTHROPIC_API_KEY not configured');
+      return NextResponse.json(
+        { error: 'AI service not configured' },
+        { status: 500 }
+      );
+    }
+
+    const anthropic = new Anthropic({ apiKey });
 
     const prompt = `You are an expert at finding high-quality content sources for professionals who want to stay informed about specific topics.
 
@@ -70,9 +76,13 @@ Respond in this exact JSON format:
 
 Only output valid JSON, no other text.`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text().trim();
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1500,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const text = message.content[0].type === 'text' ? message.content[0].text : '';
 
     // Parse the JSON response
     let sources: DiscoveredSource[] = [];
@@ -82,7 +92,7 @@ Only output valid JSON, no other text.`;
       const parsed = JSON.parse(jsonText);
       sources = parsed.sources || [];
     } catch {
-      console.error('Failed to parse Gemini response:', text);
+      console.error('Failed to parse Anthropic response:', text);
       return NextResponse.json(
         { error: 'Failed to parse AI response' },
         { status: 500 }
@@ -102,8 +112,9 @@ Only output valid JSON, no other text.`;
     return NextResponse.json({ sources });
   } catch (error) {
     console.error('Discover sources error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to discover sources' },
+      { error: 'Failed to discover sources', details: errorMessage },
       { status: 500 }
     );
   }

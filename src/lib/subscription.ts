@@ -9,7 +9,7 @@ export interface Subscription {
 }
 
 /**
- * Get the current user's subscription tier
+ * Get the current user's subscription tier (client-side only)
  * This determines whether they need to provide their own API keys (BYOK)
  * or can use platform-provided keys
  */
