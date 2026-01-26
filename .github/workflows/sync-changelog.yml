@@ -1,0 +1,222 @@
+# Sync Changelog from Git Commits
+# Parses conventional commits and syncs to Supabase changelog_entries table
+
+name: Sync Changelog
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  # Set per repo - determines which product these commits belong to
+  CHANGELOG_PRODUCT: radar
+
+jobs:
+  sync-changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for commit parsing
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Parse and Sync Commits
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          cat << 'EOF' > sync-changelog.mjs
+          import { createClient } from '@supabase/supabase-js';
+          import { execSync } from 'child_process';
+
+          const supabaseUrl = process.env.SUPABASE_URL;
+          const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+          const product = process.env.CHANGELOG_PRODUCT || 'radar';
+
+          if (!supabaseUrl || !supabaseKey) {
+            console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY');
+            process.exit(1);
+          }
+
+          // Use service role with auth disabled to bypass RLS
+          const supabase = createClient(supabaseUrl, supabaseKey, {
+            auth: {
+              autoRefreshToken: false,
+              persistSession: false,
+            },
+          });
+
+          console.log('Supabase URL:', supabaseUrl);
+          console.log('Service key starts with:', supabaseKey?.slice(0, 20) + '...');
+
+          // Get last synced commit
+          const { data: syncState } = await supabase
+            .from('changelog_sync_state')
+            .select('last_commit_hash')
+            .eq('product', product)
+            .single();
+
+          const lastHash = syncState?.last_commit_hash;
+
+          // Get commits since last sync (or last 30 days if no sync state)
+          const range = lastHash
+            ? `${lastHash}..HEAD`
+            : '--since="30 days ago"';
+
+          // Use ASCII separators via git's %x notation (handled by git, not JS)
+          // %x1e = record separator, %x1f = unit separator
+          const gitLog = execSync(
+            `git log ${range} --pretty=format:"%H%x1f%s%x1f%b%x1f%ad%x1e" --date=short`,
+            { encoding: 'utf-8' }
+          ).trim();
+
+          const DELIM = '\x1f';  // Unit separator
+          const COMMIT_SEP = '\x1e';  // Record separator
+
+          if (!gitLog) {
+            console.log('No new commits to sync');
+            process.exit(0);
+          }
+
+          // Split by commit separator, filter empty
+          const commits = gitLog.split(COMMIT_SEP).filter(c => c.trim());
+          console.log(`Found ${commits.length} commits to process`);
+
+          // Parse conventional commit format: type(scope): title
+          const conventionalRegex = /^(\w+)(?:\(([^)]+)\))?:\s*(.+)$/;
+
+          const entries = [];
+          let latestHash = null;
+
+          for (const commit of commits) {
+            const parts = commit.split(DELIM);
+            if (parts.length < 4) {
+              console.log('Skipping malformed commit entry');
+              continue;
+            }
+
+            const [hash, subject, body, date] = parts;
+
+            if (!hash || !subject) {
+              console.log('Skipping commit with missing hash or subject');
+              continue;
+            }
+
+            if (!latestHash) latestHash = hash.trim();
+
+            const match = subject.trim().match(conventionalRegex);
+            if (!match) {
+              // Non-conventional commit, skip
+              console.log(`Skipping non-conventional commit: ${subject.trim().slice(0, 60)}`);
+              continue;
+            }
+
+            const [, type, scope, title] = match;
+
+            // Skip certain types
+            if (['ci', 'build', 'test', 'style'].includes(type)) {
+              console.log(`Skipping ${type} commit: ${title}`);
+              continue;
+            }
+
+            // Check for --highlight flag in body
+            const isHighlight = body?.includes('--highlight') || false;
+
+            // Clean up body (remove --highlight flag)
+            const description = body
+              ?.replace('--highlight', '')
+              .trim()
+              .slice(0, 500) || null;
+
+            entries.push({
+              product,
+              title,
+              description: description || null,
+              commit_type: type,
+              commit_hash: hash.trim(),
+              commit_date: date.trim(),
+              is_highlight: isHighlight,
+            });
+          }
+
+          if (entries.length === 0) {
+            console.log('No changelog entries to insert');
+            process.exit(0);
+          }
+
+          console.log(`Inserting ${entries.length} changelog entries`);
+
+          // Test: verify table is accessible
+          const { data: testData, error: testError } = await supabase
+            .from('changelog_entries')
+            .select('id')
+            .limit(1);
+
+          if (testError) {
+            console.error('Cannot access changelog_entries table:', testError);
+            process.exit(1);
+          }
+          console.log('Table access verified, existing entries:', testData?.length || 0);
+
+          // Insert entries one by one to handle duplicates gracefully
+          let inserted = 0;
+          for (const entry of entries) {
+            console.log(`Inserting: ${entry.title}`);
+            try {
+              const { data, error: insertError, status, statusText } = await supabase
+                .from('changelog_entries')
+                .insert(entry)
+                .select();
+
+              console.log(`Response status: ${status} ${statusText}`);
+
+              if (insertError) {
+                // Skip duplicates (unique constraint violation)
+                if (insertError.code === '23505') {
+                  console.log(`Skipping duplicate: ${entry.title}`);
+                  continue;
+                }
+                console.error('Insert failed:', insertError.message || 'No message');
+                console.error('Full error:', JSON.stringify(insertError));
+                process.exit(1);
+              }
+
+              console.log(`Inserted successfully:`, data?.[0]?.id);
+              inserted++;
+            } catch (e) {
+              console.error('Exception during insert:', e);
+              process.exit(1);
+            }
+          }
+
+          console.log(`Inserted ${inserted} new entries (${entries.length - inserted} duplicates skipped)`);
+
+          // Update sync state
+          const { error: syncError } = await supabase
+            .from('changelog_sync_state')
+            .upsert({
+              product,
+              last_commit_hash: latestHash,
+              last_sync_at: new Date().toISOString(),
+            }, {
+              onConflict: 'product',
+            });
+
+          if (syncError) {
+            console.error('Failed to update sync state:', syncError);
+            process.exit(1);
+          }
+
+          console.log(`Successfully synced ${entries.length} entries`);
+          EOF
+
+          npm install @supabase/supabase-js
+          node sync-changelog.mjs
