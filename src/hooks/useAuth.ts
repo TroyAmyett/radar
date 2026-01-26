@@ -8,6 +8,7 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isSuperAdmin: boolean;
 }
 
 interface SignInCredentials {
@@ -26,33 +27,61 @@ export function useAuth() {
     user: null,
     session: null,
     loading: true,
+    isSuperAdmin: false,
   });
+
+  // Fetch user profile to get is_super_admin status
+  const fetchProfile = useCallback(async () => {
+    try {
+      const res = await fetch('/api/profile');
+      if (res.ok) {
+        const profile = await res.json();
+        setState((prev) => ({
+          ...prev,
+          isSuperAdmin: profile.is_super_admin ?? false,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch profile:', error);
+    }
+  }, []);
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setState({
+      setState((prev) => ({
+        ...prev,
         user: session?.user ?? null,
         session,
         loading: false,
-      });
+      }));
+      // Fetch profile if user is logged in
+      if (session?.user) {
+        fetchProfile();
+      }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setState({
+        setState((prev) => ({
+          ...prev,
           user: session?.user ?? null,
           session,
           loading: false,
-        });
+          isSuperAdmin: session?.user ? prev.isSuperAdmin : false,
+        }));
+        // Fetch profile if user logged in
+        if (session?.user) {
+          fetchProfile();
+        }
       }
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchProfile]);
 
   const signIn = useCallback(async ({ email, password }: SignInCredentials) => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -107,6 +136,7 @@ export function useAuth() {
     user: state.user,
     session: state.session,
     loading: state.loading,
+    isSuperAdmin: state.isSuperAdmin,
     signIn,
     signUp,
     signOut,

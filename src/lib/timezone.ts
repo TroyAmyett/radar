@@ -1,11 +1,41 @@
 // Timezone utilities for Radar
-// Uses browser timezone by default - can be enhanced with user profile later
+// Uses user preference from localStorage, falls back to browser timezone
+
+const TIMEZONE_STORAGE_KEY = 'radar_user_timezone'
 
 /**
- * Get the user's timezone (browser default for now)
+ * Get the user's timezone
+ * Priority: localStorage preference > browser timezone > UTC
  */
 export function getUserTimezone(): string {
+  // Check localStorage for saved preference (client-side only)
+  if (typeof window !== 'undefined') {
+    const savedTimezone = localStorage.getItem(TIMEZONE_STORAGE_KEY)
+    if (savedTimezone) {
+      return savedTimezone
+    }
+  }
+
+  // Fall back to browser timezone
   return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+}
+
+/**
+ * Set the user's preferred timezone (persists to localStorage)
+ */
+export function setUserTimezone(timezone: string): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(TIMEZONE_STORAGE_KEY, timezone)
+  }
+}
+
+/**
+ * Clear the saved timezone preference (revert to browser default)
+ */
+export function clearUserTimezone(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(TIMEZONE_STORAGE_KEY)
+  }
 }
 
 /**

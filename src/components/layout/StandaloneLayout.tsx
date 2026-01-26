@@ -2,24 +2,19 @@
 
 import Sidebar from './Sidebar';
 import Footer from './Footer';
-import { SidebarProvider, useSidebar } from './SidebarContext';
+import { SidebarProvider } from './SidebarContext';
 
 interface StandaloneLayoutProps {
   children: React.ReactNode;
 }
 
 function StandaloneLayoutContent({ children }: StandaloneLayoutProps) {
-  const { collapsed } = useSidebar();
-
   return (
     <>
+      {/* Mobile sidebar only - desktop navigation is in Header */}
       <Sidebar />
-      {/* No margin on mobile (sidebar is hidden), dynamic margin on desktop */}
-      <div
-        className={`ml-0 min-h-screen flex flex-col transition-all duration-300 ${
-          collapsed ? 'md:ml-16' : 'md:ml-64'
-        }`}
-      >
+      {/* No margin needed - sidebar only shows on mobile as a slide-in drawer */}
+      <div className="min-h-screen flex flex-col">
         <main className="flex-1">
           {children}
         </main>

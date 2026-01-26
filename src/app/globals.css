@@ -305,15 +305,21 @@ body {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Grid layout for card stream - 3 columns on desktop for consistent card height */
+/* Grid layout for card stream - 4 columns on desktop for consistent card height */
 .masonry-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
 }
 
 .masonry-item {
   /* No special styling needed for grid items */
+}
+
+@media (max-width: 1280px) {
+  .masonry-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 @media (max-width: 1024px) {

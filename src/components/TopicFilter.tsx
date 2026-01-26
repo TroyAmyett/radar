@@ -117,7 +117,7 @@ export default function TopicFilter({
   const allActive = isAllMode && excludedTopics.length === 0;
 
   return (
-    <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
+    <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto py-1 scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
       {/* Color group buttons */}
       {uniqueColors.length > 1 && onToggleColor && (
         <>

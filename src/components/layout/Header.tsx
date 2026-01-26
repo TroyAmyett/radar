@@ -1,6 +1,8 @@
 'use client';
 
-import { Search, LogOut, User, Settings } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Search, LogOut, User, Settings, Radio, LayoutDashboard, Rss, Bookmark, Flame } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,17 +11,26 @@ import { useRouter } from 'next/navigation';
 // Check if running in embedded mode (inside AgentPM)
 const isEmbedded = process.env.NEXT_PUBLIC_RADAR_MODE === 'embedded';
 
+const navItems = [
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
+  { href: '/whats-hot', label: "What's Hot", icon: Flame, adminOnly: true },
+  { href: '/sources', label: 'Sources', icon: Rss, adminOnly: false },
+  { href: '/saved', label: 'Saved', icon: Bookmark, adminOnly: false },
+  { href: '/settings', label: 'Settings', icon: Settings, adminOnly: false },
+];
+
 interface HeaderProps {
   onSearch?: (query: string) => void;
 }
 
 export default function Header({ onSearch }: HeaderProps) {
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { user, signOut } = useAuth();
+  const { user, signOut, isSuperAdmin } = useAuth();
   const router = useRouter();
 
   const handleSearch = (e: React.FormEvent) => {
@@ -95,8 +106,42 @@ export default function Header({ onSearch }: HeaderProps) {
   }, [menuOpen]);
 
   return (
-    <header className="sticky top-0 z-40 bg-white/5 backdrop-blur-xl border-b border-white/10 px-3 md:px-6 py-3 md:py-4 flex items-center justify-between gap-3">
-      <form onSubmit={handleSearch} className="flex-1 max-w-xl min-w-0">
+    <header className="sticky top-0 z-40 bg-white/5 backdrop-blur-xl border-b border-white/10 px-3 md:px-6 py-3 md:py-4 flex items-center gap-3 relative">
+      {/* Logo - hidden on mobile (shown in hamburger menu) */}
+      <Link href="/" className="hidden md:flex items-center gap-2 flex-shrink-0">
+        <Radio className="w-6 h-6 text-accent" />
+        <span className="text-lg font-semibold text-white">Radar</span>
+      </Link>
+
+      {/* Desktop Navigation - Absolutely centered */}
+      <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+        {navItems
+          .filter((item) => !item.adminOnly || isSuperAdmin)
+          .map((item) => {
+            const isActive = pathname === item.href;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${
+                  isActive
+                    ? 'bg-accent/20 text-accent'
+                    : 'text-white/70 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            );
+          })}
+      </nav>
+
+      {/* Spacer to push search and user menu to the right */}
+      <div className="flex-1" />
+
+      {/* Search */}
+      <form onSubmit={handleSearch} className="w-full md:w-auto md:min-w-[200px] max-w-md min-w-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5 text-white/40" />
           <input

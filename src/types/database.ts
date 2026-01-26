@@ -9,6 +9,32 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      user_profiles: {
+        Row: {
+          id: string;
+          email: string;
+          name: string | null;
+          is_super_admin: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          email: string;
+          name?: string | null;
+          is_super_admin?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          name?: string | null;
+          is_super_admin?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       topics: {
         Row: {
           id: string;
@@ -335,6 +361,7 @@ export interface Database {
 }
 
 // Convenience types
+export type UserProfile = Database['public']['Tables']['user_profiles']['Row'];
 export type Topic = Database['public']['Tables']['topics']['Row'];
 export type Source = Database['public']['Tables']['sources']['Row'];
 export type ContentItem = Database['public']['Tables']['content_items']['Row'];

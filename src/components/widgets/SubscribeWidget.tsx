@@ -10,7 +10,6 @@ interface SubscribeWidgetProps {
 
 export default function SubscribeWidget({ source = 'widget', className = '' }: SubscribeWidgetProps) {
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'both'>('daily');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -29,7 +28,6 @@ export default function SubscribeWidget({ source = 'widget', className = '' }: S
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email.trim(),
-          name: name.trim() || undefined,
           frequency,
           source,
         }),
@@ -41,7 +39,6 @@ export default function SubscribeWidget({ source = 'widget', className = '' }: S
         setStatus('success');
         setMessage('Check your email to confirm your subscription!');
         setEmail('');
-        setName('');
       } else {
         setStatus('error');
         setMessage(data.error || 'Failed to subscribe. Please try again.');
@@ -86,16 +83,6 @@ export default function SubscribeWidget({ source = 'widget', className = '' }: S
             placeholder="Your email address"
             className="glass-input w-full"
             required
-          />
-        </div>
-
-        <div>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Your name (optional)"
-            className="glass-input w-full"
           />
         </div>
 

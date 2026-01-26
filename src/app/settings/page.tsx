@@ -5,6 +5,7 @@ import Header from '@/components/layout/Header';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic } from '@/types/database';
 import { Settings, Plus, Palette, Mail, Clock, Save, Pencil, Trash2 } from 'lucide-react';
+import { setUserTimezone, getUserTimezone } from '@/lib/timezone';
 
 // Expanded icon options with keyword associations for auto-selection
 const iconOptions = [
@@ -109,6 +110,29 @@ interface DigestPreferences {
   email_address: string | null;
 }
 
+// Common timezones for selector
+const timezoneOptions = [
+  { value: 'America/New_York', label: 'Eastern Time (ET)' },
+  { value: 'America/Chicago', label: 'Central Time (CT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MT)' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+  { value: 'America/Phoenix', label: 'Arizona (AZ)' },
+  { value: 'America/Anchorage', label: 'Alaska (AK)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii (HI)' },
+  { value: 'Europe/London', label: 'London (GMT/BST)' },
+  { value: 'Europe/Paris', label: 'Central European (CET)' },
+  { value: 'Europe/Berlin', label: 'Berlin (CET)' },
+  { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
+  { value: 'Asia/Shanghai', label: 'China (CST)' },
+  { value: 'Asia/Singapore', label: 'Singapore (SGT)' },
+  { value: 'Asia/Dubai', label: 'Dubai (GST)' },
+  { value: 'Asia/Kolkata', label: 'India (IST)' },
+  { value: 'Australia/Sydney', label: 'Sydney (AEST)' },
+  { value: 'Australia/Perth', label: 'Perth (AWST)' },
+  { value: 'Pacific/Auckland', label: 'New Zealand (NZST)' },
+  { value: 'UTC', label: 'UTC' },
+];
+
 export default function SettingsPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,7 +148,7 @@ export default function SettingsPage() {
   const [editIcon, setEditIcon] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Digest preferences state
+  // Digest preferences state - will be populated from API/localStorage on mount
   const [digestPrefs, setDigestPrefs] = useState<DigestPreferences>({
     digest_enabled: true,
     digest_frequency: 'daily',
@@ -133,6 +157,12 @@ export default function SettingsPage() {
     digest_topics: [],
     email_address: null,
   });
+
+  // Initialize timezone from localStorage on client mount
+  useEffect(() => {
+    const savedTimezone = getUserTimezone();
+    setDigestPrefs((prev) => ({ ...prev, digest_timezone: savedTimezone }));
+  }, []);
   const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [prefsSaved, setPrefsSaved] = useState(false);
 
@@ -152,14 +182,19 @@ export default function SettingsPage() {
 
       setTopics(Array.isArray(topicsData) ? topicsData : []);
       if (prefsData && !prefsData.error) {
+        const timezone = prefsData.digest_timezone || getUserTimezone();
         setDigestPrefs({
           digest_enabled: prefsData.digest_enabled ?? true,
           digest_frequency: prefsData.digest_frequency || 'daily',
           digest_time: prefsData.digest_time?.substring(0, 5) || '06:00',
-          digest_timezone: prefsData.digest_timezone || 'America/New_York',
+          digest_timezone: timezone,
           digest_topics: prefsData.digest_topics || [],
           email_address: prefsData.email_address || null,
         });
+        // Sync timezone preference to localStorage for client-side formatting
+        if (prefsData.digest_timezone) {
+          setUserTimezone(prefsData.digest_timezone);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -255,6 +290,8 @@ export default function SettingsPage() {
           digest_time: digestPrefs.digest_time + ':00',
         }),
       });
+      // Also save timezone to localStorage for client-side date formatting
+      setUserTimezone(digestPrefs.digest_timezone);
       setPrefsSaved(true);
       setTimeout(() => setPrefsSaved(false), 3000);
     } catch (error) {
@@ -284,9 +321,10 @@ export default function SettingsPage() {
             <p className="text-white/60 mt-1">Manage your topics and preferences</p>
           </div>
 
-          <div className="max-w-2xl">
+          {/* 3-column layout: Topics, Email Digests, Preferences */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Topics Section */}
-            <section className="glass-card p-6 mb-6">
+            <section className="glass-card p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 rounded-lg bg-accent/20">
                   <Palette className="w-5 h-5 text-accent" />
@@ -301,7 +339,7 @@ export default function SettingsPage() {
 
             {/* Add Topic Form */}
             <form onSubmit={handleAddTopic} className="mb-6 p-4 rounded-lg bg-white/5">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="space-y-4 mb-4">
                 <div>
                   <label className="block text-sm text-white/60 mb-2">Name</label>
                   <input
@@ -322,7 +360,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Color</label>
+                  <label className="block text-sm text-white/60 mb-2">Color Group</label>
                   <div className="flex gap-2 flex-wrap">
                     {colorOptions.map((color) => (
                       <button
@@ -381,7 +419,7 @@ export default function SettingsPage() {
                     {editingTopic?.id === topic.id ? (
                       // Edit Mode
                       <div className="p-4 rounded-lg bg-white/10 border border-accent/50">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="space-y-4 mb-4">
                           <div>
                             <label className="block text-sm text-white/60 mb-2">Name</label>
                             <input
@@ -393,7 +431,7 @@ export default function SettingsPage() {
                           </div>
 
                           <div>
-                            <label className="block text-sm text-white/60 mb-2">Color</label>
+                            <label className="block text-sm text-white/60 mb-2">Color Group</label>
                             <div className="flex gap-2 flex-wrap">
                               {colorOptions.map((color) => (
                                 <button
@@ -482,7 +520,7 @@ export default function SettingsPage() {
           </section>
 
           {/* Email Digest Section */}
-          <section className="glass-card p-6 mb-6">
+          <section className="glass-card p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 rounded-lg bg-purple-500/20">
                 <Mail className="w-5 h-5 text-purple-400" />
@@ -519,20 +557,6 @@ export default function SettingsPage() {
 
               {digestPrefs.digest_enabled && (
                 <>
-                  {/* Email Address */}
-                  <div className="p-4 rounded-lg bg-white/5">
-                    <label className="block text-sm font-medium mb-2">Email Address</label>
-                    <input
-                      type="email"
-                      value={digestPrefs.email_address || ''}
-                      onChange={(e) =>
-                        setDigestPrefs((p) => ({ ...p, email_address: e.target.value }))
-                      }
-                      placeholder="your@email.com"
-                      className="glass-input w-full"
-                    />
-                  </div>
-
                   {/* Frequency */}
                   <div className="p-4 rounded-lg bg-white/5">
                     <label className="block text-sm font-medium mb-2">Frequency</label>
@@ -569,7 +593,7 @@ export default function SettingsPage() {
                       className="glass-input w-full"
                     />
                     <p className="text-white/40 text-xs mt-2">
-                      Timezone: {digestPrefs.digest_timezone}
+                      Based on your timezone (set in Preferences)
                     </p>
                   </div>
 
@@ -630,6 +654,30 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-4">
+              {/* Timezone Selector */}
+              <div className="p-4 rounded-lg bg-white/5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-white/60" />
+                  <p className="font-medium">Timezone</p>
+                </div>
+                <p className="text-white/60 text-sm mb-3">
+                  Used for all dates, times, and scheduled content
+                </p>
+                <select
+                  value={digestPrefs.digest_timezone}
+                  onChange={(e) =>
+                    setDigestPrefs((p) => ({ ...p, digest_timezone: e.target.value }))
+                  }
+                  className="glass-input w-full"
+                >
+                  {timezoneOptions.map((tz) => (
+                    <option key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
                 <div>
                   <p className="font-medium">Auto-refresh feeds</p>
@@ -655,6 +703,16 @@ export default function SettingsPage() {
                   <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                 </label>
               </div>
+
+              {/* Save Preferences Button */}
+              <button
+                onClick={handleSaveDigestPrefs}
+                disabled={isSavingPrefs}
+                className="w-full py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent/80 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {isSavingPrefs ? 'Saving...' : prefsSaved ? 'Saved!' : 'Save Preferences'}
+              </button>
               </div>
             </section>
           </div>
