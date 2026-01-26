@@ -31,9 +31,13 @@ export function useAuth() {
   });
 
   // Fetch user profile to get is_super_admin status
-  const fetchProfile = useCallback(async () => {
+  const fetchProfile = useCallback(async (accessToken: string) => {
     try {
-      const res = await fetch('/api/profile');
+      const res = await fetch('/api/profile', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
       if (res.ok) {
         const profile = await res.json();
         setState((prev) => ({
@@ -56,8 +60,8 @@ export function useAuth() {
         loading: false,
       }));
       // Fetch profile if user is logged in
-      if (session?.user) {
-        fetchProfile();
+      if (session?.user && session.access_token) {
+        fetchProfile(session.access_token);
       }
     });
 
@@ -72,8 +76,8 @@ export function useAuth() {
           isSuperAdmin: session?.user ? prev.isSuperAdmin : false,
         }));
         // Fetch profile if user logged in
-        if (session?.user) {
-          fetchProfile();
+        if (session?.user && session.access_token) {
+          fetchProfile(session.access_token);
         }
       }
     );

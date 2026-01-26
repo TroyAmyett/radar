@@ -15,12 +15,13 @@ export async function GET() {
   }
 
   // Return default preferences if none exist
+  // digest_timezone is null to let client use browser detection
   if (!data) {
     return NextResponse.json({
       digest_enabled: true,
       digest_frequency: 'daily',
       digest_time: '06:00:00',
-      digest_timezone: 'America/New_York',
+      digest_timezone: null,
       digest_topics: [],
       email_address: null,
     });

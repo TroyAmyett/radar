@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Search, LogOut, User, Settings, Radio, LayoutDashboard, Rss, Bookmark, Flame } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { useChangelog } from '@/hooks/useChangelog';
+import { ChangelogBadge, ChangelogDrawer, WhatsNewModal } from '@/components/changelog';
 
 // Check if running in embedded mode (inside AgentPM)
 const isEmbedded = process.env.NEXT_PUBLIC_RADAR_MODE === 'embedded';
@@ -32,6 +34,28 @@ export default function Header({ onSearch }: HeaderProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const { user, signOut, isSuperAdmin } = useAuth();
   const router = useRouter();
+
+  // Changelog hook
+  const {
+    entries,
+    unreadCount,
+    unreadHighlights,
+    isLoading: changelogLoading,
+    isDrawerOpen,
+    isWhatsNewOpen,
+    fetchEntries,
+    markAsRead,
+    markAllAsRead,
+    dismissHighlights,
+    openDrawer,
+    closeDrawer,
+    closeWhatsNew,
+  } = useChangelog(user?.id, 'radar');
+
+  const handleViewAllChangelog = useCallback(() => {
+    closeWhatsNew();
+    openDrawer();
+  }, [closeWhatsNew, openDrawer]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,6 +130,7 @@ export default function Header({ onSearch }: HeaderProps) {
   }, [menuOpen]);
 
   return (
+    <>
     <header className="sticky top-0 z-40 bg-white/5 backdrop-blur-xl border-b border-white/10 px-3 md:px-6 py-3 md:py-4 flex items-center gap-3 relative">
       {/* Logo - hidden on mobile (shown in hamburger menu) */}
       <Link href="/" className="hidden md:flex items-center gap-2 flex-shrink-0">
@@ -114,7 +139,7 @@ export default function Header({ onSearch }: HeaderProps) {
       </Link>
 
       {/* Desktop Navigation - Absolutely centered */}
-      <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+      <nav className={`hidden md:flex items-center absolute left-1/2 -translate-x-1/2 ${isEmbedded ? 'gap-1' : 'gap-2'}`}>
         {navItems
           .filter((item) => !item.adminOnly || isSuperAdmin)
           .map((item) => {
@@ -124,13 +149,17 @@ export default function Header({ onSearch }: HeaderProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${
+                className={`flex items-center gap-2 rounded-lg transition-all ${
+                  isEmbedded
+                    ? 'px-3 py-2 text-sm'
+                    : 'px-4 py-2.5 text-base'
+                } ${
                   isActive
                     ? 'bg-accent/20 text-accent'
                     : 'text-white/70 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className={isEmbedded ? 'w-4 h-4' : 'w-5 h-5'} />
                 <span className="font-medium">{item.label}</span>
               </Link>
             );
@@ -153,6 +182,11 @@ export default function Header({ onSearch }: HeaderProps) {
           />
         </div>
       </form>
+
+      {/* Changelog Badge - only show when not embedded */}
+      {user && !isEmbedded && (
+        <ChangelogBadge unreadCount={unreadCount} onClick={openDrawer} />
+      )}
 
       {/* Hide user menu when embedded in AgentPM - parent app handles user context */}
       {user && !isEmbedded && (
@@ -183,6 +217,16 @@ export default function Header({ onSearch }: HeaderProps) {
               <button
                 onClick={() => {
                   setMenuOpen(false);
+                  router.push('/profile');
+                }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span>Profile</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
                   router.push('/account');
                 }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
@@ -204,5 +248,25 @@ export default function Header({ onSearch }: HeaderProps) {
         </div>
       )}
     </header>
+
+    {/* Changelog Drawer */}
+    <ChangelogDrawer
+      isOpen={isDrawerOpen}
+      onClose={closeDrawer}
+      entries={entries}
+      isLoading={changelogLoading}
+      onMarkAllRead={markAllAsRead}
+      onMarkAsRead={markAsRead}
+      onFetchEntries={fetchEntries}
+    />
+
+    {/* What's New Modal */}
+    <WhatsNewModal
+      isOpen={isWhatsNewOpen}
+      highlights={unreadHighlights}
+      onDismiss={dismissHighlights}
+      onViewAll={handleViewAllChangelog}
+    />
+    </>
   );
 }

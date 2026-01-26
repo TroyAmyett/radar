@@ -36,6 +36,13 @@ export default function SignupPage() {
     try {
       const { session } = await signUp({ email, password, name });
 
+      // Send welcome email (fire and forget - don't block signup)
+      fetch('/api/welcome-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name }),
+      }).catch((err) => console.error('Failed to send welcome email:', err));
+
       if (session) {
         // User was auto-confirmed, redirect to dashboard
         router.push('/');

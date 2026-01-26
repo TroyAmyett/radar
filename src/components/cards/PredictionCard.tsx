@@ -275,11 +275,17 @@ export default function PredictionCard({
             {multiQuestionData.slice(0, 5).map((q, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 p-1.5 rounded-lg bg-white/5"
+                className="flex items-center gap-2 p-2 rounded-lg bg-white/5"
               >
                 {/* Question title */}
                 <span className="flex-1 text-sm text-white/80 truncate">
                   {q.title}
+                </span>
+                {/* Confidence percentage */}
+                <span className={`text-sm font-bold ${
+                  q.predictedYes ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {q.confidence}%
                 </span>
                 {/* Yes/No indicator */}
                 <span className={`px-2 py-0.5 rounded text-xs font-bold ${
