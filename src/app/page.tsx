@@ -401,10 +401,10 @@ export default function Dashboard() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen">
+      <div className="min-h-screen overflow-x-hidden">
         <Header onSearch={setSearchQuery} />
 
-        <div className="p-3 md:p-6">
+        <div className="p-3 md:p-6 max-w-full">
           {/* Mobile: stack vertically, Desktop: side by side */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <TopicFilter

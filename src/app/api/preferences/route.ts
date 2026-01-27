@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getAccountId } from '@/lib/supabase';
+import { supabaseAdmin, getAccountId } from '@/lib/supabase';
 
 export async function GET() {
   const accountId = getAccountId();
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('user_preferences')
     .select('*')
     .eq('account_id', accountId)
@@ -16,6 +16,7 @@ export async function GET() {
 
   // Return default preferences if none exist
   // digest_timezone is null to let client use browser detection
+  // onboarding_complete is false if no preferences saved yet
   if (!data) {
     return NextResponse.json({
       digest_enabled: true,
@@ -24,10 +25,15 @@ export async function GET() {
       digest_timezone: null,
       digest_topics: [],
       email_address: null,
+      onboarding_complete: false,
     });
   }
 
-  return NextResponse.json(data);
+  // If preferences exist with a timezone, onboarding is complete
+  return NextResponse.json({
+    ...data,
+    onboarding_complete: !!data.digest_timezone,
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -35,7 +41,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   // Check if preferences exist
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseAdmin
     .from('user_preferences')
     .select('id')
     .eq('account_id', accountId)
@@ -43,7 +49,7 @@ export async function POST(request: NextRequest) {
 
   if (existing) {
     // Update existing
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('user_preferences')
       .update({
         digest_enabled: body.digest_enabled,
@@ -64,7 +70,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data);
   } else {
     // Insert new
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('user_preferences')
       .insert({
         account_id: accountId,

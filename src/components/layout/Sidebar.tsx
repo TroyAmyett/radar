@@ -17,7 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
-  { href: '/whats-hot', label: "What's Hot", icon: Flame, adminOnly: true },
+  { href: '/whats-hot', label: 'Hot', icon: Flame, adminOnly: true },
   { href: '/sources', label: 'Sources', icon: Rss, adminOnly: false },
   { href: '/saved', label: 'Saved', icon: Bookmark, adminOnly: false },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: false },

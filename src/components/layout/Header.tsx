@@ -15,7 +15,7 @@ const isEmbedded = process.env.NEXT_PUBLIC_RADAR_MODE === 'embedded';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
-  { href: '/whats-hot', label: "What's Hot", icon: Flame, adminOnly: true },
+  { href: '/whats-hot', label: 'Hot', icon: Flame, adminOnly: true },
   { href: '/sources', label: 'Sources', icon: Rss, adminOnly: false },
   { href: '/saved', label: 'Saved', icon: Bookmark, adminOnly: false },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: false },
@@ -131,15 +131,15 @@ export default function Header({ onSearch }: HeaderProps) {
 
   return (
     <>
-    <header className="sticky top-0 z-40 bg-white/5 backdrop-blur-xl border-b border-white/10 px-3 md:px-6 py-3 md:py-4 flex items-center gap-3 relative">
+    <header className="sticky top-0 z-40 bg-white/5 backdrop-blur-xl border-b border-white/10 px-3 md:px-4 lg:px-6 py-3 flex items-center gap-2 md:gap-3">
       {/* Logo - hidden on mobile (shown in hamburger menu) */}
-      <Link href="/" className="hidden md:flex items-center gap-2 flex-shrink-0">
-        <Radio className="w-6 h-6 text-accent" />
-        <span className="text-lg font-semibold text-white">Radar</span>
+      <Link href="/" className="hidden md:flex items-center gap-1.5 flex-shrink-0">
+        <Radio className="w-5 h-5 text-accent" />
+        <span className="text-base font-semibold text-white hidden lg:inline">Radar</span>
       </Link>
 
-      {/* Desktop Navigation - Absolutely centered */}
-      <nav className={`hidden md:flex items-center absolute left-1/2 -translate-x-1/2 ${isEmbedded ? 'gap-1' : 'gap-2'}`}>
+      {/* Desktop Navigation - flex centered */}
+      <nav className={`hidden md:flex items-center flex-1 justify-center ${isEmbedded ? 'gap-0.5' : 'gap-1 lg:gap-2'}`}>
         {navItems
           .filter((item) => !item.adminOnly || isSuperAdmin)
           .map((item) => {
@@ -149,25 +149,22 @@ export default function Header({ onSearch }: HeaderProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2 rounded-lg transition-all ${
+                className={`flex items-center gap-1.5 rounded-lg transition-all whitespace-nowrap ${
                   isEmbedded
-                    ? 'px-3 py-2 text-sm'
-                    : 'px-4 py-2.5 text-base'
+                    ? 'px-2 py-1.5 text-sm'
+                    : 'px-2 lg:px-3 py-2 text-sm lg:text-base'
                 } ${
                   isActive
                     ? 'bg-accent/20 text-accent'
                     : 'text-white/70 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <Icon className={isEmbedded ? 'w-4 h-4' : 'w-5 h-5'} />
+                <Icon className={isEmbedded ? 'w-4 h-4' : 'w-4 h-4 lg:w-5 lg:h-5'} />
                 <span className="font-medium">{item.label}</span>
               </Link>
             );
           })}
       </nav>
-
-      {/* Spacer to push search and user menu to the right */}
-      <div className="flex-1" />
 
       {/* Search */}
       <form onSubmit={handleSearch} className="w-full md:w-auto md:min-w-[200px] max-w-md min-w-0">
