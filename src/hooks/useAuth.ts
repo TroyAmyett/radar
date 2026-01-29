@@ -108,6 +108,7 @@ export function useAuth() {
         data: {
           name,
         },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
@@ -136,6 +137,20 @@ export function useAuth() {
     }
   }, []);
 
+  const resendConfirmation = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+  }, []);
+
   return {
     user: state.user,
     session: state.session,
@@ -145,5 +160,6 @@ export function useAuth() {
     signUp,
     signOut,
     resetPassword,
+    resendConfirmation,
   };
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Radio, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,8 +11,19 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, user, loading: authLoading } = useAuth();
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const { signIn, resendConfirmation, user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check for error from auth callback
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+    }
+  }, [searchParams]);
 
   // Redirect if already authenticated (session sharing from AgentPM)
   useEffect(() => {
@@ -42,6 +53,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setResendSuccess(false);
     setLoading(true);
 
     try {
@@ -54,6 +66,25 @@ export default function LoginPage() {
     }
   };
 
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      setError('Please enter your email address first');
+      return;
+    }
+    setResendLoading(true);
+    setError('');
+    try {
+      await resendConfirmation(email);
+      setResendSuccess(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resend confirmation email');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const isEmailNotConfirmedError = error.toLowerCase().includes('email not confirmed');
+
   return (
     <div className="w-full max-w-md">
       <div className="glass-card p-8">
@@ -65,9 +96,25 @@ export default function LoginPage() {
         <h1 className="text-xl font-semibold text-center mb-2">Welcome back</h1>
         <p className="text-white/60 text-center mb-8">Sign in to your account</p>
 
+        {resendSuccess && (
+          <div className="mb-6 p-3 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-sm">
+            Confirmation email sent! Please check your inbox and click the link to verify your email.
+          </div>
+        )}
+
         {error && (
           <div className="mb-6 p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm">
-            {error}
+            <p>{error}</p>
+            {isEmailNotConfirmedError && (
+              <button
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={resendLoading}
+                className="mt-2 text-accent hover:text-accent/80 transition-colors underline disabled:opacity-50"
+              >
+                {resendLoading ? 'Sending...' : 'Resend confirmation email'}
+              </button>
+            )}
           </div>
         )}
 

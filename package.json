@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
+    "@funnelists/auth": "file:../packages/auth",
     "@react-email/components": "^1.0.4",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.90.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.562.0",
