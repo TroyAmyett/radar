@@ -4,6 +4,42 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Dual storage: writes to both localStorage (SSO compat) and cookies (server access)
+// Only stores tokens in the cookie (not the full session) to stay under 4KB limit
+const AUTH_COOKIE_KEY = 'funnelists-auth-tokens';
+const dualStorage = {
+  getItem: (key: string) => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(key);
+    }
+    return null;
+  },
+  setItem: (key: string, value: string) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(key, value);
+      // Extract only tokens for the cookie (full session is too large)
+      try {
+        const session = JSON.parse(value);
+        if (session?.access_token) {
+          const tokens = JSON.stringify({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token || '',
+          });
+          document.cookie = `${AUTH_COOKIE_KEY}=${encodeURIComponent(tokens)}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+        }
+      } catch {
+        // Not a session value, skip cookie
+      }
+    }
+  },
+  removeItem: (key: string) => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(key);
+      document.cookie = `${AUTH_COOKIE_KEY}=; path=/; max-age=0; SameSite=Lax`;
+    }
+  },
+};
+
 // Client for browser (with RLS)
 // Uses shared storage key for session sharing across all Funnelists apps
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -12,6 +48,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     storageKey: 'funnelists-auth', // Shared across all Funnelists apps
+    storage: dualStorage,
   },
 });
 

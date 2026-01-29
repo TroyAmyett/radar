@@ -22,11 +22,12 @@ export async function createServerClient() {
     }
   );
 
-  // Get the session from the auth storage cookie
-  const authCookie = cookieStore.get('funnelists-auth');
+  // Get tokens from the auth cookie (set by dual storage adapter in supabase.ts)
+  const authCookie = cookieStore.get('funnelists-auth-tokens') || cookieStore.get('funnelists-auth');
   if (authCookie) {
     try {
-      const session = JSON.parse(authCookie.value);
+      const decoded = decodeURIComponent(authCookie.value);
+      const session = JSON.parse(decoded);
       if (session?.access_token) {
         await supabase.auth.setSession({
           access_token: session.access_token,
