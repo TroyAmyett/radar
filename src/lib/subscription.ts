@@ -1,16 +1,10 @@
 import { createClient } from '@/lib/supabase/client';
-import {
-  isPlatformFunded,
-  type SubscriptionTier,
-  type SubscriptionStatus,
-} from '@funnelists/auth';
 
-// Re-export for backwards compatibility
 export interface Subscription {
   id: string;
   account_id: string;
-  tier: SubscriptionTier;
-  status: SubscriptionStatus;
+  tier: 'beta' | 'trial' | 'demo' | 'free' | 'friends_family' | 'starter' | 'pro' | 'business' | 'enterprise';
+  status: 'active' | 'trialing' | 'past_due' | 'canceled';
   current_period_end: string;
 }
 
@@ -27,12 +21,11 @@ export async function getCurrentSubscription(): Promise<Subscription> {
     throw new Error('Not authenticated');
   }
 
-  // Get user's current account (prefer primary, or first active)
+  // Get user's current account (prefer primary)
   const { data: userAccounts, error: userAccountError } = await supabase
     .from('user_accounts')
     .select('account_id, is_primary')
     .eq('user_id', user.id)
-    .eq('status', 'active')
     .order('is_primary', { ascending: false })
     .limit(10);
 
@@ -67,22 +60,17 @@ export async function getCurrentSubscription(): Promise<Subscription> {
 
 /**
  * Check if the user is on a tier that can use platform-provided API keys
- * Uses shared @funnelists/auth package
  */
 export async function canUsePlatformKeys(): Promise<boolean> {
   const subscription = await getCurrentSubscription();
-  return isPlatformFunded({
-    account: {
-      id: subscription.account_id,
-      plan: subscription.tier,
-    },
-  });
+  const platformTiers = ['beta', 'trial', 'demo', 'free'];
+  return platformTiers.includes(subscription.tier);
 }
 
 /**
  * Check if the user is required to provide their own API keys
  */
 export async function requiresBYOK(): Promise<boolean> {
-  const canUse = await canUsePlatformKeys();
-  return !canUse;
+  const canUseplatform = await canUsePlatformKeys();
+  return !canUseplatform;
 }
