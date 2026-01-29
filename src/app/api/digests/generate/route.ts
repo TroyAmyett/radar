@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getAccountId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { resolveAuth, unauthorizedResponse } from '@/lib/auth';
 import { generateDigestInsight } from '@/lib/ai/summarize';
 import { render } from '@react-email/components';
 import MorningDigest from '@/components/email/MorningDigest';
@@ -17,7 +18,14 @@ interface DiscoveredSource {
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const { type = 'morning', account_id } = body;
-  const accountId = account_id || getAccountId();
+  let accountId: string;
+  if (account_id) {
+    accountId = account_id;
+  } else {
+    const auth = await resolveAuth();
+    if (!auth) return unauthorizedResponse();
+    accountId = auth.accountId;
+  }
 
   try {
     if (type === 'morning') {

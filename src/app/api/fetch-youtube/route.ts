@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin, getAccountId } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
+import { resolveAuth, unauthorizedResponse } from '@/lib/auth';
 import { getVideoTranscript } from '@/lib/youtube-transcript';
 import { summarizeTranscript } from '@/lib/gemini';
 
@@ -93,8 +94,14 @@ const CONTENT_MAX_AGE_DAYS = 30;
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  // Use account_id from body (cron job) or fall back to default
-  const accountId = body.account_id || getAccountId();
+  let accountId: string;
+  if (body.account_id) {
+    accountId = body.account_id;
+  } else {
+    const auth = await resolveAuth();
+    if (!auth) return unauthorizedResponse();
+    accountId = auth.accountId;
+  }
   const sourceId = body.source_id;
 
   // Calculate cutoff date for filtering old content

@@ -1,24 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin, getAccountId } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
+import { requireAuth, AuthError, unauthorizedResponse } from '@/lib/auth';
 
 // Debug endpoint to view and update YouTube source channel IDs
 export async function GET(request: NextRequest) {
-  const accountId = request.nextUrl.searchParams.get('account_id') || getAccountId();
+  try {
+    const accountId = request.nextUrl.searchParams.get('account_id') || (await requireAuth()).accountId;
 
-  const { data: sources, error } = await supabaseAdmin
-    .from('sources')
-    .select('id, name, url, channel_id, type')
-    .eq('account_id', accountId)
-    .eq('type', 'youtube');
+    const { data: sources, error } = await supabaseAdmin
+      .from('sources')
+      .select('id, name, url, channel_id, type')
+      .eq('account_id', accountId)
+      .eq('type', 'youtube');
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      sources,
+      instructions: 'POST with { source_id, channel_id } to update a channel ID',
+    });
+  } catch (e) {
+    if (e instanceof AuthError) return unauthorizedResponse();
+    throw e;
   }
-
-  return NextResponse.json({
-    sources,
-    instructions: 'POST with { source_id, channel_id } to update a channel ID',
-  });
 }
 
 export async function POST(request: NextRequest) {

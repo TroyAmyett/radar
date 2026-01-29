@@ -63,13 +63,3 @@ export const supabaseAdmin = createClient(
     }
   }
 );
-
-// Default account UUID for Radar standalone app
-// This UUID format is required because AgentPM migrated account_id columns to UUID type
-const RADAR_DEFAULT_ACCOUNT_ID = '00000000-0000-0000-0000-000000000001';
-
-// Helper function to get user's account ID (fallback only)
-// API routes should prefer account_id from request body (passed by frontend)
-export function getAccountId(): string {
-  return RADAR_DEFAULT_ACCOUNT_ID;
-}

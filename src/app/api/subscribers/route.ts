@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getAccountId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { requireAuth, AuthError, unauthorizedResponse } from '@/lib/auth';
 import { resend } from '@/lib/email/resend';
 import crypto from 'crypto';
 
@@ -9,9 +10,9 @@ function generateToken(): string {
 }
 
 export async function POST(request: NextRequest) {
-  const accountId = getAccountId();
-
   try {
+    const { accountId } = await requireAuth();
+
     const body = await request.json();
     const { email, name, frequency = 'daily', topics, source } = body;
 
@@ -125,8 +126,9 @@ export async function POST(request: NextRequest) {
         status: subscriber.status,
       },
     });
-  } catch (error) {
-    console.error('Error in subscriber endpoint:', error);
+  } catch (e) {
+    if (e instanceof AuthError) return unauthorizedResponse();
+    console.error('Error in subscriber endpoint:', e);
     return NextResponse.json(
       { error: 'Failed to process subscription' },
       { status: 500 }
@@ -190,17 +192,22 @@ async function sendConfirmationEmail(
 
 // GET endpoint to list subscribers (admin only)
 export async function GET() {
-  const accountId = getAccountId();
+  try {
+    const { accountId } = await requireAuth();
 
-  const { data, error } = await supabase
-    .from('email_subscribers')
-    .select('*')
-    .eq('account_id', accountId)
-    .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('email_subscribers')
+      .select('*')
+      .eq('account_id', accountId)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (e) {
+    if (e instanceof AuthError) return unauthorizedResponse();
+    throw e;
   }
-
-  return NextResponse.json(data);
 }

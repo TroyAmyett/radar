@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, getAccountId } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { requireAuth, AuthError, unauthorizedResponse, resolveAuth } from '@/lib/auth';
 import { postToX, isXConfigured } from '@/lib/social/x-client';
 
 export async function POST(request: NextRequest) {
-  const accountId = getAccountId();
-
   try {
+    const { accountId } = await requireAuth();
+
     const body = await request.json();
     const {
       contentItemId,
@@ -84,8 +85,9 @@ export async function POST(request: NextRequest) {
       post,
       xPost: xPostResult,
     });
-  } catch (error) {
-    console.error('Error publishing:', error);
+  } catch (e) {
+    if (e instanceof AuthError) return unauthorizedResponse();
+    console.error('Error publishing:', e);
     return NextResponse.json(
       { error: 'Failed to publish content' },
       { status: 500 }
@@ -99,7 +101,16 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '10');
   const topicId = searchParams.get('topic_id');
-  const accountId = searchParams.get('account_id') || getAccountId();
+  const queryAccountId = searchParams.get('account_id');
+
+  let accountId: string;
+  if (queryAccountId) {
+    accountId = queryAccountId;
+  } else {
+    const auth = await resolveAuth();
+    if (!auth) return unauthorizedResponse();
+    accountId = auth.accountId;
+  }
 
   const offset = (page - 1) * limit;
 

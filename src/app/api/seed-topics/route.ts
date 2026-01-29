@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin, getAccountId } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
+import { requireAuth, AuthError, unauthorizedResponse } from '@/lib/auth';
 
 // Business color: cyan (#0ea5e9), Personal color: amber (#f59e0b)
 const DEFAULT_TOPICS = [
@@ -14,9 +15,9 @@ const DEFAULT_TOPICS = [
 ];
 
 export async function POST() {
-  const accountId = getAccountId();
-
   try {
+    const { accountId } = await requireAuth();
+
     // Check if topics already exist
     const { data: existingTopics } = await supabaseAdmin
       .from('topics')
@@ -52,8 +53,9 @@ export async function POST() {
       message: 'Default topics created',
       topics: data,
     });
-  } catch (error) {
-    console.error('Failed to seed topics:', error);
+  } catch (e) {
+    if (e instanceof AuthError) return unauthorizedResponse();
+    console.error('Failed to seed topics:', e);
     return NextResponse.json(
       { error: 'Failed to seed topics' },
       { status: 500 }

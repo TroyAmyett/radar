@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin, getAccountId } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
+import { requireAuth, AuthError, unauthorizedResponse } from '@/lib/auth';
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
@@ -33,9 +34,7 @@ interface Topic {
 }
 
 // Suggest a topic based on source title and description
-async function suggestTopic(title: string, description?: string): Promise<string | undefined> {
-  const accountId = getAccountId();
-
+async function suggestTopic(accountId: string, title: string, description?: string): Promise<string | undefined> {
   // Fetch all topics for the account
   const { data: topics } = await supabaseAdmin
     .from('topics')
@@ -111,14 +110,14 @@ function decodeHtmlEntities(text: string): string {
     '&#47;': '/',
     '&apos;': "'",
     '&nbsp;': ' ',
-    '&raquo;': '»',
-    '&laquo;': '«',
-    '&ndash;': '–',
-    '&mdash;': '—',
-    '&copy;': '©',
-    '&reg;': '®',
-    '&trade;': '™',
-    '&hellip;': '…',
+    '&raquo;': '\u00BB',
+    '&laquo;': '\u00AB',
+    '&ndash;': '\u2013',
+    '&mdash;': '\u2014',
+    '&copy;': '\u00A9',
+    '&reg;': '\u00AE',
+    '&trade;': '\u2122',
+    '&hellip;': '\u2026',
   };
   return text.replace(/&(?:#\d+|#x[\da-f]+|\w+);/gi, (match) => {
     if (entities[match]) return entities[match];
@@ -133,36 +132,42 @@ function decodeHtmlEntities(text: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  const { url } = await request.json();
-
-  if (!url) {
-    return NextResponse.json({ error: 'URL is required' }, { status: 400, headers: CORS_HEADERS });
-  }
-
   try {
-    const normalizedUrl = url.trim().toLowerCase();
+    const { accountId } = await requireAuth();
+    const { url } = await request.json();
 
-    // Detect source type from URL
-    if (normalizedUrl.includes('youtube.com') || normalizedUrl.includes('youtu.be')) {
-      return await lookupYouTube(url);
+    if (!url) {
+      return NextResponse.json({ error: 'URL is required' }, { status: 400, headers: CORS_HEADERS });
     }
 
-    if (normalizedUrl.includes('twitter.com') || normalizedUrl.includes('x.com')) {
-      return await lookupTwitter(url);
-    }
+    try {
+      const normalizedUrl = url.trim().toLowerCase();
 
-    if (normalizedUrl.includes('polymarket.com')) {
-      return await lookupPolymarket(url);
-    }
+      // Detect source type from URL
+      if (normalizedUrl.includes('youtube.com') || normalizedUrl.includes('youtu.be')) {
+        return await lookupYouTube(accountId, url);
+      }
 
-    // Default: try RSS discovery
-    return await lookupRSS(url);
-  } catch (error) {
-    console.error('Source lookup error:', error);
-    return NextResponse.json(
-      { error: 'Failed to lookup source' },
-      { status: 500, headers: CORS_HEADERS }
-    );
+      if (normalizedUrl.includes('twitter.com') || normalizedUrl.includes('x.com')) {
+        return await lookupTwitter(url);
+      }
+
+      if (normalizedUrl.includes('polymarket.com')) {
+        return await lookupPolymarket(url);
+      }
+
+      // Default: try RSS discovery
+      return await lookupRSS(accountId, url);
+    } catch (error) {
+      console.error('Source lookup error:', error);
+      return NextResponse.json(
+        { error: 'Failed to lookup source' },
+        { status: 500, headers: CORS_HEADERS }
+      );
+    }
+  } catch (e) {
+    if (e instanceof AuthError) return unauthorizedResponse();
+    throw e;
   }
 }
 
@@ -174,7 +179,7 @@ export async function OPTIONS() {
   });
 }
 
-async function lookupYouTube(url: string): Promise<NextResponse> {
+async function lookupYouTube(accountId: string, url: string): Promise<NextResponse> {
   if (!YOUTUBE_API_KEY) {
     return NextResponse.json(
       { error: 'YouTube API not configured' },
@@ -262,7 +267,7 @@ async function lookupYouTube(url: string): Promise<NextResponse> {
   const channelDescription = decodeHtmlEntities(channel.snippet.description)?.substring(0, 300);
 
   // Suggest a topic based on channel name and description
-  const suggestedTopicId = await suggestTopic(channelName, channelDescription);
+  const suggestedTopicId = await suggestTopic(accountId, channelName, channelDescription);
 
   const result: SourceInfo = {
     type: 'youtube',
@@ -510,7 +515,7 @@ async function checkIfFeed(url: string): Promise<DiscoveredFeed | null> {
   }
 }
 
-async function lookupRSS(url: string): Promise<NextResponse> {
+async function lookupRSS(accountId: string, url: string): Promise<NextResponse> {
   // Discover RSS feeds directly (no HTTP self-call)
   const discoverData = await discoverFeeds(url);
 
@@ -525,7 +530,7 @@ async function lookupRSS(url: string): Promise<NextResponse> {
   const feedName = decodeHtmlEntities(feed.title || discoverData.pageTitle || 'RSS Feed');
 
   // Suggest a topic based on feed name and page title
-  const suggestedTopicId = await suggestTopic(feedName, discoverData.pageTitle);
+  const suggestedTopicId = await suggestTopic(accountId, feedName, discoverData.pageTitle);
 
   const result: SourceInfo = {
     type: 'rss',

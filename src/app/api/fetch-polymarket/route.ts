@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin, getAccountId } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
+import { resolveAuth, unauthorizedResponse } from '@/lib/auth';
 
 const GAMMA_API = 'https://gamma-api.polymarket.com';
 
@@ -102,8 +103,14 @@ function formatVolume(volume: string | undefined): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    // Use account_id from body (cron job) or fall back to default
-    const accountId = body.account_id || getAccountId();
+    let accountId: string;
+    if (body.account_id) {
+      accountId = body.account_id;
+    } else {
+      const auth = await resolveAuth();
+      if (!auth) return unauthorizedResponse();
+      accountId = auth.accountId;
+    }
     const sourceId = body.source_id;
 
     // Get Polymarket sources
