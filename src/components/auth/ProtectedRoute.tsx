@@ -14,12 +14,25 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
-  // Check if onboarding is needed after auth is complete
+  // Check if onboarding is needed after auth is complete (from database)
   useEffect(() => {
     if (!loading) {
-      const isComplete = localStorage.getItem('radar_onboarding_complete') === 'true';
-      setShowOnboarding(!isComplete);
-      setCheckingOnboarding(false);
+      fetch('/api/preferences')
+        .then(res => res.json())
+        .then(data => {
+          const needsOnboarding = !data.onboarding_complete;
+          setShowOnboarding(needsOnboarding);
+          setCheckingOnboarding(false);
+
+          // Seed default topics for new users (runs in background)
+          if (needsOnboarding) {
+            fetch('/api/seed-topics', { method: 'POST' }).catch(() => {});
+          }
+        })
+        .catch(() => {
+          // On error, don't show onboarding
+          setCheckingOnboarding(false);
+        });
     }
   }, [loading]);
 

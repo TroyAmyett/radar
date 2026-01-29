@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Radio, Globe, Clock, ArrowRight, Check } from 'lucide-react';
+import { Radio, Globe, Clock, ArrowRight, Check, Bookmark, Share, PlusSquare, Smartphone } from 'lucide-react';
 import { setUserTimezone } from '@/lib/timezone';
 
 interface WelcomeModalProps {
@@ -32,15 +32,21 @@ const timezoneOptions = [
 ];
 
 export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
+  const [step, setStep] = useState<'timezone' | 'bookmark'>('timezone');
   const [timezone, setTimezone] = useState('');
   const [detectedTimezone, setDetectedTimezone] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     // Detect browser timezone on mount
     const detected = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
     setDetectedTimezone(detected);
     setTimezone(detected);
+
+    // Detect iOS/iPadOS for platform-specific instructions
+    const ua = navigator.userAgent;
+    setIsIOS(/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
   }, []);
 
   const handleComplete = async () => {
@@ -49,7 +55,7 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
       // Save timezone to localStorage
       setUserTimezone(timezone);
 
-      // Save timezone to server preferences
+      // Save timezone to server preferences (this marks onboarding complete)
       await fetch('/api/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,14 +69,10 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
         }),
       });
 
-      // Mark onboarding as complete
-      localStorage.setItem('radar_onboarding_complete', 'true');
-
       onComplete();
     } catch (error) {
       console.error('Failed to save preferences:', error);
-      // Still complete onboarding even if save fails
-      localStorage.setItem('radar_onboarding_complete', 'true');
+      // Still complete onboarding even if save fails - user can set timezone in settings
       onComplete();
     } finally {
       setIsSaving(false);
@@ -98,61 +100,151 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
           </p>
         </div>
 
-        {/* Timezone Selection */}
-        <div className="space-y-4 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-accent/20">
-              <Globe className="w-5 h-5 text-accent" />
-            </div>
-            <div>
-              <h3 className="font-medium">Confirm Your Timezone</h3>
-              <p className="text-white/60 text-sm">
-                We&apos;ll use this for all dates and scheduled content
-              </p>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-lg bg-white/5">
-            {detectedTimezone && (
-              <div className="flex items-center gap-2 mb-3 text-sm text-white/60">
-                <Check className="w-4 h-4 text-green-400" />
-                <span>Detected: {getTimezoneLabel(detectedTimezone)}</span>
+        {step === 'timezone' && (
+          <>
+            {/* Timezone Selection */}
+            <div className="space-y-4 mb-8">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-accent/20">
+                  <Globe className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Confirm Your Timezone</h3>
+                  <p className="text-white/60 text-sm">
+                    We&apos;ll use this for all dates and scheduled content
+                  </p>
+                </div>
               </div>
-            )}
 
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="w-4 h-4 text-white/60" />
-              <label className="text-sm font-medium">Your Timezone</label>
+              <div className="p-4 rounded-lg bg-white/5">
+                {detectedTimezone && (
+                  <div className="flex items-center gap-2 mb-3 text-sm text-white/60">
+                    <Check className="w-4 h-4 text-green-400" />
+                    <span>Detected: {getTimezoneLabel(detectedTimezone)}</span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 text-white/60" />
+                  <label className="text-sm font-medium">Your Timezone</label>
+                </div>
+                <select
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="glass-input w-full"
+                >
+                  {timezoneOptions.map((tz) => (
+                    <option key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <select
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
-              className="glass-input w-full"
-            >
-              {timezoneOptions.map((tz) => (
-                <option key={tz.value} value={tz.value}>
-                  {tz.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        {/* Get Started Button */}
-        <button
-          onClick={handleComplete}
-          disabled={isSaving}
-          className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
-        >
-          {isSaving ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <>
-              Get Started
+            {/* Next Button */}
+            <button
+              onClick={() => setStep('bookmark')}
+              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+            >
+              Next
               <ArrowRight className="w-5 h-5" />
-            </>
-          )}
-        </button>
+            </button>
+          </>
+        )}
+
+        {step === 'bookmark' && (
+          <>
+            {/* Bookmark / Add to Home Screen Reminder */}
+            <div className="space-y-4 mb-8">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-accent/20">
+                  <Bookmark className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Save Radar for Easy Access</h3>
+                  <p className="text-white/60 text-sm">
+                    Bookmark this page so you can find it again
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-lg bg-white/5 space-y-4">
+                {isIOS ? (
+                  /* iOS / iPadOS instructions */
+                  <>
+                    <div className="flex items-start gap-3">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold shrink-0 mt-0.5">1</div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span>Tap the</span>
+                        <Share className="w-4 h-4 text-accent" />
+                        <span className="font-medium">Share</span>
+                        <span>button in Safari</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold shrink-0 mt-0.5">2</div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span>Select</span>
+                        <PlusSquare className="w-4 h-4 text-accent" />
+                        <span className="font-medium">Add to Home Screen</span>
+                      </div>
+                    </div>
+                    <p className="text-white/40 text-xs">
+                      This adds Radar as an app icon on your home screen for quick access.
+                    </p>
+                  </>
+                ) : (
+                  /* Desktop / Android instructions */
+                  <>
+                    <div className="flex items-start gap-3">
+                      <Smartphone className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium mb-1">On mobile?</p>
+                        <p className="text-white/60">Use your browser&apos;s menu to &quot;Add to Home Screen&quot; for app-like access.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Bookmark className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium mb-1">On desktop?</p>
+                        <p className="text-white/60">
+                          Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 text-xs font-mono">Ctrl+D</kbd> (or <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 text-xs font-mono">Cmd+D</kbd> on Mac) to bookmark this page.
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Get Started Button */}
+            <button
+              onClick={handleComplete}
+              disabled={isSaving}
+              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {isSaving ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  Get Started
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+
+            {/* Step indicator */}
+            <div className="flex justify-center gap-2 mt-4">
+              <button
+                onClick={() => setStep('timezone')}
+                className="w-2 h-2 rounded-full bg-white/30 hover:bg-white/50 transition-colors"
+                aria-label="Go to timezone step"
+              />
+              <div className="w-2 h-2 rounded-full bg-accent" />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

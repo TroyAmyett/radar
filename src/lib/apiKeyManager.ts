@@ -1,10 +1,15 @@
 import { createServerClient } from '@/lib/supabase/server';
+import {
+  resolveApiKey,
+  getApiKeyStatus,
+  type AuthContext,
+  type AIProvider as SharedAIProvider,
+  AGENTPM_URLS,
+} from '@funnelists/auth';
 
-const AGENTPM_URL = process.env.NEXT_PUBLIC_AGENTPM_URL || 'https://agentpm.funnelists.com';
+const AGENTPM_URL = process.env.NEXT_PUBLIC_AGENTPM_URL || AGENTPM_URLS.production;
 
-// Tiers that can use platform-provided keys
-const PLATFORM_KEY_TIERS = ['beta', 'trial', 'demo', 'free'];
-
+// Re-export for backwards compatibility
 export type AIProvider = 'anthropic' | 'gemini';
 
 export interface KeyStatus {
@@ -15,25 +20,14 @@ export interface KeyStatus {
 }
 
 /**
- * Get an API key for the specified provider (server-side only)
- * Uses tier-based logic:
- * - Beta/Trial/Demo/Free: Use platform keys
- * - Paying tiers: Require BYOK from AgentPM
+ * Build auth context from Supabase user data (server-side)
  */
-export async function getApiKey(provider: AIProvider): Promise<string> {
-  // First, try platform key (works for beta/trial/demo/free users)
-  const platformKey = process.env[`${provider.toUpperCase()}_API_KEY`];
-
-  // Get user's subscription tier to determine if they can use platform keys
+async function buildServerAuthContext(): Promise<AuthContext & { platformKey?: string }> {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    // No user session - if platform key exists, use it (for cron jobs, etc)
-    if (platformKey) {
-      return platformKey;
-    }
-    throw new Error('Please sign in to use Radar');
+    return { userId: undefined };
   }
 
   // Get user's subscription tier
@@ -46,11 +40,7 @@ export async function getApiKey(provider: AIProvider): Promise<string> {
     .limit(10);
 
   if (!userAccounts || userAccounts.length === 0) {
-    // No account found - use platform key if available
-    if (platformKey) {
-      return platformKey;
-    }
-    throw new Error('No active account found');
+    return { userId: user.id };
   }
 
   const userAccount = userAccounts.find(a => a.is_primary) || userAccounts[0];
@@ -58,51 +48,81 @@ export async function getApiKey(provider: AIProvider): Promise<string> {
   // Get subscription
   const { data: subscription } = await supabase
     .from('subscriptions')
-    .select('tier')
+    .select('id, tier, status, account_id')
     .eq('account_id', userAccount.account_id)
     .eq('status', 'active')
     .single();
 
-  const tier = subscription?.tier || 'free';
+  // Get account details
+  const { data: account } = await supabase
+    .from('accounts')
+    .select('id, slug')
+    .eq('id', userAccount.account_id)
+    .single();
 
-  // Platform tier users can use platform keys
-  if (PLATFORM_KEY_TIERS.includes(tier) && platformKey) {
-    return platformKey;
+  return {
+    userId: user.id,
+    account: account ? {
+      id: account.id,
+      slug: account.slug,
+      plan: subscription?.tier || 'free',
+    } : null,
+    subscription: subscription ? {
+      id: subscription.id,
+      account_id: subscription.account_id,
+      tier: subscription.tier,
+      status: subscription.status,
+    } : null,
+  };
+}
+
+/**
+ * Get an API key for the specified provider (server-side only)
+ * Uses shared @funnelists/auth package for tier-based logic:
+ * - Beta/Trial/Demo/Free: Use platform keys
+ * - Paying tiers: Require BYOK from AgentPM
+ */
+export async function getApiKey(provider: AIProvider): Promise<string> {
+  const platformKey = process.env[`${provider.toUpperCase()}_API_KEY`];
+  const context = await buildServerAuthContext();
+
+  // No user session - if platform key exists, use it (for cron jobs, etc)
+  if (!context.userId) {
+    if (platformKey) {
+      return platformKey;
+    }
+    throw new Error('Please sign in to use Radar');
   }
 
-  // Paying customers must use BYOK
-  // Fetch user's BYOK key from AgentPM
-  const response = await fetch(`${AGENTPM_URL}/api/keys/get`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ provider, userId: user.id })
+  // Use shared resolver
+  const result = await resolveApiKey({
+    provider: provider as SharedAIProvider,
+    context,
+    config: {
+      agentpmUrl: AGENTPM_URL,
+      platformKeys: {
+        anthropic: process.env.ANTHROPIC_API_KEY,
+        gemini: process.env.GEMINI_API_KEY,
+      },
+    },
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to retrieve ${provider} API key`);
+  if (result.key) {
+    return result.key;
   }
 
-  const { key } = await response.json();
-
-  if (!key) {
-    throw new Error(
-      `Please configure your ${provider} API key in Settings. ` +
-      `As a ${tier} tier user, you need to bring your own API key.`
-    );
-  }
-
-  return key;
+  throw new Error(result.error || `Failed to retrieve ${provider} API key`);
 }
 
 /**
  * Get key status for UI display (server-side only)
  * Shows whether a key is configured and where it comes from
+ * Uses shared @funnelists/auth package
  */
 export async function getKeyStatus(provider: AIProvider): Promise<KeyStatus> {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const context = await buildServerAuthContext();
 
-  if (!user) {
+  if (!context.userId) {
     return {
       configured: false,
       source: 'none',
@@ -110,59 +130,23 @@ export async function getKeyStatus(provider: AIProvider): Promise<KeyStatus> {
     };
   }
 
-  // Get user's subscription tier
-  const { data: userAccounts } = await supabase
-    .from('user_accounts')
-    .select('account_id, is_primary')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .order('is_primary', { ascending: false })
-    .limit(10);
-
-  const userAccount = userAccounts?.find(a => a.is_primary) || userAccounts?.[0];
-
-  let tier = 'free';
-  if (userAccount) {
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('tier')
-      .eq('account_id', userAccount.account_id)
-      .eq('status', 'active')
-      .single();
-    tier = subscription?.tier || 'free';
-  }
-
-  const isPlatformTier = PLATFORM_KEY_TIERS.includes(tier);
-
-  // Platform tiers can use platform keys
-  if (isPlatformTier && process.env[`${provider.toUpperCase()}_API_KEY`]) {
-    return {
-      configured: true,
-      source: 'platform',
-      required: false
-    };
-  }
-
-  // Check if user has BYOK configured
-  try {
-    const response = await fetch(`${AGENTPM_URL}/api/keys/status?provider=${provider}&userId=${user.id}`);
-
-    if (response.ok) {
-      const data = await response.json();
-      return {
-        configured: data.configured || false,
-        source: data.configured ? 'byok' : 'none',
-        required: !isPlatformTier,
-        keyHint: data.keyHint
-      };
+  // Use shared status checker
+  const status = await getApiKeyStatus(
+    provider as SharedAIProvider,
+    context,
+    {
+      agentpmUrl: AGENTPM_URL,
+      platformKeys: {
+        anthropic: process.env.ANTHROPIC_API_KEY,
+        gemini: process.env.GEMINI_API_KEY,
+      },
     }
-  } catch (error) {
-    console.error(`Failed to check ${provider} key status:`, error);
-  }
+  );
 
   return {
-    configured: false,
-    source: 'none',
-    required: !isPlatformTier
+    configured: status.isConfigured,
+    source: status.source,
+    required: status.required,
+    keyHint: status.keyHint,
   };
 }

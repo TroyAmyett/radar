@@ -1,10 +1,16 @@
 import { createClient } from '@/lib/supabase/client';
+import {
+  isPlatformFunded,
+  type SubscriptionTier,
+  type SubscriptionStatus,
+} from '@funnelists/auth';
 
+// Re-export for backwards compatibility
 export interface Subscription {
   id: string;
   account_id: string;
-  tier: 'beta' | 'trial' | 'demo' | 'free' | 'friends_family' | 'starter' | 'pro' | 'business' | 'enterprise';
-  status: 'active' | 'trialing' | 'past_due' | 'canceled';
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
   current_period_end: string;
 }
 
@@ -61,17 +67,22 @@ export async function getCurrentSubscription(): Promise<Subscription> {
 
 /**
  * Check if the user is on a tier that can use platform-provided API keys
+ * Uses shared @funnelists/auth package
  */
 export async function canUsePlatformKeys(): Promise<boolean> {
   const subscription = await getCurrentSubscription();
-  const platformTiers = ['beta', 'trial', 'demo', 'free'];
-  return platformTiers.includes(subscription.tier);
+  return isPlatformFunded({
+    account: {
+      id: subscription.account_id,
+      plan: subscription.tier,
+    },
+  });
 }
 
 /**
  * Check if the user is required to provide their own API keys
  */
 export async function requiresBYOK(): Promise<boolean> {
-  const canUseplatform = await canUsePlatformKeys();
-  return !canUseplatform;
+  const canUse = await canUsePlatformKeys();
+  return !canUse;
 }
