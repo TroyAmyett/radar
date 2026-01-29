@@ -27,12 +27,11 @@ export async function resolveAuth(): Promise<AuthResult | null> {
 
   const adminClient = createAdminClient();
 
-  // Query user_accounts for this user's active account
+  // Query user_accounts for this user's account
   const { data: userAccounts } = await adminClient
     .from('user_accounts')
     .select('account_id, is_primary')
     .eq('user_id', user.id)
-    .eq('status', 'active')
     .order('is_primary', { ascending: false })
     .limit(10);
 
@@ -67,7 +66,6 @@ export async function resolveAuth(): Promise<AuthResult | null> {
       user_id: user.id,
       account_id: newAccount.id,
       is_primary: true,
-      status: 'active',
       role: 'owner',
     });
 
