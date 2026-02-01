@@ -14,6 +14,7 @@ export interface WelcomeEmailData {
   to: string;
   userName?: string;
   loginUrl?: string;
+  videoUrl?: string;
 }
 
 export async function sendDigestEmail(data: DigestEmailData): Promise<string | null> {
@@ -39,6 +40,7 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<string |
     const html = await render(WelcomeEmail({
       userName: data.userName,
       loginUrl,
+      videoUrl: data.videoUrl,
     }));
 
     const result = await resend.emails.send({

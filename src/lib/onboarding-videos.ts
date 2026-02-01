@@ -12,7 +12,7 @@ export interface OnboardingVideo {
   title: string
   /** Short description shown below the title */
   description: string
-  /** Direct URL to the mp4 video file */
+  /** Video URL — mp4 path, YouTube URL, or YouTube embed URL */
   url: string | null
   /** Duration label, e.g. "2 min" */
   duration: string
@@ -58,6 +58,42 @@ export const onboardingVideos: Record<string, OnboardingVideo> = {
     url: '/videos/dailyDigest.mp4',
     duration: '2 min',
   },
+}
+
+/**
+ * Extract YouTube video ID from various URL formats:
+ * - https://www.youtube.com/watch?v=VIDEO_ID
+ * - https://youtu.be/VIDEO_ID
+ * - https://www.youtube.com/embed/VIDEO_ID
+ * Returns null if the URL is not a YouTube URL.
+ */
+export function getYouTubeId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?.*v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+  ]
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match) return match[1]
+  }
+  return null
+}
+
+/** Get YouTube embed URL from any YouTube URL format */
+export function getYouTubeEmbedUrl(url: string): string | null {
+  const id = getYouTubeId(url)
+  return id ? `https://www.youtube.com/embed/${id}?autoplay=1&rel=0` : null
+}
+
+/** Get YouTube thumbnail URL */
+export function getYouTubeThumbnail(url: string): string | null {
+  const id = getYouTubeId(url)
+  return id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : null
+}
+
+/** Get a linkable YouTube watch URL (for emails, external links) */
+export function getYouTubeWatchUrl(url: string): string | null {
+  const id = getYouTubeId(url)
+  return id ? `https://www.youtube.com/watch?v=${id}` : null
 }
 
 const WATCHED_STORAGE_KEY = 'radar_videos_watched'

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { X, Play } from 'lucide-react';
-import { OnboardingVideo, markVideoWatched } from '@/lib/onboarding-videos';
+import { OnboardingVideo, markVideoWatched, getYouTubeEmbedUrl } from '@/lib/onboarding-videos';
 
 interface VideoModalProps {
   video: OnboardingVideo;
@@ -59,14 +59,29 @@ export default function VideoModal({ video, isOpen, onClose }: VideoModalProps) 
 
         {/* Video player */}
         {video.url ? (
-          <video
-            ref={videoRef}
-            src={video.url}
-            controls
-            autoPlay
-            className="w-full aspect-video bg-black"
-            playsInline
-          />
+          (() => {
+            const youtubeEmbed = getYouTubeEmbedUrl(video.url!);
+            if (youtubeEmbed) {
+              return (
+                <iframe
+                  src={youtubeEmbed}
+                  className="w-full aspect-video bg-black"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              );
+            }
+            return (
+              <video
+                ref={videoRef}
+                src={video.url!}
+                controls
+                autoPlay
+                className="w-full aspect-video bg-black"
+                playsInline
+              />
+            );
+          })()
         ) : (
           <div className="w-full aspect-video bg-black/50 flex items-center justify-center">
             <div className="text-center text-white/40">

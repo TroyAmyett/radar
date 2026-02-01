@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Radio, Globe, Clock, ArrowRight, Check, Bookmark, Share, PlusSquare, Smartphone, Play, SkipForward } from 'lucide-react';
 import { setUserTimezone } from '@/lib/timezone';
-import { onboardingVideos, markVideoWatched } from '@/lib/onboarding-videos';
+import { onboardingVideos, markVideoWatched, getYouTubeEmbedUrl } from '@/lib/onboarding-videos';
 
 interface WelcomeModalProps {
   onComplete: () => void;
@@ -174,15 +174,24 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
 
               {welcomeVideo.url && (
                 <div className="rounded-lg overflow-hidden bg-black">
-                  <video
-                    ref={videoRef}
-                    src={welcomeVideo.url}
-                    controls
-                    autoPlay
-                    playsInline
-                    className="w-full aspect-video"
-                    onPlay={() => markVideoWatched(welcomeVideo.key)}
-                  />
+                  {getYouTubeEmbedUrl(welcomeVideo.url) ? (
+                    <iframe
+                      src={getYouTubeEmbedUrl(welcomeVideo.url)!}
+                      className="w-full aspect-video"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <video
+                      ref={videoRef}
+                      src={welcomeVideo.url}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="w-full aspect-video"
+                      onPlay={() => markVideoWatched(welcomeVideo.key)}
+                    />
+                  )}
                 </div>
               )}
             </div>

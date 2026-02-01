@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Play, CheckCircle2 } from 'lucide-react';
 import VideoModal from './VideoModal';
-import { onboardingVideos, OnboardingVideo, isVideoWatched } from '@/lib/onboarding-videos';
+import { onboardingVideos, OnboardingVideo, isVideoWatched, getYouTubeThumbnail } from '@/lib/onboarding-videos';
 
 /**
  * Full gallery of onboarding videos — used on the help/videos page.
@@ -35,8 +35,15 @@ export default function VideoGallery() {
               className="glass-card p-0 overflow-hidden text-left hover:border-accent/30 transition-colors group"
             >
               {/* Thumbnail / play area */}
-              <div className="aspect-video bg-black/40 flex items-center justify-center relative">
-                <Play className="w-10 h-10 text-white/30 group-hover:text-accent group-hover:scale-110 transition-all" />
+              <div className="aspect-video bg-black/40 flex items-center justify-center relative overflow-hidden">
+                {video.url && getYouTubeThumbnail(video.url) ? (
+                  <img
+                    src={getYouTubeThumbnail(video.url)!}
+                    alt={video.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : null}
+                <Play className="relative z-10 w-10 h-10 text-white/60 group-hover:text-accent group-hover:scale-110 transition-all drop-shadow-lg" />
                 {/* Duration badge */}
                 <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/60 text-xs text-white/70">
                   {video.duration}
