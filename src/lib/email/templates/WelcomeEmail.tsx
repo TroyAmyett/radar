@@ -15,9 +15,11 @@ import {
 interface WelcomeEmailProps {
   userName?: string;
   loginUrl: string;
+  /** Optional URL to the welcome/intro video */
+  videoUrl?: string;
 }
 
-export function WelcomeEmail({ userName, loginUrl }: WelcomeEmailProps) {
+export function WelcomeEmail({ userName, loginUrl, videoUrl }: WelcomeEmailProps) {
   const previewText = `Welcome to Radar - Your intelligence feed awaits`;
 
   return (
@@ -60,6 +62,17 @@ export function WelcomeEmail({ userName, loginUrl }: WelcomeEmailProps) {
                 <strong>AI Insights</strong> - Let AI help surface important trends
               </Text>
             </Section>
+
+            {videoUrl && (
+              <Section style={videoSection}>
+                <Text style={videoCta}>
+                  Watch a quick 2-minute intro to see Radar in action:
+                </Text>
+                <Button style={videoButton} href={videoUrl}>
+                  ▶ Watch the Tour
+                </Button>
+              </Section>
+            )}
 
             <Section style={buttonSection}>
               <Button style={button} href={loginUrl}>
@@ -151,6 +164,34 @@ const featureItem = {
   margin: '0 0 12px 0',
   paddingLeft: '16px',
   borderLeft: '2px solid #0ea5e9',
+};
+
+const videoSection = {
+  textAlign: 'center' as const,
+  margin: '24px 0',
+  padding: '20px',
+  backgroundColor: 'rgba(14, 165, 233, 0.08)',
+  borderRadius: '8px',
+  border: '1px solid rgba(14, 165, 233, 0.2)',
+};
+
+const videoCta = {
+  color: 'rgba(255, 255, 255, 0.8)',
+  fontSize: '15px',
+  lineHeight: '24px',
+  margin: '0 0 16px 0',
+};
+
+const videoButton = {
+  backgroundColor: 'transparent',
+  borderRadius: '8px',
+  color: '#0ea5e9',
+  fontSize: '15px',
+  fontWeight: '600',
+  textDecoration: 'none',
+  padding: '10px 24px',
+  display: 'inline-block',
+  border: '1px solid #0ea5e9',
 };
 
 const buttonSection = {

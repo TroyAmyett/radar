@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Radio, Globe, Clock, ArrowRight, Check, Bookmark, Share, PlusSquare, Smartphone } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Radio, Globe, Clock, ArrowRight, Check, Bookmark, Share, PlusSquare, Smartphone, Play, SkipForward } from 'lucide-react';
 import { setUserTimezone } from '@/lib/timezone';
+import { onboardingVideos, markVideoWatched } from '@/lib/onboarding-videos';
 
 interface WelcomeModalProps {
   onComplete: () => void;
@@ -32,7 +33,9 @@ const timezoneOptions = [
 ];
 
 export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
-  const [step, setStep] = useState<'timezone' | 'bookmark'>('timezone');
+  const [step, setStep] = useState<'timezone' | 'video' | 'bookmark'>('timezone');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const welcomeVideo = onboardingVideos.welcomeOverview;
   const [timezone, setTimezone] = useState('');
   const [detectedTimezone, setDetectedTimezone] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -144,12 +147,69 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
 
             {/* Next Button */}
             <button
-              onClick={() => setStep('bookmark')}
+              onClick={() => setStep(welcomeVideo.url ? 'video' : 'bookmark')}
               className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-medium py-3 px-4 rounded-lg transition-colors"
             >
               Next
               <ArrowRight className="w-5 h-5" />
             </button>
+          </>
+        )}
+
+        {step === 'video' && (
+          <>
+            {/* Welcome Video */}
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-accent/20">
+                  <Play className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Quick Tour</h3>
+                  <p className="text-white/60 text-sm">
+                    Watch a {welcomeVideo.duration} overview of how Radar works
+                  </p>
+                </div>
+              </div>
+
+              {welcomeVideo.url && (
+                <div className="rounded-lg overflow-hidden bg-black">
+                  <video
+                    ref={videoRef}
+                    src={welcomeVideo.url}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="w-full aspect-video"
+                    onPlay={() => markVideoWatched(welcomeVideo.key)}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Continue / Skip */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  if (videoRef.current) videoRef.current.pause();
+                  setStep('bookmark');
+                }}
+                className="flex-1 flex items-center justify-center gap-2 text-white/60 hover:text-white font-medium py-3 px-4 rounded-lg border border-white/10 hover:border-white/20 transition-colors"
+              >
+                <SkipForward className="w-4 h-4" />
+                Skip
+              </button>
+              <button
+                onClick={() => {
+                  if (videoRef.current) videoRef.current.pause();
+                  setStep('bookmark');
+                }}
+                className="flex-1 flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+              >
+                Continue
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
           </>
         )}
 
@@ -241,6 +301,13 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
                 className="w-2 h-2 rounded-full bg-white/30 hover:bg-white/50 transition-colors"
                 aria-label="Go to timezone step"
               />
+              {welcomeVideo.url && (
+                <button
+                  onClick={() => setStep('video')}
+                  className="w-2 h-2 rounded-full bg-white/30 hover:bg-white/50 transition-colors"
+                  aria-label="Go to video step"
+                />
+              )}
               <div className="w-2 h-2 rounded-full bg-accent" />
             </div>
           </>

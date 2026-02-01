@@ -6,6 +6,8 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic } from '@/types/database';
 import { Settings, Plus, Palette, Mail, Clock, Save, Pencil, Trash2 } from 'lucide-react';
 import { setUserTimezone, getUserTimezone } from '@/lib/timezone';
+import VideoHelpButton from '@/components/onboarding/VideoHelpButton';
+import { onboardingVideos } from '@/lib/onboarding-videos';
 
 // Expanded icon options with keyword associations for auto-selection
 const iconOptions = [
@@ -329,8 +331,11 @@ export default function SettingsPage() {
                 <div className="p-2 rounded-lg bg-accent/20">
                   <Palette className="w-5 h-5 text-accent" />
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold">Topics</h2>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-semibold">Topics</h2>
+                    <VideoHelpButton video={onboardingVideos.createTopics} compact />
+                  </div>
                   <p className="text-white/60 text-sm">
                     Organize your content with custom topics
                   </p>
@@ -525,8 +530,11 @@ export default function SettingsPage() {
               <div className="p-2 rounded-lg bg-purple-500/20">
                 <Mail className="w-5 h-5 text-purple-400" />
               </div>
-              <div>
-                <h2 className="text-lg font-semibold">Email Digests</h2>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">Email Digests</h2>
+                  <VideoHelpButton video={onboardingVideos.dailyDigest} compact />
+                </div>
                 <p className="text-white/60 text-sm">
                   Get daily or weekly summaries delivered to your inbox
                 </p>

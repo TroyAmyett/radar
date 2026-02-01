@@ -5,6 +5,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { Heart, Bookmark, MessageSquare, ExternalLink, Sparkles, Send, ClipboardList, FileText, X, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 
+const isEmbedded = process.env.NEXT_PUBLIC_RADAR_MODE === 'embedded';
+
 interface ArticleCardProps {
   item: ContentItemWithInteraction;
   onLike?: (id: string) => void;
@@ -205,21 +207,24 @@ export default function ArticleCard({
             <Send className="w-4 h-4" />
           </button>
 
-          <button
-            onClick={handleCreateTask}
-            className="p-2 rounded-lg hover:bg-blue-500/20 text-white/50 hover:text-blue-400 transition-all"
-            title="Create Task"
-          >
-            <ClipboardList className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={handleSaveToNotes}
-            className="p-2 rounded-lg hover:bg-yellow-500/20 text-white/50 hover:text-yellow-400 transition-all"
-            title="Save to Notes"
-          >
-            <FileText className="w-4 h-4" />
-          </button>
+          {isEmbedded && (
+            <>
+              <button
+                onClick={handleCreateTask}
+                className="p-2 rounded-lg hover:bg-blue-500/20 text-white/50 hover:text-blue-400 transition-all"
+                title="Create Task"
+              >
+                <ClipboardList className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleSaveToNotes}
+                className="p-2 rounded-lg hover:bg-yellow-500/20 text-white/50 hover:text-yellow-400 transition-all"
+                title="Save to Notes"
+              >
+                <FileText className="w-4 h-4" />
+              </button>
+            </>
+          )}
 
           <button
             onClick={handleReadAloud}

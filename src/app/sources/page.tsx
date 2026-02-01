@@ -10,6 +10,8 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Source, Topic } from '@/types/database';
 import { Plus, Rss, Youtube, Twitter, Trash2, RefreshCw, Pencil, TrendingUp, LucideProps, Sparkles, X, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import VideoHelpButton from '@/components/onboarding/VideoHelpButton';
+import { onboardingVideos } from '@/lib/onboarding-videos';
 
 type SourceType = 'rss' | 'youtube' | 'twitter' | 'polymarket';
 
@@ -331,6 +333,7 @@ function SourcesPageContent() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-semibold">Sources</h1>
+                <VideoHelpButton video={onboardingVideos.addFirstSource} compact />
                 <span className={`text-sm px-2 py-0.5 rounded-full ${
                   limits.atLimit
                     ? 'bg-red-500/20 text-red-400'

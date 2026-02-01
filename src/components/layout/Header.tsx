@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, LogOut, User, Settings, Radio, LayoutDashboard, Rss, Bookmark, Flame } from 'lucide-react';
+import { Search, LogOut, User, Settings, Radio, LayoutDashboard, Rss, Bookmark, Flame, Play } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,6 +19,7 @@ const navItems = [
   { href: '/sources', label: 'Sources', icon: Rss, adminOnly: false },
   { href: '/saved', label: 'Saved', icon: Bookmark, adminOnly: false },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: false },
+  { href: '/help', label: 'Help', icon: Play, adminOnly: false },
 ];
 
 interface HeaderProps {

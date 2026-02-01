@@ -12,6 +12,7 @@ import {
   Flame,
   Menu,
   X,
+  Play,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/sources', label: 'Sources', icon: Rss, adminOnly: false },
   { href: '/saved', label: 'Saved', icon: Bookmark, adminOnly: false },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: false },
+  { href: '/help', label: 'Help', icon: Play, adminOnly: false },
 ];
 
 export default function Sidebar() {

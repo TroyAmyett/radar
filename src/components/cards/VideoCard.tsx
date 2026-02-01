@@ -5,6 +5,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { Heart, Bookmark, MessageSquare, ExternalLink, Play, Sparkles, Send, ClipboardList, FileText, X } from 'lucide-react';
 import { useState } from 'react';
 
+const isEmbedded = process.env.NEXT_PUBLIC_RADAR_MODE === 'embedded';
+
 interface VideoCardProps {
   item: ContentItemWithInteraction;
   onLike?: (id: string) => void;
@@ -195,21 +197,24 @@ export default function VideoCard({
             <Send className="w-4 h-4" />
           </button>
 
-          <button
-            onClick={handleCreateTask}
-            className="p-2 rounded-lg hover:bg-blue-500/20 text-white/50 hover:text-blue-400 transition-all"
-            title="Create Task - Opens AgentPM to create a research task from this content"
-          >
-            <ClipboardList className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={handleSaveToNotes}
-            className="p-2 rounded-lg hover:bg-yellow-500/20 text-white/50 hover:text-yellow-400 transition-all"
-            title="Save to Notes - Opens AgentPM NoteTaker with this content"
-          >
-            <FileText className="w-4 h-4" />
-          </button>
+          {isEmbedded && (
+            <>
+              <button
+                onClick={handleCreateTask}
+                className="p-2 rounded-lg hover:bg-blue-500/20 text-white/50 hover:text-blue-400 transition-all"
+                title="Create Task"
+              >
+                <ClipboardList className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleSaveToNotes}
+                className="p-2 rounded-lg hover:bg-yellow-500/20 text-white/50 hover:text-yellow-400 transition-all"
+                title="Save to Notes"
+              >
+                <FileText className="w-4 h-4" />
+              </button>
+            </>
+          )}
 
           <a
             href={item.url}
