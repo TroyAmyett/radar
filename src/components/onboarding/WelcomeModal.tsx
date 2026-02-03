@@ -90,7 +90,7 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="glass-card w-full max-w-md mx-4 p-8">
+      <div className={`glass-card w-full mx-4 p-8 ${step === 'video' ? 'max-w-3xl' : 'max-w-md'} transition-all duration-300`}>
         {/* Logo and Welcome */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
