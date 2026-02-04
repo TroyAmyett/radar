@@ -248,7 +248,8 @@ body {
     padding-right: 40px;
   }
 
-  select.glass-input option {
+  /* Fix white background flash on ALL native <select> dropdown options */
+  select option {
     background-color: #1a1a24;
     color: #e5e5e5;
     padding: var(--fl-spacing-sm);

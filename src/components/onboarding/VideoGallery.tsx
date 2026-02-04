@@ -51,7 +51,7 @@ export default function VideoGallery() {
                     className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                   />
                 ) : null}
-                <Play className="relative z-10 w-10 h-10 text-white/60 group-hover:text-accent group-hover:scale-110 transition-all drop-shadow-lg" />
+                <Play className="relative z-10 w-10 h-10 text-green-400 group-hover:text-green-300 group-hover:scale-110 transition-all drop-shadow-lg" />
                 {/* Duration badge */}
                 <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/60 text-xs text-white/70">
                   {video.duration}

@@ -132,15 +132,15 @@ export default function Header({ onSearch }: HeaderProps) {
 
   return (
     <>
-    <header className="sticky top-0 z-40 bg-white/5 backdrop-blur-xl border-b border-white/10 px-3 md:px-4 lg:px-6 py-3 flex items-center gap-2 md:gap-3">
+    <header className="sticky top-0 z-40 bg-white/5 backdrop-blur-xl border-b border-white/10 px-3 md:px-4 lg:px-6 py-3 flex items-center justify-between gap-2 md:gap-3">
       {/* Logo - hidden on mobile (shown in hamburger menu) */}
       <Link href="/" className="hidden md:flex items-center gap-1.5 flex-shrink-0">
         <Radio className="w-5 h-5 text-accent" />
         <span className="text-base font-semibold text-white hidden lg:inline">Radar</span>
       </Link>
 
-      {/* Desktop Navigation - flex centered */}
-      <nav className={`hidden md:flex items-center flex-1 justify-center ${isEmbedded ? 'gap-0.5' : 'gap-1 lg:gap-2'}`}>
+      {/* Desktop Navigation - absolutely centered */}
+      <nav className={`hidden md:flex items-center absolute left-1/2 -translate-x-1/2 ${isEmbedded ? 'gap-0.5' : 'gap-1 lg:gap-2'}`}>
         {navItems
           .filter((item) => !item.adminOnly || isSuperAdmin)
           .map((item) => {

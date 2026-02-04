@@ -40,13 +40,13 @@ export default function VideoHelpButton({ video, compact, label }: VideoHelpButt
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-accent hover:bg-accent/10 transition-colors"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-green-400 hover:text-green-300 hover:bg-green-500/10 transition-colors"
         title={`Watch: ${video.title}`}
       >
         <Play className="w-3.5 h-3.5" />
         <span>{label || video.duration}</span>
         {!watched && (
-          <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
         )}
       </button>
       <VideoModal video={video} isOpen={isOpen} onClose={() => setIsOpen(false)} />

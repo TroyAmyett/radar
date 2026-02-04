@@ -11,8 +11,8 @@ export default function HelpPage() {
       <Header />
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg bg-accent/20">
-            <Play className="w-5 h-5 text-accent" />
+          <div className="p-2 rounded-lg bg-green-500/20">
+            <Play className="w-5 h-5 text-green-400" />
           </div>
           <div>
             <h1 className="text-xl font-semibold">Getting Started</h1>

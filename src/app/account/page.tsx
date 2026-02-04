@@ -448,7 +448,7 @@ function ConnectionsTab() {
   const [isLoading, setIsLoading] = useState(true);
 
   const providers = [
-    { id: 'twitter', name: 'X (Twitter)', icon: '𝕏', description: 'Post content to X' },
+    { id: 'twitter', name: 'X (Twitter)', icon: '𝕏', description: 'Post content to X', comingSoon: true },
     { id: 'linkedin', name: 'LinkedIn', icon: 'in', description: 'Share to LinkedIn', comingSoon: true },
   ];
 
