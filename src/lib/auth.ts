@@ -46,7 +46,7 @@ export async function resolveAuth(): Promise<AuthResult | null> {
     .insert({
       name: user.user_metadata?.name || user.email || 'Radar User',
       slug: `radar-${user.id.substring(0, 8)}`,
-      plan: 'free',
+      plan: 'beta',
       status: 'active',
       created_by: user.id,
       created_by_type: 'user',
@@ -67,6 +67,16 @@ export async function resolveAuth(): Promise<AuthResult | null> {
       account_id: newAccount.id,
       is_primary: true,
       role: 'owner',
+    });
+
+  // Create beta subscription for early access
+  await adminClient
+    .from('subscriptions')
+    .insert({
+      account_id: newAccount.id,
+      tier: 'beta',
+      status: 'active',
+      current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
   return { accountId: newAccount.id, userId: user.id };
