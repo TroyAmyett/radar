@@ -16,6 +16,8 @@ export interface OnboardingVideo {
   url: string | null
   /** Duration label, e.g. "2 min" */
   duration: string
+  /** Timestamp (seconds) to use for the thumbnail frame. Defaults to 3. */
+  thumbnailTime?: number
 }
 
 /**
@@ -29,6 +31,7 @@ export const onboardingVideos: Record<string, OnboardingVideo> = {
     description: 'A quick overview of how Radar helps you stay ahead of what matters.',
     url: '/videos/welcomeOverview.mp4',
     duration: '2 min',
+    thumbnailTime: 5,
   },
   addFirstSource: {
     key: 'addFirstSource',
@@ -36,6 +39,7 @@ export const onboardingVideos: Record<string, OnboardingVideo> = {
     description: 'Learn how to add RSS feeds, YouTube channels, and more to your feed.',
     url: '/videos/addFirstSource.mp4',
     duration: '1 min',
+    thumbnailTime: 4,
   },
   createTopics: {
     key: 'createTopics',
@@ -43,6 +47,7 @@ export const onboardingVideos: Record<string, OnboardingVideo> = {
     description: 'Organize your feed with custom topics that auto-tag matching content.',
     url: '/videos/createTopics.mp4',
     duration: '2 min',
+    thumbnailTime: 5,
   },
   aiSummaries: {
     key: 'aiSummaries',
@@ -50,6 +55,7 @@ export const onboardingVideos: Record<string, OnboardingVideo> = {
     description: 'See how AI summaries let you scan dozens of articles in seconds.',
     url: '/videos/aiSummaries.mp4',
     duration: '2 min',
+    thumbnailTime: 4,
   },
   dailyDigest: {
     key: 'dailyDigest',
@@ -57,6 +63,7 @@ export const onboardingVideos: Record<string, OnboardingVideo> = {
     description: 'Get a daily briefing delivered right when you need it.',
     url: '/videos/dailyDigest.mp4',
     duration: '2 min',
+    thumbnailTime: 5,
   },
 }
 

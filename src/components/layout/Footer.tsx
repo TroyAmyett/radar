@@ -1,12 +1,14 @@
 'use client';
 
-import { Zap, Globe } from 'lucide-react';
+import { Zap } from 'lucide-react';
 
 export default function Footer() {
+  const year = new Date().getFullYear();
+
   return (
     <footer className="bg-white/5 backdrop-blur-xl border-t border-white/10 px-4 md:px-6 py-3">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
-        {/* Left: Built by Funnelists branding */}
+        {/* Left: Copyright + Funnelists branding */}
         <a
           href="https://funnelists.com"
           target="_blank"
@@ -17,24 +19,27 @@ export default function Footer() {
             <Zap className="w-3 h-3 text-white" />
           </div>
           <span>
-            Built by <span className="text-accent font-medium">Funnelists</span>
+            &copy; {year} <span className="text-accent font-medium">Funnelists</span>
           </span>
         </a>
 
-        {/* Center/Right: Built with Claude Code + CTA */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-white/50">
-            <Globe className="w-4 h-4 text-emerald-400" />
-            <span>Built with Claude Code</span>
-          </div>
-
+        {/* Right: Legal links */}
+        <div className="flex items-center gap-4 text-white/50">
           <a
-            href="https://calendly.com/funnelists"
+            href="https://funnelists.com/terms"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-1.5 rounded-lg bg-accent/20 text-accent hover:bg-accent/30 transition-colors text-sm font-medium"
+            className="hover:text-white transition-colors"
           >
-            Build your AI app
+            Terms
+          </a>
+          <a
+            href="https://funnelists.com/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white transition-colors"
+          >
+            Privacy
           </a>
         </div>
       </div>

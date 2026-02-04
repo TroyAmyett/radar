@@ -51,7 +51,7 @@ export default function VideoGallery() {
                   />
                 ) : video.url ? (
                   <video
-                    src={`${video.url}#t=0.1`}
+                    src={`${video.url}#t=${video.thumbnailTime ?? 3}`}
                     preload="metadata"
                     muted
                     playsInline
