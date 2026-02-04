@@ -30,11 +30,8 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
       // Save timezone to localStorage
       setUserTimezone(timezone);
 
-      // Mark onboarding complete in localStorage (immediate, survives API failures)
-      try { localStorage.setItem('radar_onboarding_complete', 'true'); } catch { /* */ }
-
-      // Save preferences to server
-      await fetch('/api/preferences', {
+      // Save preferences to server (creates the user_preferences row)
+      const res = await fetch('/api/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -47,10 +44,16 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
         }),
       });
 
+      // Only cache onboarding complete after the server confirms the save
+      if (res.ok) {
+        try { localStorage.setItem('radar_onboarding_complete', 'true'); } catch { /* */ }
+      }
+
       onComplete();
       router.push('/settings');
     } catch (error) {
       console.error('Failed to save preferences:', error);
+      // Don't set localStorage flag — let them retry on next load
       onComplete();
       router.push('/settings');
     } finally {

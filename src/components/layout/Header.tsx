@@ -132,15 +132,17 @@ export default function Header({ onSearch }: HeaderProps) {
 
   return (
     <>
-    <header className="sticky top-0 z-40 bg-white/5 backdrop-blur-xl border-b border-white/10 px-3 md:px-4 lg:px-6 py-3 flex items-center justify-between gap-2 md:gap-3">
-      {/* Logo - hidden on mobile (shown in hamburger menu) */}
-      <Link href="/" className="hidden md:flex items-center gap-1.5 flex-shrink-0">
-        <Radio className="w-5 h-5 text-accent" />
-        <span className="text-base font-semibold text-white hidden lg:inline">Radar</span>
-      </Link>
+    <header className="sticky top-0 z-40 bg-white/5 backdrop-blur-xl border-b border-white/10 px-3 md:px-4 lg:px-6 py-3 flex items-center gap-2 md:gap-3">
+      {/* Left section — logo (equal width with right for centering) */}
+      <div className="hidden md:flex items-center flex-1 min-w-0">
+        <Link href="/" className="flex items-center gap-1.5 flex-shrink-0">
+          <Radio className="w-5 h-5 text-accent" />
+          <span className="text-base font-semibold text-white hidden lg:inline">Radar</span>
+        </Link>
+      </div>
 
-      {/* Desktop Navigation - absolutely centered */}
-      <nav className={`hidden md:flex items-center absolute left-1/2 -translate-x-1/2 ${isEmbedded ? 'gap-0.5' : 'gap-1 lg:gap-2'}`}>
+      {/* Center section — nav (naturally centered between equal flex-1 sides) */}
+      <nav className={`hidden md:flex items-center flex-shrink-0 ${isEmbedded ? 'gap-0.5' : 'gap-1 lg:gap-2'}`}>
         {navItems
           .filter((item) => !item.adminOnly || isSuperAdmin)
           .map((item) => {
@@ -167,84 +169,86 @@ export default function Header({ onSearch }: HeaderProps) {
           })}
       </nav>
 
-      {/* Search */}
-      <form onSubmit={handleSearch} className="w-full md:w-auto md:min-w-[200px] max-w-md min-w-0">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5 text-white/40" />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="glass-input w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-2.5 text-sm md:text-base"
-          />
-        </div>
-      </form>
+      {/* Right section — search + user (equal width with left for centering) */}
+      <div className="flex items-center justify-end gap-2 md:gap-3 flex-1 min-w-0">
+        <form onSubmit={handleSearch} className="w-full md:w-auto md:min-w-[200px] max-w-md min-w-0">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5 text-white/40" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="glass-input w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-2.5 text-sm md:text-base"
+            />
+          </div>
+        </form>
 
-      {/* Changelog Badge - only show when not embedded */}
-      {user && !isEmbedded && (
-        <ChangelogBadge unreadCount={unreadCount} onClick={openDrawer} />
-      )}
+        {/* Changelog Badge - only show when not embedded */}
+        {user && !isEmbedded && (
+          <ChangelogBadge unreadCount={unreadCount} onClick={openDrawer} />
+        )}
 
-      {/* Hide user menu when embedded in AgentPM - parent app handles user context */}
-      {user && !isEmbedded && (
-        <div className="flex-shrink-0">
-          <button
-            ref={buttonRef}
-            onClick={toggleMenu}
-            className="w-8 md:w-9 h-8 md:h-9 rounded-full bg-accent/20 flex items-center justify-center hover:bg-accent/30 transition-colors"
-          >
-            <User className="w-4 md:w-5 h-4 md:h-5 text-accent" />
-          </button>
-
-          {menuOpen && typeof document !== 'undefined' && createPortal(
-            <div
-              ref={menuRef}
-              className="fixed w-48 py-2 rounded-lg bg-[#111118] border border-white/20 shadow-2xl"
-              style={{
-                top: menuPosition.top,
-                right: menuPosition.right,
-                zIndex: 99999,
-              }}
+        {/* User menu - hidden when embedded in AgentPM */}
+        {user && !isEmbedded && (
+          <div className="flex-shrink-0">
+            <button
+              ref={buttonRef}
+              onClick={toggleMenu}
+              className="w-8 md:w-9 h-8 md:h-9 rounded-full bg-accent/20 flex items-center justify-center hover:bg-accent/30 transition-colors"
             >
-              {user.email && (
-                <div className="px-4 py-2 border-b border-white/10">
-                  <p className="text-sm text-white/60 truncate">{user.email}</p>
-                </div>
-              )}
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  router.push('/profile');
+              <User className="w-4 md:w-5 h-4 md:h-5 text-accent" />
+            </button>
+
+            {menuOpen && typeof document !== 'undefined' && createPortal(
+              <div
+                ref={menuRef}
+                className="fixed w-48 py-2 rounded-lg bg-[#111118] border border-white/20 shadow-2xl"
+                style={{
+                  top: menuPosition.top,
+                  right: menuPosition.right,
+                  zIndex: 99999,
                 }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
               >
-                <User className="w-4 h-4" />
-                <span>Profile</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  router.push('/account');
-                }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                data-testid="config-button"
-              >
-                <Settings className="w-4 h-4" />
-                <span>Config</span>
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign Out</span>
-              </button>
-            </div>,
-            document.body
-          )}
-        </div>
-      )}
+                {user.email && (
+                  <div className="px-4 py-2 border-b border-white/10">
+                    <p className="text-sm text-white/60 truncate">{user.email}</p>
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    router.push('/profile');
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  <span>Profile</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    router.push('/account');
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                  data-testid="config-button"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Config</span>
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>,
+              document.body
+            )}
+          </div>
+        )}
+      </div>
     </header>
 
     {/* Changelog Drawer */}

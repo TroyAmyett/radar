@@ -53,16 +53,50 @@ export function useAuth() {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setState((prev) => ({
-        ...prev,
-        user: session?.user ?? null,
-        session,
-        loading: false,
-      }));
-      // Fetch profile if user is logged in
-      if (session?.user && session.access_token) {
-        fetchProfile(session.access_token);
+      if (session) {
+        setState((prev) => ({
+          ...prev,
+          user: session.user ?? null,
+          session,
+          loading: false,
+        }));
+        if (session.user && session.access_token) {
+          fetchProfile(session.access_token);
+        }
+        return;
       }
+
+      // No session in localStorage — try bootstrapping from the auth cookie.
+      // After email confirmation, the server callback sets funnelists-auth-tokens
+      // but the client-side localStorage is empty until we hydrate it here.
+      try {
+        const match = document.cookie.match(/funnelists-auth-tokens=([^;]+)/);
+        if (match) {
+          const tokens = JSON.parse(decodeURIComponent(match[1]));
+          if (tokens?.access_token && tokens?.refresh_token) {
+            supabase.auth.setSession({
+              access_token: tokens.access_token,
+              refresh_token: tokens.refresh_token,
+            }).then(({ data: { session: bootstrapped } }) => {
+              setState((prev) => ({
+                ...prev,
+                user: bootstrapped?.user ?? null,
+                session: bootstrapped,
+                loading: false,
+              }));
+              if (bootstrapped?.user && bootstrapped.access_token) {
+                fetchProfile(bootstrapped.access_token);
+              }
+            }).catch(() => {
+              setState((prev) => ({ ...prev, loading: false }));
+            });
+            return; // Wait for setSession to resolve
+          }
+        }
+      } catch { /* cookie parse failed */ }
+
+      // No session anywhere
+      setState((prev) => ({ ...prev, loading: false }));
     });
 
     // Listen for auth changes

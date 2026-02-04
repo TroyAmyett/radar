@@ -11,25 +11,17 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [isRecovery, setIsRecovery] = useState(() => {
-    // Check URL hash immediately — if it contains recovery params, show the form right away
-    // instead of waiting for Supabase to process the token (which requires a network round-trip)
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash;
-      return hash.includes('type=recovery') || hash.includes('type=magiclink');
+  const [isRecovery, setIsRecovery] = useState(false);
+  const [waiting, setWaiting] = useState(true);
+
+  // Detect recovery params from URL hash (client-side only to avoid hydration mismatch)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes('type=recovery') || hash.includes('type=magiclink')) {
+      setIsRecovery(true);
+      setWaiting(false);
     }
-    return false;
-  });
-  const [waiting, setWaiting] = useState(() => {
-    // Skip waiting if we already detected recovery params in the URL hash
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash;
-      if (hash.includes('type=recovery') || hash.includes('type=magiclink')) {
-        return false;
-      }
-    }
-    return true;
-  });
+  }, []);
 
   // Listen for PASSWORD_RECOVERY event from Supabase
   useEffect(() => {

@@ -6,7 +6,11 @@ import type { NextRequest } from 'next/server';
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  const next = requestUrl.searchParams.get('next') ?? '/';
+  // Validate redirect to prevent open redirect — must be a relative path
+  let next = requestUrl.searchParams.get('next') ?? '/';
+  if (!next.startsWith('/') || next.startsWith('//')) {
+    next = '/';
+  }
   const error = requestUrl.searchParams.get('error');
   const errorDescription = requestUrl.searchParams.get('error_description');
 
