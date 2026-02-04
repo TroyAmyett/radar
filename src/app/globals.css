@@ -249,8 +249,8 @@ body {
   }
 
   select.glass-input option {
-    background: var(--fl-color-bg-surface);
-    color: var(--fl-color-text-primary);
+    background-color: #1a1a24;
+    color: #e5e5e5;
     padding: var(--fl-spacing-sm);
   }
 

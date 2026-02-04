@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Radio, Globe, Clock, ArrowRight, Check, Bookmark, Share, PlusSquare, Smartphone, Play, SkipForward } from 'lucide-react';
+import { Radio, Globe, Clock, ArrowRight, Check, Play, SkipForward } from 'lucide-react';
 import { setUserTimezone } from '@/lib/timezone';
 import { onboardingVideos, markVideoWatched, getYouTubeEmbedUrl } from '@/lib/onboarding-videos';
 
@@ -33,23 +33,18 @@ const timezoneOptions = [
 ];
 
 export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
-  const [step, setStep] = useState<'timezone' | 'video' | 'bookmark'>('timezone');
+  const [step, setStep] = useState<'timezone' | 'video'>('timezone');
   const videoRef = useRef<HTMLVideoElement>(null);
   const welcomeVideo = onboardingVideos.welcomeOverview;
   const [timezone, setTimezone] = useState('');
   const [detectedTimezone, setDetectedTimezone] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     // Detect browser timezone on mount
     const detected = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
     setDetectedTimezone(detected);
     setTimezone(detected);
-
-    // Detect iOS/iPadOS for platform-specific instructions
-    const ua = navigator.userAgent;
-    setIsIOS(/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
   }, []);
 
   const handleComplete = async () => {
@@ -147,11 +142,18 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
 
             {/* Next Button */}
             <button
-              onClick={() => setStep(welcomeVideo.url ? 'video' : 'bookmark')}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+              onClick={() => welcomeVideo.url ? setStep('video') : handleComplete()}
+              disabled={isSaving}
+              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
             >
-              Next
-              <ArrowRight className="w-5 h-5" />
+              {isSaving ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  Next
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </button>
           </>
         )}
@@ -201,9 +203,10 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
               <button
                 onClick={() => {
                   if (videoRef.current) videoRef.current.pause();
-                  setStep('bookmark');
+                  handleComplete();
                 }}
-                className="flex-1 flex items-center justify-center gap-2 text-white/60 hover:text-white font-medium py-3 px-4 rounded-lg border border-white/10 hover:border-white/20 transition-colors"
+                disabled={isSaving}
+                className="flex-1 flex items-center justify-center gap-2 text-white/60 hover:text-white font-medium py-3 px-4 rounded-lg border border-white/10 hover:border-white/20 transition-colors disabled:opacity-50"
               >
                 <SkipForward className="w-4 h-4" />
                 Skip
@@ -211,116 +214,24 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
               <button
                 onClick={() => {
                   if (videoRef.current) videoRef.current.pause();
-                  setStep('bookmark');
+                  handleComplete();
                 }}
-                className="flex-1 flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                disabled={isSaving}
+                className="flex-1 flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
               >
-                Continue
-                <ArrowRight className="w-5 h-5" />
+                {isSaving ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    Get Started
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
               </button>
             </div>
           </>
         )}
 
-        {step === 'bookmark' && (
-          <>
-            {/* Bookmark / Add to Home Screen Reminder */}
-            <div className="space-y-4 mb-8">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accent/20">
-                  <Bookmark className="w-5 h-5 text-accent" />
-                </div>
-                <div>
-                  <h3 className="font-medium">Save Radar for Easy Access</h3>
-                  <p className="text-white/60 text-sm">
-                    Bookmark this page so you can find it again
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-lg bg-white/5 space-y-4">
-                {isIOS ? (
-                  /* iOS / iPadOS instructions */
-                  <>
-                    <div className="flex items-start gap-3">
-                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold shrink-0 mt-0.5">1</div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span>Tap the</span>
-                        <Share className="w-4 h-4 text-accent" />
-                        <span className="font-medium">Share</span>
-                        <span>button in Safari</span>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold shrink-0 mt-0.5">2</div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span>Select</span>
-                        <PlusSquare className="w-4 h-4 text-accent" />
-                        <span className="font-medium">Add to Home Screen</span>
-                      </div>
-                    </div>
-                    <p className="text-white/40 text-xs">
-                      This adds Radar as an app icon on your home screen for quick access.
-                    </p>
-                  </>
-                ) : (
-                  /* Desktop / Android instructions */
-                  <>
-                    <div className="flex items-start gap-3">
-                      <Smartphone className="w-5 h-5 text-accent shrink-0 mt-0.5" />
-                      <div className="text-sm">
-                        <p className="font-medium mb-1">On mobile?</p>
-                        <p className="text-white/60">Use your browser&apos;s menu to &quot;Add to Home Screen&quot; for app-like access.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Bookmark className="w-5 h-5 text-accent shrink-0 mt-0.5" />
-                      <div className="text-sm">
-                        <p className="font-medium mb-1">On desktop?</p>
-                        <p className="text-white/60">
-                          Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 text-xs font-mono">Ctrl+D</kbd> (or <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 text-xs font-mono">Cmd+D</kbd> on Mac) to bookmark this page.
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Get Started Button */}
-            <button
-              onClick={handleComplete}
-              disabled={isSaving}
-              className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/90 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {isSaving ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  Get Started
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </button>
-
-            {/* Step indicator */}
-            <div className="flex justify-center gap-2 mt-4">
-              <button
-                onClick={() => setStep('timezone')}
-                className="w-2 h-2 rounded-full bg-white/30 hover:bg-white/50 transition-colors"
-                aria-label="Go to timezone step"
-              />
-              {welcomeVideo.url && (
-                <button
-                  onClick={() => setStep('video')}
-                  className="w-2 h-2 rounded-full bg-white/30 hover:bg-white/50 transition-colors"
-                  aria-label="Go to video step"
-                />
-              )}
-              <div className="w-2 h-2 rounded-full bg-accent" />
-            </div>
-          </>
-        )}
       </div>
     </div>
   );
