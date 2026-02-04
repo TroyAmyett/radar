@@ -17,6 +17,14 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Check if onboarding is needed after auth is complete (from database)
   useEffect(() => {
     if (!loading) {
+      // Fast path: if localStorage says onboarding is done, skip the API call
+      try {
+        if (localStorage.getItem('radar_onboarding_complete') === 'true') {
+          setCheckingOnboarding(false);
+          return;
+        }
+      } catch { /* localStorage unavailable */ }
+
       fetch('/api/preferences')
         .then(res => res.json())
         .then(data => {
@@ -24,9 +32,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
           setShowOnboarding(needsOnboarding);
           setCheckingOnboarding(false);
 
-          // Seed default topics for new users (runs in background)
           if (needsOnboarding) {
+            // Seed default topics for new users (runs in background)
             fetch('/api/seed-topics', { method: 'POST' }).catch(() => {});
+          } else {
+            // Cache completion so subsequent navigations skip the API call
+            try { localStorage.setItem('radar_onboarding_complete', 'true'); } catch { /* */ }
           }
         })
         .catch(() => {

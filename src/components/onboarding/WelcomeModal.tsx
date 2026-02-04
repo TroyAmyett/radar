@@ -30,7 +30,10 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
       // Save timezone to localStorage
       setUserTimezone(timezone);
 
-      // Save preferences to server (this marks onboarding complete)
+      // Mark onboarding complete in localStorage (immediate, survives API failures)
+      try { localStorage.setItem('radar_onboarding_complete', 'true'); } catch { /* */ }
+
+      // Save preferences to server
       await fetch('/api/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
