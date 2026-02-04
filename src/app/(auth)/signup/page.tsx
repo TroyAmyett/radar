@@ -36,12 +36,8 @@ export default function SignupPage() {
     try {
       const { session } = await signUp({ email, password, name });
 
-      // Send welcome email (fire and forget - don't block signup)
-      fetch('/api/welcome-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name }),
-      }).catch((err) => console.error('Failed to send welcome email:', err));
+      // Welcome email is sent from the auth callback after email confirmation,
+      // so we don't send it here (avoids duplicate emails at signup time).
 
       if (session) {
         // User was auto-confirmed, redirect to dashboard

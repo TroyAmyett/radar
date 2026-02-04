@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
         new URL(`/login?error=${encodeURIComponent(exchangeError.message)}`, requestUrl.origin)
       );
     }
+
   }
 
   // URL to redirect to after sign in process completes
