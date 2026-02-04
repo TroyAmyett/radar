@@ -1,6 +1,6 @@
 'use client';
 
-import { Zap } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -15,9 +15,13 @@ export default function Footer() {
           rel="noopener noreferrer"
           className="flex items-center gap-2 text-white/70 hover:text-white transition-colors group"
         >
-          <div className="flex items-center justify-center w-5 h-5 rounded bg-gradient-to-br from-accent to-accent-600 group-hover:from-accent-400 group-hover:to-accent transition-all">
-            <Zap className="w-3 h-3 text-white" />
-          </div>
+          <Image
+            src="/icon-192.png"
+            alt="Funnelists"
+            width={20}
+            height={20}
+            className="rounded"
+          />
           <span>
             &copy; {year} <span className="text-accent font-medium">Funnelists</span>
           </span>

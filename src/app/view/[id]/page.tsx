@@ -3,9 +3,17 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ExternalLink, Clock, User, Calendar, Bookmark, Heart, Share2, TrendingUp } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Clock, User, Calendar, Bookmark, Heart, Share2, TrendingUp, Loader2 } from 'lucide-react';
 import { ContentItemWithInteraction } from '@/types/database';
 import { formatDate } from '@/lib/timezone';
+
+// Threshold in characters — if stored content text is shorter, fetch full article
+const SHORT_CONTENT_THRESHOLD = 500;
+
+function textLength(html: string | null | undefined): number {
+  if (!html) return 0;
+  return html.replace(/<[^>]*>/g, '').trim().length;
+}
 
 export default function ContentViewerPage() {
   const params = useParams();
@@ -13,6 +21,8 @@ export default function ContentViewerPage() {
   const [item, setItem] = useState<ContentItemWithInteraction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fullContent, setFullContent] = useState<string | null>(null);
+  const [isLoadingFull, setIsLoadingFull] = useState(false);
 
   useEffect(() => {
     async function fetchContent() {
@@ -39,6 +49,27 @@ export default function ContentViewerPage() {
       fetchContent();
     }
   }, [id]);
+
+  // Auto-fetch full article when stored content is short
+  useEffect(() => {
+    if (!item || item.type !== 'article') return;
+    if (textLength(item.content) >= SHORT_CONTENT_THRESHOLD) return;
+
+    let cancelled = false;
+    setIsLoadingFull(true);
+
+    fetch(`/api/content/${item.id}/full-article`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!cancelled && data?.content) {
+          setFullContent(data.content);
+        }
+      })
+      .catch(() => { /* keep original content */ })
+      .finally(() => { if (!cancelled) setIsLoadingFull(false); });
+
+    return () => { cancelled = true; };
+  }, [item]);
 
   const handleSave = async () => {
     if (!item) return;
@@ -136,9 +167,9 @@ export default function ContentViewerPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="glass-panel sticky top-0 z-50 border-b border-white/10">
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-white/10">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-white/70 hover:text-white transition-colors">
+          <Link href="/" className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-white/90 hover:bg-white/20 hover:text-white transition-colors">
             <ArrowLeft className="w-5 h-5" />
             <span className="hidden sm:inline">Back to Dashboard</span>
           </Link>
@@ -311,17 +342,25 @@ export default function ContentViewerPage() {
 
               {/* Summary */}
               {item.summary && (
-                <div className="glass-panel rounded-lg p-4 mb-6 border-l-4 border-primary">
+                <div className="rounded-lg p-4 mb-6 border-l-4 border-primary bg-white/5">
                   <p className="text-white/90 italic">{item.summary}</p>
                 </div>
               )}
 
               {/* Full Content */}
-              {item.content && (
+              {(fullContent || item.content) && (
                 <div
                   className="prose prose-invert prose-lg max-w-none"
-                  dangerouslySetInnerHTML={{ __html: item.content }}
+                  dangerouslySetInnerHTML={{ __html: fullContent || item.content || '' }}
                 />
+              )}
+
+              {/* Loading full article indicator */}
+              {isLoadingFull && (
+                <div className="flex items-center gap-2 text-white/50 text-sm mt-4">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Loading full article...</span>
+                </div>
               )}
 
               {/* Read More Link */}
