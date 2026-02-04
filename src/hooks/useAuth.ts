@@ -120,6 +120,9 @@ export function useAuth() {
   }, []);
 
   const signOut = useCallback(async () => {
+    // Clear per-session onboarding cache so a different user gets their own check
+    try { localStorage.removeItem('radar_onboarding_complete'); } catch { /* */ }
+
     const { error } = await supabase.auth.signOut();
 
     if (error) {
