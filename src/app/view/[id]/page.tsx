@@ -167,9 +167,9 @@ export default function ContentViewerPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-white/10">
+      <header className="sticky top-0 z-50 bg-white/5 backdrop-blur-xl border-b border-white/10" style={{ backgroundColor: 'rgba(10, 10, 20, 0.85)' }}>
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 text-white/90 hover:bg-white/20 hover:text-white transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-white/70 hover:text-white transition-colors">
             <ArrowLeft className="w-5 h-5" />
             <span className="hidden sm:inline">Back to Dashboard</span>
           </Link>
