@@ -345,7 +345,7 @@ function SourcesPageContent() {
                 </span>
               </div>
               <p className="text-white/60 mt-1">
-                Manage your RSS feeds, YouTube channels, and X accounts
+                Manage your RSS feeds, YouTube channels, and Polymarket topics
               </p>
               {limits.nearLimit && !limits.atLimit && (
                 <p className="text-yellow-400 text-sm mt-1">
@@ -477,7 +477,7 @@ function SourcesPageContent() {
             <div className="flex flex-col items-center justify-center py-20 text-white/40">
               <Rss className="w-16 h-16 mb-4" />
               <p className="text-lg">No sources yet</p>
-              <p className="text-sm mt-1">Add RSS feeds, YouTube channels, or X accounts to get started</p>
+              <p className="text-sm mt-1">Add RSS feeds, YouTube channels, or Polymarket topics to get started</p>
             </div>
           ) : filteredSources.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-white/40">

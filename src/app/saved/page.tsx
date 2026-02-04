@@ -21,7 +21,7 @@ export default function SavedPage() {
 
       const contentRes = await fetch(contentUrl);
       const contentData = await contentRes.json();
-      setItems(contentData);
+      setItems(Array.isArray(contentData) ? contentData : []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {

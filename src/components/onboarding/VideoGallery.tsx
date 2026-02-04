@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Play, CheckCircle2 } from 'lucide-react';
 import VideoModal from './VideoModal';
 import { onboardingVideos, OnboardingVideo, isVideoWatched, getYouTubeThumbnail } from '@/lib/onboarding-videos';
@@ -11,6 +11,13 @@ import { onboardingVideos, OnboardingVideo, isVideoWatched, getYouTubeThumbnail 
  */
 export default function VideoGallery() {
   const [activeVideo, setActiveVideo] = useState<OnboardingVideo | null>(null);
+  // Counter to force re-render after watching a video so checkmarks update
+  const [, setWatchCount] = useState(0);
+
+  const handleClose = useCallback(() => {
+    setActiveVideo(null);
+    setWatchCount(c => c + 1);
+  }, []);
 
   const available = Object.values(onboardingVideos).filter(v => v.url);
 
@@ -35,7 +42,7 @@ export default function VideoGallery() {
               className="glass-card p-0 overflow-hidden text-left hover:border-accent/30 transition-colors group"
             >
               {/* Thumbnail / play area */}
-              <div className="aspect-video bg-black/40 flex items-center justify-center relative overflow-hidden">
+              <div className="aspect-video bg-black/40 relative overflow-hidden">
                 {video.url && getYouTubeThumbnail(video.url) ? (
                   <img
                     src={getYouTubeThumbnail(video.url)!}
@@ -51,11 +58,15 @@ export default function VideoGallery() {
                     className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                   />
                 ) : null}
-                <Play className="relative z-10 w-10 h-10 text-green-400 group-hover:text-green-300 group-hover:scale-110 transition-all drop-shadow-lg" />
-                {/* Duration badge */}
-                <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/60 text-xs text-white/70">
-                  {video.duration}
-                </span>
+                {/* Play button — bottom right */}
+                <div className="absolute bottom-2 right-2 flex items-center gap-1.5 z-10">
+                  <span className="px-2 py-0.5 rounded bg-black/60 text-xs text-white/70">
+                    {video.duration}
+                  </span>
+                  <div className="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+                    <Play className="w-5 h-5 text-green-400 group-hover:text-green-300 group-hover:scale-110 transition-all fill-green-400" />
+                  </div>
+                </div>
               </div>
               {/* Info */}
               <div className="p-3">
@@ -80,7 +91,7 @@ export default function VideoGallery() {
         <VideoModal
           video={activeVideo}
           isOpen={!!activeVideo}
-          onClose={() => setActiveVideo(null)}
+          onClose={handleClose}
         />
       )}
     </>
