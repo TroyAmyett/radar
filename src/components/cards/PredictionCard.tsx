@@ -4,6 +4,7 @@ import { ContentItemWithInteraction } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
 import { Heart, Bookmark, MessageSquare, ExternalLink, TrendingUp, X, DollarSign, Droplets, Clock, RefreshCcw } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 
 interface PredictionCardProps {
   item: ContentItemWithInteraction;
@@ -186,12 +187,10 @@ export default function PredictionCard({
         </button>
       )}
 
-      {/* Thumbnail image */}
+      {/* Thumbnail image — links to in-app detail view */}
       {item.thumbnail_url && (
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href={`/view/${item.id}`}
           className="block relative"
         >
           <img
@@ -204,7 +203,7 @@ export default function PredictionCard({
             <TrendingUp className="w-3 h-3 text-white" />
             <span className="text-xs font-medium text-white">Polymarket</span>
           </div>
-        </a>
+        </Link>
       )}
 
       <div className="p-4">
@@ -228,14 +227,12 @@ export default function PredictionCard({
         )}
 
         <div className="flex items-start gap-2 mb-3">
-          <a
-            href={item.url}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href={`/view/${item.id}`}
             className="flex-1 group-hover:text-accent transition-colors"
           >
             <h3 className="font-semibold text-lg line-clamp-2">{item.title}</h3>
-          </a>
+          </Link>
           {priceDelta && (
             <span
               className={`flex-shrink-0 px-1.5 py-0.5 rounded text-xs font-bold ${

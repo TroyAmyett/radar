@@ -4,6 +4,7 @@ import { ContentItemWithInteraction } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
 import { Heart, Bookmark, MessageSquare, ExternalLink, Play, Sparkles, Send, ClipboardList, FileText, X } from 'lucide-react';
 import { useState } from 'react';
+import Link from 'next/link';
 
 const isEmbedded = process.env.NEXT_PUBLIC_RADAR_MODE === 'embedded';
 
@@ -79,10 +80,8 @@ export default function VideoCard({
           <X className="w-4 h-4" />
         </button>
       )}
-      <a
-        href={item.url}
-        target="_blank"
-        rel="noopener noreferrer"
+      <Link
+        href={`/view/${item.id}`}
         className="block relative"
       >
         {item.thumbnail_url ? (
@@ -108,7 +107,7 @@ export default function VideoCard({
             <Play className="w-6 h-6 text-white ml-1" />
           </div>
         </div>
-      </a>
+      </Link>
 
       <div className="p-4">
         {item.topic && (
@@ -123,14 +122,12 @@ export default function VideoCard({
           </span>
         )}
 
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href={`/view/${item.id}`}
           className="block hover:text-accent transition-colors"
         >
           <h3 className="font-semibold mb-2 line-clamp-2">{item.title}</h3>
-        </a>
+        </Link>
 
         {item.summary && (
           <p className="text-white/60 text-sm mb-3 line-clamp-4">{item.summary}</p>

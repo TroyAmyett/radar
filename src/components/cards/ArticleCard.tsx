@@ -4,6 +4,7 @@ import { ContentItemWithInteraction } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
 import { Heart, Bookmark, MessageSquare, ExternalLink, Sparkles, Send, ClipboardList, FileText, X, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
+import Link from 'next/link';
 
 const isEmbedded = process.env.NEXT_PUBLIC_RADAR_MODE === 'embedded';
 
@@ -93,11 +94,9 @@ export default function ArticleCard({
         </button>
       )}
 
-      {/* Thumbnail at top like VideoCard */}
-      <a
-        href={item.url}
-        target="_blank"
-        rel="noopener noreferrer"
+      {/* Thumbnail at top — links to in-app detail view */}
+      <Link
+        href={`/view/${item.id}`}
         className="block relative"
       >
         {item.thumbnail_url ? (
@@ -115,7 +114,7 @@ export default function ArticleCard({
             <FileText className="w-12 h-12 text-white/20" />
           </div>
         )}
-      </a>
+      </Link>
 
       <div className="p-4">
         {item.topic && (
@@ -130,14 +129,12 @@ export default function ArticleCard({
           </span>
         )}
 
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href={`/view/${item.id}`}
           className="block hover:text-accent transition-colors"
         >
           <h3 className="font-semibold mb-2 line-clamp-2">{item.title}</h3>
-        </a>
+        </Link>
 
         {item.summary && (
           <p className="text-white/60 text-sm mb-3 line-clamp-4">{item.summary}</p>
