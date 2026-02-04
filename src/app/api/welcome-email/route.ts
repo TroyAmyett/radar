@@ -16,18 +16,18 @@ export async function POST(request: NextRequest) {
 
     // Determine the login URL based on environment
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://radar.funnelists.com';
-    const loginUrl = `${baseUrl}/login`;
+    const loginUrl = baseUrl;
 
     // Resolve welcome video URL for the email CTA
+    // Only include the video button if we have an external URL (e.g. YouTube).
+    // Local video paths (starting with /) are shown during in-app onboarding,
+    // so there's no need to link to them from the email.
     const welcomeVideo = onboardingVideos.welcomeOverview;
     let videoUrl: string | undefined;
-    if (welcomeVideo.url) {
+    if (welcomeVideo.url && !welcomeVideo.url.startsWith('/')) {
       const ytId = welcomeVideo.url.match(/(?:youtube\.com\/watch\?.*v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
       if (ytId) {
         videoUrl = `https://www.youtube.com/watch?v=${ytId[1]}`;
-      } else if (welcomeVideo.url.startsWith('/')) {
-        // Local path — link to help page instead
-        videoUrl = `${baseUrl}/help`;
       } else {
         videoUrl = welcomeVideo.url;
       }
