@@ -11,8 +11,25 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [isRecovery, setIsRecovery] = useState(false);
-  const [waiting, setWaiting] = useState(true);
+  const [isRecovery, setIsRecovery] = useState(() => {
+    // Check URL hash immediately — if it contains recovery params, show the form right away
+    // instead of waiting for Supabase to process the token (which requires a network round-trip)
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      return hash.includes('type=recovery') || hash.includes('type=magiclink');
+    }
+    return false;
+  });
+  const [waiting, setWaiting] = useState(() => {
+    // Skip waiting if we already detected recovery params in the URL hash
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash.includes('type=recovery') || hash.includes('type=magiclink')) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   // Listen for PASSWORD_RECOVERY event from Supabase
   useEffect(() => {
@@ -26,16 +43,15 @@ export default function ResetPasswordPage() {
     // Also check if we already have a session (in case the event fired before mount)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        // If there's a session and we're on this page, assume it's a recovery flow
         setIsRecovery(true);
         setWaiting(false);
       }
     });
 
-    // Timeout: stop waiting after 5 seconds
+    // Timeout: stop waiting after 3 seconds (fallback for edge cases)
     const timeout = setTimeout(() => {
       setWaiting(false);
-    }, 5000);
+    }, 3000);
 
     return () => {
       subscription.unsubscribe();
