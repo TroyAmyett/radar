@@ -44,13 +44,29 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
       console.error('Auth code exchange error:', exchangeError);
       return NextResponse.redirect(
         new URL(`/login?error=${encodeURIComponent(exchangeError.message)}`, requestUrl.origin)
       );
+    }
+
+    // Sync the session tokens into the cookie that server-side API routes read.
+    // @supabase/ssr sets its own sb-* cookies, but our server client (server.ts)
+    // reads from the 'funnelists-auth-tokens' cookie set by the dualStorage adapter.
+    // Without this, API calls 401 until the client-side JS hydrates and sets it.
+    if (data?.session) {
+      const tokens = JSON.stringify({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token || '',
+      });
+      cookieStore.set('funnelists-auth-tokens', encodeURIComponent(tokens), {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7,
+        sameSite: 'lax',
+      });
     }
 
   }
