@@ -8,7 +8,7 @@ import EditSourceModal from '@/components/modals/EditSourceModal';
 import DiscoverSourcesModal from '@/components/modals/DiscoverSourcesModal';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Source, Topic } from '@/types/database';
-import { Plus, Rss, Youtube, Twitter, Trash2, RefreshCw, Pencil, TrendingUp, LucideProps, Sparkles, X, Loader2 } from 'lucide-react';
+import { Plus, Rss, Youtube, Twitter, Trash2, RefreshCw, Pencil, TrendingUp, LucideProps, Sparkles, X, Loader2, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import VideoHelpButton from '@/components/onboarding/VideoHelpButton';
 import { onboardingVideos } from '@/lib/onboarding-videos';
@@ -477,7 +477,23 @@ function SourcesPageContent() {
             <div className="flex flex-col items-center justify-center py-20 text-white/40">
               <Rss className="w-16 h-16 mb-4" />
               <p className="text-lg">No sources yet</p>
-              <p className="text-sm mt-1">Add RSS feeds, YouTube channels, or Polymarket topics to get started</p>
+              <p className="text-sm mt-1 mb-4">Add RSS feeds, YouTube channels, or Polymarket topics to get started</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="flex items-center gap-2 bg-accent hover:bg-accent/80 text-white font-medium py-2.5 px-5 rounded-lg transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Source
+                </button>
+                <button
+                  onClick={() => setIsDiscoverModalOpen(true)}
+                  className="flex items-center gap-2 glass-button text-accent border border-accent/30 hover:bg-accent/10"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Discover
+                </button>
+              </div>
             </div>
           ) : filteredSources.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-white/40">
@@ -541,6 +557,27 @@ function SourcesPageContent() {
                         })}
                       </p>
                     )}
+
+                    {/* Feed health warning */}
+                    {(() => {
+                      const meta = source.metadata as Record<string, unknown> | null;
+                      const failures = typeof meta?.consecutive_failures === 'number' ? meta.consecutive_failures : 0;
+                      const lastError = meta?.last_error as string | null;
+                      if (failures < 2 || !lastError) return null;
+                      return (
+                        <div className="flex items-start gap-2 mt-2 p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                          <AlertTriangle className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <p className="text-yellow-400 text-xs font-medium">
+                              Failing ({failures} consecutive)
+                            </p>
+                            <p className="text-yellow-400/60 text-xs truncate" title={lastError}>
+                              {lastError}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/10">
                       <button

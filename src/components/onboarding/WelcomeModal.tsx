@@ -44,7 +44,6 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
           digest_time: '06:00:00',
           digest_timezone: timezone,
           digest_topics: [],
-          email_address: null,
         }),
       });
     } catch (error) {

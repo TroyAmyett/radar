@@ -370,17 +370,41 @@ export async function POST(request: NextRequest) {
           noExistingCount,
         };
 
-        // Update last fetched timestamp
+        // Update last fetched timestamp and clear error state
         await supabaseAdmin
           .from('sources')
-          .update({ last_fetched_at: new Date().toISOString() })
+          .update({
+            last_fetched_at: new Date().toISOString(),
+            metadata: {
+              ...(source.metadata as Record<string, unknown> || {}),
+              last_error: null,
+              consecutive_failures: 0,
+              last_successful_fetch: new Date().toISOString(),
+            },
+          })
           .eq('id', source.id);
 
       } catch (error) {
+        const errorMsg = (error as Error).message || String(error);
+        const prevMeta = (source.metadata as Record<string, unknown>) || {};
+        const prevFailures = (typeof prevMeta.consecutive_failures === 'number' ? prevMeta.consecutive_failures : 0);
+
+        await supabaseAdmin
+          .from('sources')
+          .update({
+            metadata: {
+              ...prevMeta,
+              last_error: errorMsg,
+              last_error_at: new Date().toISOString(),
+              consecutive_failures: prevFailures + 1,
+            },
+          })
+          .eq('id', source.id);
+
         console.error(`Error processing Polymarket source ${source.id}:`, error);
         debugInfo = {
           ...debugInfo,
-          processingError: String(error),
+          processingError: errorMsg,
         };
       }
     }

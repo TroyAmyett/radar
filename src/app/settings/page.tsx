@@ -563,6 +563,25 @@ export default function SettingsPage() {
                 </label>
               </div>
 
+              {/* Email Address */}
+              <div className="p-4 rounded-lg bg-white/5">
+                <label className="block text-sm font-medium mb-2">
+                  Delivery Email
+                </label>
+                <input
+                  type="email"
+                  value={digestPrefs.email_address || ''}
+                  onChange={(e) =>
+                    setDigestPrefs((p) => ({ ...p, email_address: e.target.value || null }))
+                  }
+                  placeholder="you@example.com"
+                  className="glass-input w-full"
+                />
+                <p className="text-white/40 text-xs mt-2">
+                  Where your digest emails will be sent
+                </p>
+              </div>
+
               {digestPrefs.digest_enabled && (
                 <>
                   {/* Frequency */}
@@ -684,32 +703,6 @@ export default function SettingsPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
-                <div>
-                  <p className="font-medium">Auto-refresh feeds</p>
-                  <p className="text-white/60 text-sm">
-                    Automatically fetch new content periodically
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between p-4 rounded-lg bg-white/5">
-                <div>
-                  <p className="font-medium">Show read items</p>
-                  <p className="text-white/60 text-sm">
-                    Display items you&apos;ve already viewed
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" defaultChecked />
-                  <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
-                </label>
               </div>
 
               {/* Save Preferences Button */}

@@ -55,17 +55,18 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existing) {
-      // Update existing
+      // Update existing — only include fields that were explicitly provided
+      const updateFields: Record<string, unknown> = {};
+      if ('digest_enabled' in body) updateFields.digest_enabled = body.digest_enabled;
+      if ('digest_frequency' in body) updateFields.digest_frequency = body.digest_frequency;
+      if ('digest_time' in body) updateFields.digest_time = body.digest_time;
+      if ('digest_timezone' in body) updateFields.digest_timezone = body.digest_timezone;
+      if ('digest_topics' in body) updateFields.digest_topics = body.digest_topics;
+      if ('email_address' in body) updateFields.email_address = body.email_address;
+
       const { data, error } = await supabaseAdmin
         .from('user_preferences')
-        .update({
-          digest_enabled: body.digest_enabled,
-          digest_frequency: body.digest_frequency,
-          digest_time: body.digest_time,
-          digest_timezone: body.digest_timezone,
-          digest_topics: body.digest_topics,
-          email_address: body.email_address,
-        })
+        .update(updateFields)
         .eq('id', existing.id)
         .select()
         .single();

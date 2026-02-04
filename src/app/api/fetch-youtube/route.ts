@@ -240,16 +240,40 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Update last_fetched_at
+      // Update last_fetched_at and clear error state
       await supabaseAdmin
         .from('sources')
-        .update({ last_fetched_at: new Date().toISOString() })
+        .update({
+          last_fetched_at: new Date().toISOString(),
+          metadata: {
+            ...(source.metadata as Record<string, unknown> || {}),
+            last_error: null,
+            consecutive_failures: 0,
+            last_successful_fetch: new Date().toISOString(),
+          },
+        })
         .eq('id', source.id);
 
       results.success++;
     } catch (err) {
+      const errorMsg = (err as Error).message;
+      const prevMeta = (source.metadata as Record<string, unknown>) || {};
+      const prevFailures = (typeof prevMeta.consecutive_failures === 'number' ? prevMeta.consecutive_failures : 0);
+
+      await supabaseAdmin
+        .from('sources')
+        .update({
+          metadata: {
+            ...prevMeta,
+            last_error: errorMsg,
+            last_error_at: new Date().toISOString(),
+            consecutive_failures: prevFailures + 1,
+          },
+        })
+        .eq('id', source.id);
+
       results.failed++;
-      results.errors.push(`${source.name}: ${(err as Error).message}`);
+      results.errors.push(`${source.name}: ${errorMsg}`);
     }
   }
 

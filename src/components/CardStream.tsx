@@ -4,7 +4,8 @@ import { ContentItemWithInteraction } from '@/types/database';
 import ArticleCard from './cards/ArticleCard';
 import VideoCard from './cards/VideoCard';
 import PredictionCard from './cards/PredictionCard';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Rss, Plus } from 'lucide-react';
+import Link from 'next/link';
 
 interface CardStreamProps {
   items: ContentItemWithInteraction[];
@@ -50,8 +51,16 @@ export default function CardStream({
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-white/40">
+        <Rss className="w-12 h-12 mb-3" />
         <p className="text-lg">No content found</p>
-        <p className="text-sm mt-1">Add sources to start seeing content, then click Refresh</p>
+        <p className="text-sm mt-1 mb-4">Add sources to start seeing content, then click Refresh</p>
+        <Link
+          href="/sources"
+          className="flex items-center gap-2 bg-accent hover:bg-accent/80 text-white font-medium py-2.5 px-5 rounded-lg transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add Sources
+        </Link>
       </div>
     );
   }
