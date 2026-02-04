@@ -24,6 +24,10 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
 
   const handleComplete = async () => {
     setIsSaving(true);
+
+    // Mark onboarding done immediately so navigation doesn't re-trigger the modal
+    try { localStorage.setItem('radar_onboarding_complete', 'true'); } catch { /* */ }
+
     try {
       const timezone = timezoneRef.current;
 
@@ -31,7 +35,7 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
       setUserTimezone(timezone);
 
       // Save preferences to server (creates the user_preferences row)
-      const res = await fetch('/api/preferences', {
+      await fetch('/api/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -43,22 +47,14 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
           email_address: null,
         }),
       });
-
-      // Only cache onboarding complete after the server confirms the save
-      if (res.ok) {
-        try { localStorage.setItem('radar_onboarding_complete', 'true'); } catch { /* */ }
-      }
-
-      onComplete();
-      router.push('/settings');
     } catch (error) {
       console.error('Failed to save preferences:', error);
-      // Don't set localStorage flag — let them retry on next load
-      onComplete();
-      router.push('/settings');
     } finally {
       setIsSaving(false);
     }
+
+    onComplete();
+    router.push('/settings');
   };
 
   // If no video URL, just complete immediately
@@ -75,7 +71,7 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="glass-card w-full mx-4 p-8 max-w-5xl transition-all duration-300">
         {/* Logo and Welcome */}
         <div className="text-center mb-8">
