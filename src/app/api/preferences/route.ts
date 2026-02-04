@@ -31,10 +31,10 @@ export async function GET() {
       });
     }
 
-    // If preferences exist with a timezone, onboarding is complete
+    // If a preferences row exists, onboarding has been completed
     return NextResponse.json({
       ...data,
-      onboarding_complete: !!data.digest_timezone,
+      onboarding_complete: true,
     });
   } catch (e) {
     if (e instanceof AuthError) return unauthorizedResponse();

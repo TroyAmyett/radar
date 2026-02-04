@@ -26,7 +26,7 @@ export default function VideoHelpButton({ video, compact, label }: VideoHelpButt
       <>
         <button
           onClick={() => setIsOpen(true)}
-          className="p-1 rounded-md hover:bg-white/10 text-white/40 hover:text-accent transition-colors"
+          className="p-1 rounded-md hover:bg-white/10 text-green-400 hover:text-green-300 transition-colors"
           title={`Watch: ${video.title}`}
         >
           <Play className="w-3.5 h-3.5" />

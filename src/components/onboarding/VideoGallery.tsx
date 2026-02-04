@@ -25,7 +25,7 @@ export default function VideoGallery() {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-2">
         {available.map(video => {
           const watched = isVideoWatched(video.key);
           return (
@@ -41,6 +41,14 @@ export default function VideoGallery() {
                     src={getYouTubeThumbnail(video.url)!}
                     alt={video.title}
                     className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : video.url ? (
+                  <video
+                    src={`${video.url}#t=0.1`}
+                    preload="metadata"
+                    muted
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                   />
                 ) : null}
                 <Play className="relative z-10 w-10 h-10 text-white/60 group-hover:text-accent group-hover:scale-110 transition-all drop-shadow-lg" />

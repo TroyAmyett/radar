@@ -48,7 +48,7 @@ export default function VideoModal({ video, isOpen, onClose }: VideoModalProps) 
       />
 
       {/* Modal */}
-      <div className="relative glass-card w-full max-w-2xl mx-4 overflow-hidden">
+      <div className="relative glass-card w-full max-w-5xl mx-4 overflow-hidden">
         {/* Close button */}
         <button
           onClick={onClose}

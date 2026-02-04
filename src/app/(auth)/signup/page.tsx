@@ -36,8 +36,6 @@ export default function SignupPage() {
     try {
       const { session } = await signUp({ email, password, name });
 
-      // Welcome email is sent from the auth callback after email confirmation,
-      // so we don't send it here (avoids duplicate emails at signup time).
 
       if (session) {
         // User was auto-confirmed, redirect to dashboard
