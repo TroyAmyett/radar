@@ -355,3 +355,83 @@ body {
     border-radius: 12px;
   }
 }
+
+/* Article prose styling overrides for dark glass theme */
+.prose.prose-invert {
+  --tw-prose-links: #38bdf8;
+  --tw-prose-bold: #ffffff;
+  --tw-prose-headings: #ffffff;
+  --tw-prose-body: rgba(255, 255, 255, 0.85);
+  --tw-prose-quotes: rgba(255, 255, 255, 0.8);
+  --tw-prose-quote-borders: #0ea5e9;
+  --tw-prose-code: #38bdf8;
+  --tw-prose-pre-bg: rgba(0, 0, 0, 0.4);
+  --tw-prose-pre-code: rgba(255, 255, 255, 0.85);
+  --tw-prose-hr: rgba(255, 255, 255, 0.1);
+  --tw-prose-th-borders: rgba(255, 255, 255, 0.2);
+  --tw-prose-td-borders: rgba(255, 255, 255, 0.1);
+}
+
+.prose.prose-invert a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 150ms ease;
+}
+
+.prose.prose-invert a:hover {
+  color: #7dd3fc;
+}
+
+.prose.prose-invert blockquote {
+  border-left-color: var(--fl-color-primary);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.75rem 1rem;
+  border-radius: 0 var(--fl-radius-md) var(--fl-radius-md) 0;
+}
+
+.prose.prose-invert pre {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--fl-radius-lg);
+}
+
+.prose.prose-invert code:not(pre code) {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--fl-radius-sm);
+  font-size: 0.875em;
+}
+
+.prose.prose-invert code::before,
+.prose.prose-invert code::after {
+  content: none;
+}
+
+.prose.prose-invert img {
+  border-radius: var(--fl-radius-lg);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.prose.prose-invert table {
+  border-collapse: collapse;
+}
+
+.prose.prose-invert th {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.prose.prose-invert tr {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.prose.prose-invert figure figcaption {
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+}
+
+/* Ensure inline images from RSS content don't overflow */
+.prose.prose-invert img {
+  max-width: 100%;
+  height: auto;
+}

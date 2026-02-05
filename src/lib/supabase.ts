@@ -10,7 +10,25 @@ const AUTH_COOKIE_KEY = 'funnelists-auth-tokens';
 const dualStorage = {
   getItem: (key: string) => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem(key);
+      const value = localStorage.getItem(key);
+      // Re-sync cookie whenever session is read from localStorage.
+      // This ensures the server-side cookie stays fresh even if it expired
+      // or wasn't written during the initial auth flow.
+      if (value) {
+        try {
+          const session = JSON.parse(value);
+          if (session?.access_token) {
+            const tokens = JSON.stringify({
+              access_token: session.access_token,
+              refresh_token: session.refresh_token || '',
+            });
+            document.cookie = `${AUTH_COOKIE_KEY}=${encodeURIComponent(tokens)}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+          }
+        } catch {
+          // Not a session value, skip cookie sync
+        }
+      }
+      return value;
     }
     return null;
   },

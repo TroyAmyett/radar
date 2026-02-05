@@ -282,10 +282,6 @@ export default function AddSourceModal({
             <Rss className="w-3.5 h-3.5 text-orange-400" />
             RSS / Blogs
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 rounded-full text-xs text-white/50">
-            <Twitter className="w-3.5 h-3.5 text-blue-400" />
-            X / Twitter
-          </span>
           <button
             type="button"
             onClick={() => handleQuickAdd('polymarket')}

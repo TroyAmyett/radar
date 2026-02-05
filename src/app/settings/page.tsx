@@ -109,7 +109,6 @@ interface DigestPreferences {
   digest_time: string;
   digest_timezone: string;
   digest_topics: string[];
-  email_address: string | null;
 }
 
 // Common timezones for selector
@@ -157,7 +156,6 @@ export default function SettingsPage() {
     digest_time: '06:00',
     digest_timezone: 'America/New_York',
     digest_topics: [],
-    email_address: null,
   });
 
   // Initialize timezone from localStorage on client mount
@@ -191,7 +189,6 @@ export default function SettingsPage() {
           digest_time: prefsData.digest_time?.substring(0, 5) || '06:00',
           digest_timezone: timezone,
           digest_topics: prefsData.digest_topics || [],
-          email_address: prefsData.email_address || null,
         });
         // Sync timezone preference to localStorage for client-side formatting
         if (prefsData.digest_timezone) {
@@ -220,6 +217,11 @@ export default function SettingsPage() {
           icon: newTopicIcon,
         }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('Failed to add topic:', err);
+        return;
+      }
       const newTopic = await res.json();
       setTopics((prev) => [...prev, newTopic]);
       setNewTopicName('');
@@ -253,6 +255,11 @@ export default function SettingsPage() {
           icon: editIcon,
         }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('Failed to update topic:', err);
+        return;
+      }
       const updatedTopic = await res.json();
       setTopics((prev) =>
         prev.map((t) => (t.id === updatedTopic.id ? updatedTopic : t))
@@ -421,7 +428,7 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 {topics.map((topic) => (
                   <div key={topic.id}>
-                    {editingTopic?.id === topic.id ? (
+                    {editingTopic && editingTopic.id === topic.id ? (
                       // Edit Mode
                       <div className="p-4 rounded-lg bg-white/10 border border-accent/50">
                         <div className="space-y-4 mb-4">
@@ -561,25 +568,6 @@ export default function SettingsPage() {
                   />
                   <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                 </label>
-              </div>
-
-              {/* Email Address */}
-              <div className="p-4 rounded-lg bg-white/5">
-                <label className="block text-sm font-medium mb-2">
-                  Delivery Email
-                </label>
-                <input
-                  type="email"
-                  value={digestPrefs.email_address || ''}
-                  onChange={(e) =>
-                    setDigestPrefs((p) => ({ ...p, email_address: e.target.value || null }))
-                  }
-                  placeholder="you@example.com"
-                  className="glass-input w-full"
-                />
-                <p className="text-white/40 text-xs mt-2">
-                  Where your digest emails will be sent
-                </p>
               </div>
 
               {digestPrefs.digest_enabled && (

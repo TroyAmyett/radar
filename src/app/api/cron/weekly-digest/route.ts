@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 async function logCronJobComplete(logId: string | null, status: string, responseStatus: number, responseBody: object, errorMessage: string | null = null) {
   if (!logId) return;
@@ -48,8 +48,7 @@ async function handleRequest(request: NextRequest, logId: string | null) {
       .from('user_preferences')
       .select('*')
       .eq('digest_enabled', true)
-      .in('digest_frequency', ['weekly', 'both'])
-      .not('email_address', 'is', null);
+      .in('digest_frequency', ['weekly', 'both']);
 
     const results = {
       processed: 0,
@@ -59,6 +58,20 @@ async function handleRequest(request: NextRequest, logId: string | null) {
 
     for (const pref of preferences || []) {
       try {
+        // Resolve user email from account_id → user_accounts → auth.users
+        const { data: userAccount } = await supabaseAdmin
+          .from('user_accounts')
+          .select('user_id')
+          .eq('account_id', pref.account_id)
+          .eq('is_primary', true)
+          .maybeSingle();
+
+        if (!userAccount) continue;
+
+        const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(userAccount.user_id);
+        const email = authUser?.email;
+        if (!email) continue;
+
         // Generate digest
         const generateRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/digests/generate`, {
           method: 'POST',
@@ -78,7 +91,7 @@ async function handleRequest(request: NextRequest, logId: string | null) {
             body: JSON.stringify({
               type: 'weekly',
               html: digest.html,
-              email: pref.email_address,
+              email,
               account_id: pref.account_id,
             }),
           });
