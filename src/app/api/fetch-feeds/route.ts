@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       let feed;
       try {
         feed = await parser.parseURL(source.url);
-      } catch (parseErr) {
+      } catch {
         // If direct parsing fails, try fetching and sanitizing the XML first
         const response = await fetch(source.url, {
           headers: { 'User-Agent': 'Radar Intelligence Dashboard' },

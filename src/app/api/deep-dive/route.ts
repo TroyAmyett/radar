@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { requireAuth, AuthError, unauthorizedResponse } from '@/lib/auth';
 import { generateDeepDive } from '@/lib/ai/summarize';
 
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the content item
-    const { data: item, error } = await supabase
+    const { data: item, error } = await supabaseAdmin
       .from('content_items')
       .select('*')
       .eq('id', content_item_id)

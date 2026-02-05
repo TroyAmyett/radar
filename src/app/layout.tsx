@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   description: 'AI-powered intelligence monitoring',
   manifest: '/manifest.json',
   appleWebApp: {
-    capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Radar',
   },

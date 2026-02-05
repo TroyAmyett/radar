@@ -404,7 +404,7 @@ export default function Dashboard() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen overflow-x-hidden">
+      <div className="min-h-screen overflow-x-clip">
         <Header onSearch={setSearchQuery} />
 
         <div className="p-3 md:p-6 max-w-full">
