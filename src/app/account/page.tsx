@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { authFetch } from '@/lib/api';
 import {
   Key,
   Link2,
@@ -341,7 +342,7 @@ function AddApiKeyModal({
     setError(null);
 
     try {
-      const response = await fetch('/api/account/keys', {
+      const response = await authFetch('/api/account/keys', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider: selectedProvider, apiKey }),

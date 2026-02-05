@@ -6,6 +6,7 @@ import CardStream from '@/components/CardStream';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { ContentItemWithInteraction } from '@/types/database';
 import { Bookmark } from 'lucide-react';
+import { authFetch } from '@/lib/api';
 
 export default function SavedPage() {
   const [items, setItems] = useState<ContentItemWithInteraction[]>([]);
@@ -35,7 +36,7 @@ export default function SavedPage() {
 
   const handleLike = async (id: string) => {
     try {
-      await fetch('/api/interactions', {
+      await authFetch('/api/interactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_item_id: id, action: 'like' }),
@@ -68,7 +69,7 @@ export default function SavedPage() {
 
   const handleSave = async (id: string) => {
     try {
-      await fetch('/api/interactions', {
+      await authFetch('/api/interactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_item_id: id, action: 'save' }),
@@ -82,7 +83,7 @@ export default function SavedPage() {
 
   const handleAddNote = async (id: string, note: string) => {
     try {
-      await fetch('/api/interactions', {
+      await authFetch('/api/interactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_item_id: id, action: 'note', value: note }),
@@ -116,7 +117,7 @@ export default function SavedPage() {
   const handleDismiss = async (id: string) => {
     try {
       // Unsave the item first
-      await fetch('/api/interactions', {
+      await authFetch('/api/interactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_item_id: id, action: 'save' }),

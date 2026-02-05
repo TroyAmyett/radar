@@ -7,6 +7,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic, WhatsHotPost } from '@/types/database';
 import { Flame, ExternalLink, Calendar, ChevronLeft, ChevronRight, Twitter } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { authFetch } from '@/lib/api';
 
 interface WhatsHotPostWithTopic extends WhatsHotPost {
   topics?: Topic | null;
@@ -33,7 +34,7 @@ export default function WhatsHotPage() {
 
   const fetchTopics = async () => {
     try {
-      const res = await fetch('/api/topics');
+      const res = await authFetch('/api/topics');
       const data = await res.json();
       setTopics(Array.isArray(data) ? data : []);
     } catch (error) {

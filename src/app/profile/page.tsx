@@ -6,6 +6,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { User, Clock, Save, Globe } from 'lucide-react';
 import { setUserTimezone, getUserTimezone } from '@/lib/timezone';
 import { useAuth } from '@/hooks/useAuth';
+import { authFetch } from '@/lib/api';
 
 // Common timezones for selector
 const timezoneOptions = [
@@ -50,10 +51,10 @@ export default function ProfilePage() {
       setUserTimezone(timezone);
 
       // Also save to server preferences
-      const prefsRes = await fetch('/api/preferences');
+      const prefsRes = await authFetch('/api/preferences');
       const prefs = await prefsRes.json();
 
-      await fetch('/api/preferences', {
+      await authFetch('/api/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

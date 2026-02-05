@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { X, Loader2, Link, Youtube, Rss, Twitter, CheckCircle2, AlertCircle, TrendingUp } from 'lucide-react';
 import { Topic } from '@/types/database';
+import { authFetch } from '@/lib/api';
 
 interface SourceInfo {
   type: 'youtube' | 'rss' | 'twitter' | 'polymarket';
@@ -145,7 +146,7 @@ export default function AddSourceModal({
     setSourceInfo(null);
 
     try {
-      const res = await fetch('/api/sources/lookup', {
+      const res = await authFetch('/api/sources/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: normalizedUrl }),

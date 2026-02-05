@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, ExternalLink, Clock, User, Calendar, Bookmark, Heart, Share2, TrendingUp, Loader2 } from 'lucide-react';
 import { ContentItemWithInteraction } from '@/types/database';
 import { formatDate } from '@/lib/timezone';
+import { authFetch } from '@/lib/api';
 
 // Threshold in characters — if stored content text is shorter, fetch full article
 const SHORT_CONTENT_THRESHOLD = 500;
@@ -74,7 +75,7 @@ export default function ContentViewerPage() {
   const handleSave = async () => {
     if (!item) return;
     try {
-      await fetch('/api/interactions', {
+      await authFetch('/api/interactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_item_id: item.id, action: 'save' }),
@@ -102,7 +103,7 @@ export default function ContentViewerPage() {
   const handleLike = async () => {
     if (!item) return;
     try {
-      await fetch('/api/interactions', {
+      await authFetch('/api/interactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_item_id: item.id, action: 'like' }),

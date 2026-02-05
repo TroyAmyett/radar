@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 // Create a server-side Supabase client that respects RLS
 export async function createServerClient() {
   const cookieStore = await cookies();
+  const headerStore = await headers();
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +23,18 @@ export async function createServerClient() {
     }
   );
 
-  // Get tokens from the auth cookie (set by dual storage adapter in supabase.ts)
+  // 1. Check Authorization header first (most reliable for client API calls)
+  const authHeader = headerStore.get('authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    const accessToken = authHeader.substring(7);
+    await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: '',
+    });
+    return supabase;
+  }
+
+  // 2. Fall back to cookie-based auth
   const authCookie = cookieStore.get('funnelists-auth-tokens') || cookieStore.get('funnelists-auth');
   if (authCookie) {
     try {

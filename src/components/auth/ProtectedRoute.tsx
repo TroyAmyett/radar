@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { Loader2 } from 'lucide-react';
 import WelcomeModal from '@/components/onboarding/WelcomeModal';
+import { authFetch } from '@/lib/api';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -25,7 +26,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
         }
       } catch { /* localStorage unavailable */ }
 
-      fetch('/api/preferences')
+      authFetch('/api/preferences')
         .then(res => res.json())
         .then(data => {
           const needsOnboarding = !data.onboarding_complete;
@@ -34,7 +35,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
           if (needsOnboarding) {
             // Seed default topics for new users (runs in background)
-            fetch('/api/seed-topics', { method: 'POST' }).catch(() => {});
+            authFetch('/api/seed-topics', { method: 'POST' }).catch(() => {});
           } else {
             // Cache completion so subsequent navigations skip the API call
             try { localStorage.setItem('radar_onboarding_complete', 'true'); } catch { /* */ }

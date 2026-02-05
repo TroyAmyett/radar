@@ -12,6 +12,7 @@ import { Plus, Rss, Youtube, Twitter, Trash2, RefreshCw, Pencil, TrendingUp, Luc
 import { formatDistanceToNow } from 'date-fns';
 import VideoHelpButton from '@/components/onboarding/VideoHelpButton';
 import { onboardingVideos } from '@/lib/onboarding-videos';
+import { authFetch } from '@/lib/api';
 
 type SourceType = 'rss' | 'youtube' | 'twitter' | 'polymarket';
 
@@ -119,8 +120,8 @@ function SourcesPageContent() {
     setIsLoading(true);
     try {
       const [sourcesRes, topicsRes] = await Promise.all([
-        fetch('/api/sources'),
-        fetch('/api/topics'),
+        authFetch('/api/sources'),
+        authFetch('/api/topics'),
       ]);
       const [sourcesData, topicsData] = await Promise.all([
         sourcesRes.json(),
@@ -161,7 +162,7 @@ function SourcesPageContent() {
     description?: string;
     metadata?: Record<string, unknown>;
   }) => {
-    const res = await fetch('/api/sources', {
+    const res = await authFetch('/api/sources', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(source),
@@ -178,19 +179,19 @@ function SourcesPageContent() {
 
     // Fetch content for the new source based on type
     if (source.type === 'rss') {
-      fetch('/api/fetch-feeds', {
+      authFetch('/api/fetch-feeds', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source_id: newSource.id }),
       });
     } else if (source.type === 'youtube') {
-      fetch('/api/fetch-youtube', {
+      authFetch('/api/fetch-youtube', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source_id: newSource.id }),
       });
     } else if (source.type === 'polymarket') {
-      fetch('/api/fetch-polymarket', {
+      authFetch('/api/fetch-polymarket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ source_id: newSource.id }),
@@ -205,7 +206,7 @@ function SourcesPageContent() {
 
   const handleSaveSource = async (updates: Partial<Source> & { id: string }) => {
     try {
-      const res = await fetch('/api/sources', {
+      const res = await authFetch('/api/sources', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
@@ -235,19 +236,19 @@ function SourcesPageContent() {
     setRefreshingId(source.id);
     try {
       if (source.type === 'rss') {
-        await fetch('/api/fetch-feeds', {
+        await authFetch('/api/fetch-feeds', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ source_id: source.id }),
         });
       } else if (source.type === 'youtube') {
-        await fetch('/api/fetch-youtube', {
+        await authFetch('/api/fetch-youtube', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ source_id: source.id }),
         });
       } else if (source.type === 'polymarket') {
-        await fetch('/api/fetch-polymarket', {
+        await authFetch('/api/fetch-polymarket', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ source_id: source.id }),

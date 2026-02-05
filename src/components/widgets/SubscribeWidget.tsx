@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Mail, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { authFetch } from '@/lib/api';
 
 interface SubscribeWidgetProps {
   source?: string;
@@ -23,7 +24,7 @@ export default function SubscribeWidget({ source = 'widget', className = '' }: S
     setStatus('idle');
 
     try {
-      const res = await fetch('/api/subscribers', {
+      const res = await authFetch('/api/subscribers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

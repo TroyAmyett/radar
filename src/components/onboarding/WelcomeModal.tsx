@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Radio, ArrowRight, Play, SkipForward } from 'lucide-react';
 import { setUserTimezone } from '@/lib/timezone';
+import { authFetch } from '@/lib/api';
 import { onboardingVideos, markVideoWatched, getYouTubeEmbedUrl } from '@/lib/onboarding-videos';
 
 interface WelcomeModalProps {
@@ -35,7 +36,7 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
       setUserTimezone(timezone);
 
       // Save preferences to server (creates the user_preferences row)
-      await fetch('/api/preferences', {
+      await authFetch('/api/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

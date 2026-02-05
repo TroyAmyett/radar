@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, Loader2, Sparkles, Plus, Search, Youtube, Rss, ExternalLink } from 'lucide-react';
 import { Topic } from '@/types/database';
+import { authFetch } from '@/lib/api';
 
 interface DiscoveredSource {
   name: string;
@@ -60,7 +61,7 @@ export default function DiscoverSourcesModal({
     setResults([]);
 
     try {
-      const res = await fetch('/api/discover-sources', {
+      const res = await authFetch('/api/discover-sources', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

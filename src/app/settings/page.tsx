@@ -6,6 +6,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic } from '@/types/database';
 import { Settings, Plus, Palette, Mail, Clock, Save, Pencil, Trash2 } from 'lucide-react';
 import { setUserTimezone, getUserTimezone } from '@/lib/timezone';
+import { authFetch } from '@/lib/api';
 import VideoHelpButton from '@/components/onboarding/VideoHelpButton';
 import { onboardingVideos } from '@/lib/onboarding-videos';
 
@@ -142,6 +143,8 @@ export default function SettingsPage() {
   const [newTopicIcon, setNewTopicIcon] = useState('sparkles');
   const [isAdding, setIsAdding] = useState(false);
 
+  const [topicError, setTopicError] = useState<string | null>(null);
+
   // Edit topic state
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [editName, setEditName] = useState('');
@@ -174,8 +177,8 @@ export default function SettingsPage() {
     setIsLoading(true);
     try {
       const [topicsRes, prefsRes] = await Promise.all([
-        fetch('/api/topics'),
-        fetch('/api/preferences'),
+        authFetch('/api/topics'),
+        authFetch('/api/preferences'),
       ]);
       const topicsData = await topicsRes.json();
       const prefsData = await prefsRes.json();
@@ -207,8 +210,9 @@ export default function SettingsPage() {
     if (!newTopicName.trim()) return;
 
     setIsAdding(true);
+    setTopicError(null);
     try {
-      const res = await fetch('/api/topics', {
+      const res = await authFetch('/api/topics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -219,7 +223,7 @@ export default function SettingsPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        console.error('Failed to add topic:', err);
+        setTopicError(err.error || `Failed to add topic (${res.status})`);
         return;
       }
       const newTopic = await res.json();
@@ -227,6 +231,7 @@ export default function SettingsPage() {
       setNewTopicName('');
       setNewTopicIcon('sparkles'); // Reset to default
     } catch (error) {
+      setTopicError('Network error — please try again');
       console.error('Failed to add topic:', error);
     } finally {
       setIsAdding(false);
@@ -245,7 +250,7 @@ export default function SettingsPage() {
 
     setIsUpdating(true);
     try {
-      const res = await fetch('/api/topics', {
+      const res = await authFetch('/api/topics', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -291,7 +296,7 @@ export default function SettingsPage() {
     setIsSavingPrefs(true);
     setPrefsSaved(false);
     try {
-      await fetch('/api/preferences', {
+      await authFetch('/api/preferences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -409,6 +414,9 @@ export default function SettingsPage() {
                 </div>
               </div>
 
+              {topicError && (
+                <p className="text-red-400 text-sm mb-2">{topicError}</p>
+              )}
               <button
                 type="submit"
                 disabled={isAdding || !newTopicName.trim()}

@@ -12,6 +12,7 @@ import { Topic, ContentItemWithInteraction } from '@/types/database';
 import { RefreshCw } from 'lucide-react';
 import VideoHelpButton from '@/components/onboarding/VideoHelpButton';
 import { onboardingVideos } from '@/lib/onboarding-videos';
+import { authFetch } from '@/lib/api';
 
 // Only include active content types (post/tweet coming soon - X API is $100/month)
 const ALL_CONTENT_TYPES: ContentType[] = ['video', 'article', 'prediction'];
@@ -53,7 +54,7 @@ export default function Dashboard() {
     setIsLoading(true);
     try {
       // Fetch topics
-      const topicsRes = await fetch('/api/topics');
+      const topicsRes = await authFetch('/api/topics');
       const topicsData = await topicsRes.json();
       setTopics(Array.isArray(topicsData) ? topicsData : []);
 
@@ -227,9 +228,9 @@ export default function Dashboard() {
       // (Sources are created with the hardcoded account_id, so fetching must use the same)
       // Fetch all source types in parallel
       await Promise.all([
-        fetch('/api/fetch-feeds', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }),
-        fetch('/api/fetch-youtube', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }),
-        fetch('/api/fetch-polymarket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }),
+        authFetch('/api/fetch-feeds', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }),
+        authFetch('/api/fetch-youtube', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }),
+        authFetch('/api/fetch-polymarket', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }),
       ]);
       // Refresh content
       await fetchData();
@@ -242,7 +243,7 @@ export default function Dashboard() {
 
   const handleLike = async (id: string) => {
     try {
-      await fetch('/api/interactions', {
+      await authFetch('/api/interactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_item_id: id, action: 'like' }),
@@ -276,7 +277,7 @@ export default function Dashboard() {
 
   const handleSave = async (id: string) => {
     try {
-      await fetch('/api/interactions', {
+      await authFetch('/api/interactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_item_id: id, action: 'save' }),
@@ -310,7 +311,7 @@ export default function Dashboard() {
 
   const handleAddNote = async (id: string, note: string) => {
     try {
-      await fetch('/api/interactions', {
+      await authFetch('/api/interactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_item_id: id, action: 'note', value: note }),
@@ -352,7 +353,7 @@ export default function Dashboard() {
     setDeepDiveAnalysis(null);
 
     try {
-      const res = await fetch('/api/deep-dive', {
+      const res = await authFetch('/api/deep-dive', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_item_id: id }),
@@ -375,7 +376,7 @@ export default function Dashboard() {
 
   const handleDismiss = async (id: string) => {
     try {
-      await fetch('/api/interactions', {
+      await authFetch('/api/interactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content_item_id: id, action: 'dismiss' }),
@@ -388,7 +389,7 @@ export default function Dashboard() {
   };
 
   const handlePublishSubmit = async (data: PublishData) => {
-    const res = await fetch('/api/publish', {
+    const res = await authFetch('/api/publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
