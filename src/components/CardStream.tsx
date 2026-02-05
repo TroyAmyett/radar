@@ -14,7 +14,6 @@ interface CardStreamProps {
   onLike?: (id: string) => void;
   onSave?: (id: string) => void;
   onAddNote?: (id: string, note: string) => void;
-  onDeepDive?: (id: string) => void;
   onPublish?: (id: string) => void;
   onDismiss?: (id: string) => void;
 }
@@ -26,7 +25,6 @@ export default function CardStream({
   onLike,
   onSave,
   onAddNote,
-  onDeepDive,
   onPublish,
   onDismiss,
 }: CardStreamProps) {
@@ -76,7 +74,6 @@ export default function CardStream({
                 onLike={onLike}
                 onSave={onSave}
                 onAddNote={onAddNote}
-                onDeepDive={onDeepDive}
                 onPublish={onPublish}
                 onDismiss={onDismiss}
               />
@@ -105,7 +102,6 @@ export default function CardStream({
               onLike={onLike}
               onSave={onSave}
               onAddNote={onAddNote}
-              onDeepDive={onDeepDive}
               onPublish={onPublish}
               onDismiss={onDismiss}
             />
