@@ -70,9 +70,16 @@ export default function ArticleCard({
         const data = await res.json();
         setAiSummary(data.summary);
         setKeyPoints(data.keyPoints || []);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        console.error('AI summary API error:', res.status, errorData);
+        setAiSummary(`Error: ${errorData.error || 'Failed to generate summary'}`);
+        setShowAiSummary(false);
       }
     } catch (error) {
       console.error('Failed to get AI summary:', error);
+      setAiSummary('Error: Network request failed');
+      setShowAiSummary(false);
     } finally {
       setIsLoadingAi(false);
     }
