@@ -212,7 +212,7 @@ export default function VideoCard({
               : 'bg-white/5 text-white/50 hover:bg-purple-500/20 hover:text-purple-400'
           }`}
         >
-          <Bot className="w-3.5 h-3.5" />
+          <Bot className={`w-3.5 h-3.5 ${hasAiSummary ? 'text-purple-400' : ''}`} />
           <span>{hasAiSummary ? (showAiSummary ? 'Hide AI Summary' : 'Show AI Summary') : 'Get AI Summary'}</span>
           {hasAiSummary && (showAiSummary ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />)}
         </button>
@@ -255,9 +255,10 @@ export default function VideoCard({
             onClick={() => setShowNoteInput(!showNoteInput)}
             className={`p-2 rounded-lg transition-all ${
               item.interaction?.notes
-                ? 'bg-accent/20 text-accent'
-                : 'hover:bg-white/10 text-white/50'
+                ? 'bg-yellow-500/20 text-yellow-400'
+                : 'hover:bg-yellow-500/20 text-white/50 hover:text-yellow-400'
             }`}
+            title="Add Note"
           >
             <MessageSquare className="w-4 h-4" />
           </button>
