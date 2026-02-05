@@ -12,6 +12,88 @@ interface DiscoveredSource {
   };
 }
 
+// Validate that a URL is reachable and appropriate for its type
+async function validateSource(source: DiscoveredSource): Promise<DiscoveredSource | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    if (source.type === 'youtube') {
+      // For YouTube, verify the channel page exists
+      const response = await fetch(source.url, {
+        method: 'HEAD',
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Radar Feed Discoverer)' },
+      });
+      clearTimeout(timeout);
+
+      if (!response.ok) return null;
+      return source;
+    } else {
+      // For RSS, try to find and validate an actual feed
+      const response = await fetch(source.url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; Radar Feed Discoverer)',
+          'Accept': 'text/html,application/rss+xml,application/atom+xml,application/xml',
+        },
+      });
+      clearTimeout(timeout);
+
+      if (!response.ok) return null;
+
+      const text = await response.text();
+
+      // Check if it's already a feed
+      if (text.includes('<rss') || text.includes('<feed') || text.includes('<channel>')) {
+        return source;
+      }
+
+      // Look for feed links in HTML
+      const feedLinkMatch = text.match(/<link[^>]+type=["']application\/(?:rss|atom)\+xml["'][^>]+href=["']([^"']+)["']/i) ||
+                           text.match(/<link[^>]+href=["']([^"']+)["'][^>]+type=["']application\/(?:rss|atom)\+xml["']/i);
+
+      if (feedLinkMatch) {
+        let feedUrl = feedLinkMatch[1];
+        // Make absolute if relative
+        if (feedUrl.startsWith('/')) {
+          const baseUrl = new URL(source.url);
+          feedUrl = `${baseUrl.origin}${feedUrl}`;
+        } else if (!feedUrl.startsWith('http')) {
+          feedUrl = new URL(feedUrl, source.url).href;
+        }
+        // Update source with actual feed URL
+        return { ...source, url: feedUrl };
+      }
+
+      // Try common feed patterns
+      const baseUrl = new URL(source.url);
+      const feedPatterns = ['/feed', '/rss', '/feed.xml', '/rss.xml', '/atom.xml'];
+
+      for (const pattern of feedPatterns) {
+        const feedUrl = `${baseUrl.origin}${pattern}`;
+        try {
+          const feedRes = await fetch(feedUrl, {
+            method: 'HEAD',
+            signal: AbortSignal.timeout(3000),
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Radar Feed Discoverer)' },
+          });
+          if (feedRes.ok) {
+            return { ...source, url: feedUrl };
+          }
+        } catch {
+          // Continue trying other patterns
+        }
+      }
+
+      // No valid feed found
+      return null;
+    }
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -99,7 +181,7 @@ Only output valid JSON, no other text.`;
       );
     }
 
-    // Validate and clean up URLs
+    // Validate and clean up URLs (basic format check)
     sources = sources.filter(source => {
       try {
         new URL(source.url);
@@ -109,7 +191,18 @@ Only output valid JSON, no other text.`;
       }
     });
 
-    return NextResponse.json({ sources });
+    // Validate each source actually exists and has a valid feed/channel
+    // Run validations in parallel for speed
+    const validationResults = await Promise.all(
+      sources.map(source => validateSource(source))
+    );
+
+    // Filter out null results (failed validations)
+    const validatedSources = validationResults.filter(
+      (source): source is DiscoveredSource => source !== null
+    );
+
+    return NextResponse.json({ sources: validatedSources });
   } catch (error) {
     console.error('Discover sources error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
