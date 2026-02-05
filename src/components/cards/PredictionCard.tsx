@@ -133,6 +133,12 @@ export default function PredictionCard({
     return results.sort((a, b) => b.probability - a.probability);
   }, [firstMarket, item.summary]);
 
+  // Check if outcomes contain anonymized names (Company A, Company B, etc.)
+  const hasAnonymizedNames = useMemo(() => {
+    const anonymizedPattern = /^Company [A-Z]$/i;
+    return odds.some(o => anonymizedPattern.test(o.outcome));
+  }, [odds]);
+
   // Parse multi-question markets (multiple Yes/No sub-questions under one event)
   const multiQuestionData = useMemo(() => {
     if (markets.length <= 1) return null;
@@ -340,6 +346,11 @@ export default function PredictionCard({
             {odds.length > 4 && (
               <div className="text-xs text-white/40 text-center pt-1">
                 +{odds.length - 4} more candidates
+              </div>
+            )}
+            {hasAnonymizedNames && (
+              <div className="text-xs text-white/40 italic text-center pt-1 border-t border-white/5 mt-2">
+                * Some names anonymized by Polymarket for regulatory reasons
               </div>
             )}
           </div>
