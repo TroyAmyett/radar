@@ -40,6 +40,28 @@ const parser: Parser<unknown, CustomItem> = new Parser({
   },
 });
 
+// Sanitize XML to fix common invalid entity issues
+function sanitizeXml(xml: string): string {
+  // Replace common unescaped HTML entities that break XML parsing
+  return xml
+    .replace(/&nbsp;/g, '&#160;')
+    .replace(/&ldquo;/g, '&#8220;')
+    .replace(/&rdquo;/g, '&#8221;')
+    .replace(/&lsquo;/g, '&#8216;')
+    .replace(/&rsquo;/g, '&#8217;')
+    .replace(/&mdash;/g, '&#8212;')
+    .replace(/&ndash;/g, '&#8211;')
+    .replace(/&hellip;/g, '&#8230;')
+    .replace(/&bull;/g, '&#8226;')
+    .replace(/&copy;/g, '&#169;')
+    .replace(/&reg;/g, '&#174;')
+    .replace(/&trade;/g, '&#8482;')
+    .replace(/&euro;/g, '&#8364;')
+    .replace(/&pound;/g, '&#163;')
+    // Remove other invalid XML characters (control chars except tab, newline, carriage return)
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+}
+
 // Content older than 30 days is not considered current news
 const CONTENT_MAX_AGE_DAYS = 30;
 
@@ -86,7 +108,21 @@ export async function POST(request: NextRequest) {
 
   for (const source of sources || []) {
     try {
-      const feed = await parser.parseURL(source.url);
+      // Fetch and sanitize XML to handle malformed feeds
+      let feed;
+      try {
+        feed = await parser.parseURL(source.url);
+      } catch (parseErr) {
+        // If direct parsing fails, try fetching and sanitizing the XML first
+        const response = await fetch(source.url, {
+          headers: { 'User-Agent': 'Radar Intelligence Dashboard' },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const rawXml = await response.text();
+        const sanitizedXml = sanitizeXml(rawXml);
+        feed = await parser.parseString(sanitizedXml);
+      }
       const items = feed.items.slice(0, 20); // Limit to 20 most recent items
 
       for (const item of items) {
