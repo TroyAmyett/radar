@@ -2,9 +2,10 @@
 
 import { ContentItemWithInteraction } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
-import { Heart, Bookmark, MessageSquare, ExternalLink, Sparkles, Send, ClipboardList, FileText, X, Volume2, VolumeX } from 'lucide-react';
+import { Heart, Bookmark, MessageSquare, ExternalLink, Sparkles, Send, ClipboardList, FileText, X, Volume2, VolumeX, Bot, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
+import { authFetch } from '@/lib/api';
 
 const isEmbedded = process.env.NEXT_PUBLIC_RADAR_MODE === 'embedded';
 
@@ -30,13 +31,50 @@ export default function ArticleCard({
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [note, setNote] = useState(item.interaction?.notes || '');
   const [isReading, setIsReading] = useState(false);
+  const [showAiSummary, setShowAiSummary] = useState(false);
+  const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string | null>(
+    (item.metadata as Record<string, unknown>)?.ai_summary as string || null
+  );
+  const [keyPoints, setKeyPoints] = useState<string[]>(
+    ((item.metadata as Record<string, unknown>)?.key_points as string[]) || []
+  );
   const isLiked = item.interaction?.is_liked || false;
   const isSaved = item.interaction?.is_saved || false;
+  const hasAiSummary = !!aiSummary;
 
   const handleAddNote = () => {
     if (note.trim()) {
       onAddNote?.(item.id, note);
       setShowNoteInput(false);
+    }
+  };
+
+  const handleAiSummary = async () => {
+    if (hasAiSummary) {
+      setShowAiSummary(!showAiSummary);
+      return;
+    }
+
+    setIsLoadingAi(true);
+    setShowAiSummary(true);
+
+    try {
+      const res = await authFetch('/api/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content_item_id: item.id }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setAiSummary(data.summary);
+        setKeyPoints(data.keyPoints || []);
+      }
+    } catch (error) {
+      console.error('Failed to get AI summary:', error);
+    } finally {
+      setIsLoadingAi(false);
     }
   };
 
@@ -136,9 +174,55 @@ export default function ArticleCard({
           <h3 className="font-semibold mb-2 line-clamp-2">{item.title}</h3>
         </Link>
 
-        {item.summary && (
+        {/* Show raw summary if no AI summary, otherwise show AI summary toggle */}
+        {!showAiSummary && item.summary && (
           <p className="text-white/60 text-sm mb-3 line-clamp-4">{item.summary}</p>
         )}
+
+        {/* AI Summary Section */}
+        {showAiSummary && (
+          <div className="mb-3 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+            {isLoadingAi ? (
+              <div className="flex items-center gap-2 text-purple-400 text-sm">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Generating AI summary...</span>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-1.5 text-purple-400 text-xs font-medium mb-2">
+                  <Bot className="w-3.5 h-3.5" />
+                  <span>AI Summary</span>
+                </div>
+                <p className="text-white/80 text-sm mb-2">{aiSummary}</p>
+                {keyPoints.length > 0 && (
+                  <ul className="space-y-1">
+                    {keyPoints.map((point, i) => (
+                      <li key={i} className="text-white/60 text-xs flex items-start gap-2">
+                        <span className="text-purple-400 mt-0.5">•</span>
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* AI Summary Toggle Button */}
+        <button
+          onClick={handleAiSummary}
+          disabled={isLoadingAi}
+          className={`w-full mb-3 py-1.5 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+            hasAiSummary
+              ? 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30'
+              : 'bg-white/5 text-white/50 hover:bg-purple-500/20 hover:text-purple-400'
+          }`}
+        >
+          <Bot className="w-3.5 h-3.5" />
+          <span>{hasAiSummary ? (showAiSummary ? 'Hide AI Summary' : 'Show AI Summary') : 'Get AI Summary'}</span>
+          {hasAiSummary && (showAiSummary ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />)}
+        </button>
 
         <div className="flex items-center justify-between text-white/40 text-xs mb-3">
           {item.author && <span>{item.author}</span>}
