@@ -5,7 +5,6 @@ import Header from '@/components/layout/Header';
 import TopicFilter from '@/components/TopicFilter';
 import ContentTypeFilter, { ContentType } from '@/components/ContentTypeFilter';
 import CardStream from '@/components/CardStream';
-import DeepDiveModal from '@/components/modals/DeepDiveModal';
 import PublishModal, { PublishData } from '@/components/modals/PublishModal';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic, ContentItemWithInteraction } from '@/types/database';
@@ -17,17 +16,6 @@ import { useAuth } from '@/hooks/useAuth';
 
 // Only include active content types (post/tweet coming soon - X API is $100/month)
 const ALL_CONTENT_TYPES: ContentType[] = ['video', 'article', 'prediction'];
-
-interface DeepDiveAnalysis {
-  summary: string;
-  keyPoints: string[];
-  sentiment: number;
-  sentimentLabel: string;
-  actionItems: string[];
-  relatedTopics: string[];
-  implications: string;
-  recommendations: string[];
-}
 
 export default function Dashboard() {
   const { isSuperAdmin } = useAuth();
@@ -41,12 +29,6 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
-
-  // Deep Dive modal state
-  const [deepDiveOpen, setDeepDiveOpen] = useState(false);
-  const [deepDiveLoading, setDeepDiveLoading] = useState(false);
-  const [deepDiveItem, setDeepDiveItem] = useState<ContentItemWithInteraction | null>(null);
-  const [deepDiveAnalysis, setDeepDiveAnalysis] = useState<DeepDiveAnalysis | null>(null);
 
   // Publish modal state
   const [publishOpen, setPublishOpen] = useState(false);
@@ -345,30 +327,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeepDive = async (id: string) => {
-    const item = items.find((i) => i.id === id);
-    if (!item) return;
-
-    setDeepDiveItem(item);
-    setDeepDiveOpen(true);
-    setDeepDiveLoading(true);
-    setDeepDiveAnalysis(null);
-
-    try {
-      const res = await authFetch('/api/deep-dive', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content_item_id: id }),
-      });
-      const analysis = await res.json();
-      setDeepDiveAnalysis(analysis);
-    } catch (error) {
-      console.error('Failed to get deep dive:', error);
-    } finally {
-      setDeepDiveLoading(false);
-    }
-  };
-
   const handlePublish = (id: string) => {
     const item = items.find((i) => i.id === id);
     if (!item) return;
@@ -452,19 +410,10 @@ export default function Dashboard() {
             onLike={handleLike}
             onSave={handleSave}
             onAddNote={handleAddNote}
-            onDeepDive={handleDeepDive}
             onPublish={isSuperAdmin ? handlePublish : undefined}
             onDismiss={handleDismiss}
           />
         </div>
-
-        <DeepDiveModal
-          isOpen={deepDiveOpen}
-          onClose={() => setDeepDiveOpen(false)}
-          title={deepDiveItem?.title || ''}
-          analysis={deepDiveAnalysis}
-          isLoading={deepDiveLoading}
-        />
 
         <PublishModal
           isOpen={publishOpen}
