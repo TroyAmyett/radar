@@ -2,7 +2,7 @@
 
 import { ContentItemWithInteraction } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
-import { Heart, Bookmark, MessageSquare, ExternalLink, Sparkles, Send, ClipboardList, FileText, X, Volume2, VolumeX, Bot, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Heart, Bookmark, MessageSquare, ExternalLink, Send, ClipboardList, FileText, X, Volume2, VolumeX, Bot, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { authFetch } from '@/lib/api';
@@ -14,7 +14,6 @@ interface ArticleCardProps {
   onLike?: (id: string) => void;
   onSave?: (id: string) => void;
   onAddNote?: (id: string, note: string) => void;
-  onDeepDive?: (id: string) => void;
   onPublish?: (id: string) => void;
   onDismiss?: (id: string) => void;
 }
@@ -24,7 +23,6 @@ export default function ArticleCard({
   onLike,
   onSave,
   onAddNote,
-  onDeepDive,
   onPublish,
   onDismiss,
 }: ArticleCardProps) {
@@ -277,14 +275,6 @@ export default function ArticleCard({
             title="Add Note"
           >
             <MessageSquare className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={() => onDeepDive?.(item.id)}
-            className="p-2 rounded-lg hover:bg-purple-500/20 text-white/50 hover:text-purple-400 transition-all"
-            title="Deep Dive Analysis"
-          >
-            <Sparkles className="w-4 h-4" />
           </button>
 
           {onPublish && (
