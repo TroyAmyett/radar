@@ -1,4 +1,5 @@
 import { createServerClient, createAdminClient } from '@/lib/supabase/server';
+import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export interface AuthResult {
@@ -19,7 +20,22 @@ export class AuthError extends Error {
  */
 export async function resolveAuth(): Promise<AuthResult | null> {
   const supabase = await createServerClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
+
+  // Try session-based getUser first (works with @supabase/ssr cookies)
+  let { data: { user }, error } = await supabase.auth.getUser();
+
+  // Fallback: validate the raw JWT from the Authorization header directly.
+  // This avoids relying on setSession() which fails with empty refresh_token.
+  if (error || !user) {
+    const headerStore = await headers();
+    const authHeader = headerStore.get('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const jwt = authHeader.substring(7);
+      const result = await supabase.auth.getUser(jwt);
+      user = result.data.user;
+      error = result.error;
+    }
+  }
 
   if (error || !user) {
     return null;
@@ -46,10 +62,12 @@ export async function resolveAuth(): Promise<AuthResult | null> {
     .insert({
       name: user.user_metadata?.name || user.email || 'Radar User',
       slug: `radar-${user.id.substring(0, 8)}`,
-      plan: 'beta',
+      plan: 'free',
       status: 'active',
       created_by: user.id,
       created_by_type: 'user',
+      updated_by: user.id,
+      updated_by_type: 'user',
     })
     .select('id')
     .single();
