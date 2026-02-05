@@ -13,6 +13,7 @@ import { RefreshCw } from 'lucide-react';
 import VideoHelpButton from '@/components/onboarding/VideoHelpButton';
 import { onboardingVideos } from '@/lib/onboarding-videos';
 import { authFetch } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 
 // Only include active content types (post/tweet coming soon - X API is $100/month)
 const ALL_CONTENT_TYPES: ContentType[] = ['video', 'article', 'prediction'];
@@ -29,6 +30,7 @@ interface DeepDiveAnalysis {
 }
 
 export default function Dashboard() {
+  const { isSuperAdmin } = useAuth();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [items, setItems] = useState<ContentItemWithInteraction[]>([]);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]); // Topics to INCLUDE (when not in all mode)
@@ -451,7 +453,7 @@ export default function Dashboard() {
             onSave={handleSave}
             onAddNote={handleAddNote}
             onDeepDive={handleDeepDive}
-            onPublish={handlePublish}
+            onPublish={isSuperAdmin ? handlePublish : undefined}
             onDismiss={handleDismiss}
           />
         </div>

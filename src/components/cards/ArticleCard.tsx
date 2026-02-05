@@ -196,13 +196,15 @@ export default function ArticleCard({
             <Sparkles className="w-4 h-4" />
           </button>
 
-          <button
-            onClick={() => onPublish?.(item.id)}
-            className="p-2 rounded-lg hover:bg-green-500/20 text-white/50 hover:text-green-400 transition-all"
-            title="Publish to What's Hot"
-          >
-            <Send className="w-4 h-4" />
-          </button>
+          {onPublish && (
+            <button
+              onClick={() => onPublish(item.id)}
+              className="p-2 rounded-lg hover:bg-green-500/20 text-white/50 hover:text-green-400 transition-all"
+              title="Publish to What's Hot"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          )}
 
           {isEmbedded && (
             <>
