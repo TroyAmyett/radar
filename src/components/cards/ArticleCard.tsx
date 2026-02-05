@@ -2,7 +2,7 @@
 
 import { ContentItemWithInteraction } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
-import { Heart, Bookmark, MessageSquare, ExternalLink, Send, ClipboardList, FileText, X, Volume2, VolumeX, Bot, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Heart, Bookmark, MessageSquare, ExternalLink, Send, ClipboardList, FileText, X, Volume2, VolumeX, Bot, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { authFetch } from '@/lib/api';
@@ -140,7 +140,7 @@ export default function ArticleCard({
       {/* Thumbnail at top — links to in-app detail view */}
       <Link
         href={`/view/${item.id}`}
-        className="block relative"
+        className="block relative card-thumbnail"
       >
         {item.thumbnail_url ? (
           <img
@@ -179,14 +179,14 @@ export default function ArticleCard({
           <h3 className="font-semibold mb-2 line-clamp-2">{item.title}</h3>
         </Link>
 
-        {/* Show raw summary if no AI summary, otherwise show AI summary toggle */}
+        {/* Show raw summary if no AI summary shown */}
         {!showAiSummary && item.summary && (
-          <p className="text-white/60 text-sm mb-3 line-clamp-4">{item.summary}</p>
+          <p className="card-summary text-white/60 text-sm mb-3 line-clamp-4">{item.summary}</p>
         )}
 
         {/* AI Summary Section */}
         {showAiSummary && (
-          <div className="mb-3 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+          <div className="card-summary mb-3 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
             {isLoadingAi ? (
               <div className="flex items-center gap-2 text-purple-400 text-sm">
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -214,22 +214,7 @@ export default function ArticleCard({
           </div>
         )}
 
-        {/* AI Summary Toggle Button */}
-        <button
-          onClick={handleAiSummary}
-          disabled={isLoadingAi}
-          className={`w-full mb-3 py-1.5 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
-            hasAiSummary
-              ? 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30'
-              : 'bg-white/5 text-white/50 hover:bg-purple-500/20 hover:text-purple-400'
-          }`}
-        >
-          <Bot className={`w-3.5 h-3.5 ${hasAiSummary ? 'text-purple-400' : ''}`} />
-          <span>{hasAiSummary ? (showAiSummary ? 'Hide AI Summary' : 'Show AI Summary') : 'Get AI Summary'}</span>
-          {hasAiSummary && (showAiSummary ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />)}
-        </button>
-
-        <div className="flex items-center justify-between text-white/40 text-xs mb-3">
+        <div className="card-meta flex items-center justify-between text-white/40 text-xs mb-3">
           {item.author && <span>{item.author}</span>}
           {item.published_at && (
             <span>
@@ -240,7 +225,7 @@ export default function ArticleCard({
           )}
         </div>
 
-        <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+        <div className="card-actions flex items-center gap-2 pt-3 border-t border-white/10">
           <button
             onClick={() => onLike?.(item.id)}
             className={`p-2 rounded-lg transition-all ${
@@ -263,6 +248,23 @@ export default function ArticleCard({
             title="Save"
           >
             <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+          </button>
+
+          <button
+            onClick={handleAiSummary}
+            disabled={isLoadingAi}
+            className={`p-2 rounded-lg transition-all ${
+              isLoadingAi
+                ? 'text-purple-400'
+                : hasAiSummary
+                  ? showAiSummary
+                    ? 'bg-purple-500/20 text-purple-400'
+                    : 'bg-purple-500/10 text-purple-400'
+                  : 'hover:bg-purple-500/20 text-white/50 hover:text-purple-400'
+            }`}
+            title={isLoadingAi ? 'Generating...' : hasAiSummary ? (showAiSummary ? 'Hide AI Summary' : 'Show AI Summary') : 'Get AI Summary'}
+          >
+            {isLoadingAi ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
           </button>
 
           <button

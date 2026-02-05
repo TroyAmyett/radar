@@ -197,7 +197,7 @@ export default function PredictionCard({
       {item.thumbnail_url && (
         <Link
           href={`/view/${item.id}`}
-          className="block relative"
+          className="block relative card-thumbnail"
         >
           <img
             src={item.thumbnail_url}
@@ -357,7 +357,7 @@ export default function PredictionCard({
         )}
 
         {/* Market metrics */}
-        <div className="flex flex-wrap gap-3 text-xs text-white/50 mb-3">
+        <div className="card-meta flex flex-wrap gap-3 text-xs text-white/50 mb-3">
           {totalVolume && (
             <div className="flex items-center gap-1" title="Total volume">
               <DollarSign className="w-3 h-3" />
@@ -390,7 +390,7 @@ export default function PredictionCard({
           )}
         </div>
 
-        <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+        <div className="card-actions flex items-center gap-2 pt-3 border-t border-white/10">
           <button
             onClick={() => onLike?.(item.id)}
             className={`p-2 rounded-lg transition-all ${

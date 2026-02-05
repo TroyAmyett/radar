@@ -7,10 +7,13 @@ import PredictionCard from './cards/PredictionCard';
 import { Loader2, Rss, Plus } from 'lucide-react';
 import Link from 'next/link';
 
+export type CardDensity = 'comfortable' | 'compact' | 'dense';
+
 interface CardStreamProps {
   items: ContentItemWithInteraction[];
   isLoading?: boolean;
   isRefreshing?: boolean;
+  density?: CardDensity;
   onLike?: (id: string) => void;
   onSave?: (id: string) => void;
   onAddNote?: (id: string, note: string) => void;
@@ -22,6 +25,7 @@ export default function CardStream({
   items,
   isLoading = false,
   isRefreshing = false,
+  density = 'comfortable',
   onLike,
   onSave,
   onAddNote,
@@ -64,7 +68,7 @@ export default function CardStream({
   }
 
   return (
-    <div className="masonry-grid">
+    <div className={`masonry-grid density-${density}`}>
       {items.map((item) => {
         if (item.type === 'video') {
           return (

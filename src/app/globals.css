@@ -339,6 +339,76 @@ body {
   }
 }
 
+/* Card density zoom levels */
+/* Comfortable: fewer, larger cards with full detail */
+.masonry-grid.density-comfortable {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 769px) {
+  .masonry-grid.density-comfortable {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Compact: more cards, no summary text */
+.masonry-grid.density-compact {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 769px) {
+  .masonry-grid.density-compact {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1281px) {
+  .masonry-grid.density-compact {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Dense: maximum cards, minimal detail */
+.masonry-grid.density-dense {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+@media (min-width: 769px) {
+  .masonry-grid.density-dense {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (min-width: 1281px) {
+  .masonry-grid.density-dense {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* Card detail hiding based on density */
+.density-compact .card-summary,
+.density-compact .card-ai-button,
+.density-dense .card-summary,
+.density-dense .card-ai-button {
+  display: none;
+}
+
+.density-dense .card-meta,
+.density-dense .card-actions {
+  display: none;
+}
+
+/* Compact card thumbnail sizing */
+.density-compact .card-thumbnail {
+  aspect-ratio: 16 / 9;
+}
+
+.density-dense .card-thumbnail {
+  aspect-ratio: 4 / 3;
+}
+
 /* Hide scrollbar but keep functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;

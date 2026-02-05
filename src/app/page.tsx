@@ -4,11 +4,11 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Header from '@/components/layout/Header';
 import TopicFilter from '@/components/TopicFilter';
 import ContentTypeFilter, { ContentType } from '@/components/ContentTypeFilter';
-import CardStream from '@/components/CardStream';
+import CardStream, { CardDensity } from '@/components/CardStream';
 import PublishModal, { PublishData } from '@/components/modals/PublishModal';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic, ContentItemWithInteraction } from '@/types/database';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
 import VideoHelpButton from '@/components/onboarding/VideoHelpButton';
 import { onboardingVideos } from '@/lib/onboarding-videos';
 import { authFetch } from '@/lib/api';
@@ -16,6 +16,9 @@ import { useAuth } from '@/hooks/useAuth';
 
 // Only include active content types (post/tweet coming soon - X API is $100/month)
 const ALL_CONTENT_TYPES: ContentType[] = ['video', 'article', 'prediction'];
+
+// Card density zoom levels
+const DENSITY_LEVELS: CardDensity[] = ['comfortable', 'compact', 'dense'];
 
 export default function Dashboard() {
   const { isSuperAdmin } = useAuth();
@@ -33,6 +36,70 @@ export default function Dashboard() {
   // Publish modal state
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishItem, setPublishItem] = useState<ContentItemWithInteraction | null>(null);
+
+  // Card density zoom state
+  const [cardDensity, setCardDensity] = useState<CardDensity>('comfortable');
+
+  // Load density from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('radar_card_density');
+    if (saved && DENSITY_LEVELS.includes(saved as CardDensity)) {
+      setCardDensity(saved as CardDensity);
+    }
+  }, []);
+
+  // Zoom in (fewer, larger cards)
+  const zoomIn = useCallback(() => {
+    setCardDensity((current) => {
+      const idx = DENSITY_LEVELS.indexOf(current);
+      const newDensity = idx > 0 ? DENSITY_LEVELS[idx - 1] : current;
+      localStorage.setItem('radar_card_density', newDensity);
+      return newDensity;
+    });
+  }, []);
+
+  // Zoom out (more, smaller cards)
+  const zoomOut = useCallback(() => {
+    setCardDensity((current) => {
+      const idx = DENSITY_LEVELS.indexOf(current);
+      const newDensity = idx < DENSITY_LEVELS.length - 1 ? DENSITY_LEVELS[idx + 1] : current;
+      localStorage.setItem('radar_card_density', newDensity);
+      return newDensity;
+    });
+  }, []);
+
+  // Pinch-to-zoom handler (trackpad pinch triggers wheel with ctrlKey)
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        if (e.deltaY > 0) {
+          zoomOut(); // Pinch out / scroll down = zoom out = more cards
+        } else {
+          zoomIn(); // Pinch in / scroll up = zoom in = fewer cards
+        }
+      }
+    };
+
+    // Keyboard shortcuts: Ctrl/Cmd + Plus/Minus
+    const handleKeydown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
+        e.preventDefault();
+        zoomIn();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+        e.preventDefault();
+        zoomOut();
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('keydown', handleKeydown);
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('keydown', handleKeydown);
+    };
+  }, [zoomIn, zoomOut]);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -401,12 +468,41 @@ export default function Dashboard() {
               onToggleAll={handleToggleAllTypes}
             />
             <VideoHelpButton video={onboardingVideos.aiSummaries} compact />
+
+            {/* Zoom controls */}
+            <div className="ml-auto flex items-center gap-1 bg-white/5 rounded-lg p-1">
+              <button
+                onClick={zoomIn}
+                disabled={cardDensity === 'comfortable'}
+                className={`p-1.5 rounded transition-all ${
+                  cardDensity === 'comfortable'
+                    ? 'text-white/20 cursor-not-allowed'
+                    : 'text-white/60 hover:text-white hover:bg-white/10'
+                }`}
+                title="Zoom in (fewer, larger cards)"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+              <button
+                onClick={zoomOut}
+                disabled={cardDensity === 'dense'}
+                className={`p-1.5 rounded transition-all ${
+                  cardDensity === 'dense'
+                    ? 'text-white/20 cursor-not-allowed'
+                    : 'text-white/60 hover:text-white hover:bg-white/10'
+                }`}
+                title="Zoom out (more, smaller cards)"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           <CardStream
             items={filteredItems}
             isLoading={isLoading}
             isRefreshing={isRefreshing}
+            density={cardDensity}
             onLike={handleLike}
             onSave={handleSave}
             onAddNote={handleAddNote}
