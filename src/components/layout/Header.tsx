@@ -29,7 +29,9 @@ interface HeaderProps {
 export default function Header({ onSearch }: HeaderProps) {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchExpanded, setSearchExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -171,15 +173,60 @@ export default function Header({ onSearch }: HeaderProps) {
 
       {/* Right section — search + user (equal width with left for centering) */}
       <div className="flex items-center justify-end gap-2 md:gap-3 flex-1 min-w-0">
-        <form onSubmit={handleSearch} className="w-full md:w-auto md:min-w-[200px] max-w-md min-w-0">
+        {/* Mobile: full-width search */}
+        <form onSubmit={handleSearch} className="w-full md:hidden min-w-0">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
             <input
               type="text"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="glass-input w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-2.5 text-sm md:text-base"
+              className="glass-input w-full pl-9 pr-3 py-2 text-sm"
+            />
+          </div>
+        </form>
+
+        {/* Tablet: collapsible search icon */}
+        <div className="hidden md:flex lg:hidden items-center">
+          {searchExpanded ? (
+            <form onSubmit={(e) => { handleSearch(e); setSearchExpanded(false); }} className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onBlur={() => !searchQuery && setSearchExpanded(false)}
+                className="glass-input w-48 pl-9 pr-3 py-2 text-sm"
+                autoFocus
+              />
+            </form>
+          ) : (
+            <button
+              onClick={() => {
+                setSearchExpanded(true);
+                setTimeout(() => searchInputRef.current?.focus(), 0);
+              }}
+              className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+              title="Search"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+
+        {/* Desktop: full search box */}
+        <form onSubmit={handleSearch} className="hidden lg:block min-w-[200px] max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="glass-input w-full pl-10 pr-4 py-2.5 text-base"
             />
           </div>
         </form>
