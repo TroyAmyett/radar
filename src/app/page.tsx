@@ -194,31 +194,25 @@ export default function Dashboard() {
 
   const handleSelectTopic = (topicSlug: string | null) => {
     if (topicSlug === null) {
-      // "All" button - toggle between modes
-      if (isAllMode) {
-        // Currently showing all - switch to selection mode with nothing selected
-        setIsAllMode(false);
-        setExcludedTopics([]);
-        setSelectedTopics([]);
-      } else {
-        // Currently in selection mode - switch back to All mode (show everything)
-        setIsAllMode(true);
-        setExcludedTopics([]);
-        setSelectedTopics([]);
-      }
+      // "All" button - always go back to showing all
+      setIsAllMode(true);
+      setExcludedTopics([]);
+      setSelectedTopics([]);
     } else if (isAllMode) {
-      // In All mode: clicking a topic EXCLUDES it
-      setExcludedTopics((prev) => {
-        if (prev.includes(topicSlug)) {
-          // Already excluded, remove from exclusion (show it again)
-          return prev.filter((t) => t !== topicSlug);
-        }
-        return [...prev, topicSlug];
-      });
+      // In All mode: clicking a topic shows ONLY that topic
+      setIsAllMode(false);
+      setSelectedTopics([topicSlug]);
+      setExcludedTopics([]);
     } else {
-      // In Selection mode: clicking a topic INCLUDES it
+      // In Selection mode: toggle the topic
       setSelectedTopics((prev) => {
         if (prev.includes(topicSlug)) {
+          // If this is the only selected topic, go back to All mode
+          if (prev.length === 1) {
+            setIsAllMode(true);
+            setExcludedTopics([]);
+            return [];
+          }
           return prev.filter((t) => t !== topicSlug);
         }
         return [...prev, topicSlug];
@@ -231,44 +225,21 @@ export default function Dashboard() {
     const topicsWithColor = topics.filter((t) => t.color === color);
     const topicSlugs = topicsWithColor.map((t) => t.slug);
 
-    if (isAllMode) {
-      // In All mode: toggle exclusion of all topics in this color group
-      setExcludedTopics((prev) => {
-        const allExcluded = topicSlugs.every((slug) => prev.includes(slug));
+    // Check if this color is already the only one selected
+    const isAlreadySelected = !isAllMode &&
+      topicSlugs.length === selectedTopics.length &&
+      topicSlugs.every((slug) => selectedTopics.includes(slug));
 
-        if (allExcluded) {
-          // All excluded, remove from exclusion (show them)
-          return prev.filter((slug) => !topicSlugs.includes(slug));
-        } else {
-          // Exclude all topics of this color
-          const newExclusion = [...prev];
-          topicSlugs.forEach((slug) => {
-            if (!newExclusion.includes(slug)) {
-              newExclusion.push(slug);
-            }
-          });
-          return newExclusion;
-        }
-      });
+    if (isAlreadySelected) {
+      // Clicking the same color again - go back to showing all
+      setIsAllMode(true);
+      setSelectedTopics([]);
+      setExcludedTopics([]);
     } else {
-      // In Selection mode: toggle inclusion of all topics in this color group
-      setSelectedTopics((prev) => {
-        const allSelected = topicSlugs.every((slug) => prev.includes(slug));
-
-        if (allSelected) {
-          // Remove all topics of this color
-          return prev.filter((slug) => !topicSlugs.includes(slug));
-        } else {
-          // Add all topics of this color (without duplicates)
-          const newSelection = [...prev];
-          topicSlugs.forEach((slug) => {
-            if (!newSelection.includes(slug)) {
-              newSelection.push(slug);
-            }
-          });
-          return newSelection;
-        }
-      });
+      // Show ONLY this color's topics
+      setIsAllMode(false);
+      setSelectedTopics(topicSlugs);
+      setExcludedTopics([]);
     }
   };
 

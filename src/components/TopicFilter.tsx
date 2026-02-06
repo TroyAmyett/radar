@@ -124,33 +124,21 @@ export default function TopicFilter({
           {uniqueColors.map((color) => {
             const topicsWithColor = topics.filter(t => t.color === color);
 
-            // In All mode: check if excluded. In Selection mode: check if selected
-            const allColorTopicsActive = isAllMode
-              ? topicsWithColor.every(t => !excludedTopics.includes(t.slug))
-              : topicsWithColor.every(t => selectedTopics.includes(t.slug));
-            const someColorTopicsActive = isAllMode
-              ? topicsWithColor.some(t => !excludedTopics.includes(t.slug))
-              : topicsWithColor.some(t => selectedTopics.includes(t.slug));
-            const allColorTopicsExcluded = isAllMode && topicsWithColor.every(t => excludedTopics.includes(t.slug));
+            // Check if this color group is currently selected (not in All mode, and all its topics are selected)
+            const allColorTopicsActive = !isAllMode &&
+              topicsWithColor.every(t => selectedTopics.includes(t.slug));
 
             return (
               <button
                 key={color}
                 onClick={() => onToggleColor(color)}
                 className={`w-7 md:w-8 h-7 md:h-8 rounded-full flex-shrink-0 transition-all ${
-                  allColorTopicsExcluded
-                    ? 'opacity-30 ring-2 ring-red-500/50'
-                    : allColorTopicsActive && !isAllMode
-                    ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-900'
-                    : someColorTopicsActive && !isAllMode
-                    ? 'ring-2 ring-white/50 ring-offset-1 ring-offset-gray-900'
-                    : 'opacity-60 hover:opacity-100'
+                  allColorTopicsActive && !isAllMode
+                    ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-900 scale-110'
+                    : 'opacity-70 hover:opacity-100 hover:scale-105'
                 }`}
                 style={{ backgroundColor: color }}
-                title={isAllMode
-                  ? `Click to ${allColorTopicsExcluded ? 'show' : 'hide'} ${topicsWithColor.map(t => t.name).join(', ')}`
-                  : `Toggle ${topicsWithColor.map(t => t.name).join(', ')}`
-                }
+                title={`Show only: ${topicsWithColor.map(t => t.name).join(', ')}`}
               />
             );
           })}
@@ -176,7 +164,6 @@ export default function TopicFilter({
       {topics.map((topic) => {
         const Icon = getIconComponent(topic.icon || '');
         const isSelected = selectedTopics.includes(topic.slug);
-        const isExcluded = excludedTopics.includes(topic.slug);
         const topicColor = topic.color || '#0ea5e9';
 
         return (
@@ -184,15 +171,13 @@ export default function TopicFilter({
             key={topic.id}
             onClick={() => onSelectTopic(topic.slug)}
             className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full whitespace-nowrap transition-all glass-button hover:bg-white/10 text-sm md:text-base ${
-              isExcluded
-                ? 'opacity-40 line-through ring-1 ring-red-500/30'
-                : isSelected
+              isSelected
                 ? 'ring-2 ring-white bg-white/20 text-white'
                 : 'text-white/70 hover:text-white'
             }`}
             title={isSelected ? `Click to remove ${topic.name} from filter` : `Click to show only ${topic.name}`}
           >
-            <Icon className="w-3.5 md:w-4 h-3.5 md:h-4" style={{ color: isExcluded ? '#666' : topicColor }} />
+            <Icon className="w-3.5 md:w-4 h-3.5 md:h-4" style={{ color: topicColor }} />
             <span className="font-medium">{topic.name}</span>
           </button>
         );
