@@ -17,8 +17,8 @@ import { useAuth } from '@/hooks/useAuth';
 // Only include active content types (post/tweet coming soon - X API is $100/month)
 const ALL_CONTENT_TYPES: ContentType[] = ['video', 'article', 'prediction'];
 
-// Card density zoom levels
-const DENSITY_LEVELS: CardDensity[] = ['comfortable', 'compact', 'dense'];
+// Card density zoom levels (3, 4, 5, 6 columns)
+const DENSITY_LEVELS: CardDensity[] = ['comfortable', 'cozy', 'compact', 'dense'];
 
 export default function Dashboard() {
   const { isSuperAdmin } = useAuth();

@@ -7,7 +7,7 @@ import PredictionCard from './cards/PredictionCard';
 import { Loader2, Rss, Plus } from 'lucide-react';
 import Link from 'next/link';
 
-export type CardDensity = 'comfortable' | 'compact' | 'dense';
+export type CardDensity = 'comfortable' | 'cozy' | 'compact' | 'dense';
 
 interface CardStreamProps {
   items: ContentItemWithInteraction[];

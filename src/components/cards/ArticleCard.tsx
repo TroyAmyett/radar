@@ -2,7 +2,7 @@
 
 import { ContentItemWithInteraction } from '@/types/database';
 import { formatDistanceToNow } from 'date-fns';
-import { Heart, Bookmark, MessageSquare, ExternalLink, Send, ClipboardList, FileText, X, Volume2, VolumeX, Bot, Loader2 } from 'lucide-react';
+import { Heart, Bookmark, MessageSquare, ExternalLink, Send, ClipboardList, FileText, X, Volume2, VolumeX, Sparkles, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { authFetch } from '@/lib/api';
@@ -195,7 +195,7 @@ export default function ArticleCard({
             ) : (
               <>
                 <div className="flex items-center gap-1.5 text-purple-400 text-xs font-medium mb-2">
-                  <Bot className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3.5 h-3.5" />
                   <span>AI Summary</span>
                 </div>
                 <p className="text-white/80 text-sm mb-2">{aiSummary}</p>
@@ -264,7 +264,7 @@ export default function ArticleCard({
             }`}
             title={isLoadingAi ? 'Generating...' : hasAiSummary ? (showAiSummary ? 'Hide AI Summary' : 'Show AI Summary') : 'Get AI Summary'}
           >
-            {isLoadingAi ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
+            {isLoadingAi ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           </button>
 
           <button

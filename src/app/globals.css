@@ -340,7 +340,7 @@ body {
 }
 
 /* Card density zoom levels */
-/* Comfortable: fewer, larger cards with full detail */
+/* Comfortable: 3 columns, full detail */
 .masonry-grid.density-comfortable {
   grid-template-columns: repeat(2, 1fr);
 }
@@ -351,25 +351,31 @@ body {
   }
 }
 
-/* Compact: more cards, no summary text */
-.masonry-grid.density-compact {
+/* Cozy: 4 columns, full detail */
+.masonry-grid.density-cozy {
   grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
 }
 
 @media (min-width: 769px) {
-  .masonry-grid.density-compact {
+  .masonry-grid.density-cozy {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
-@media (min-width: 1281px) {
+/* Compact: 5 columns, reduced detail */
+.masonry-grid.density-compact {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 769px) {
   .masonry-grid.density-compact {
     grid-template-columns: repeat(5, 1fr);
   }
 }
 
-/* Dense: maximum cards, minimal detail */
+/* Dense: 6 columns, minimal but usable */
 .masonry-grid.density-dense {
   grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
@@ -377,36 +383,40 @@ body {
 
 @media (min-width: 769px) {
   .masonry-grid.density-dense {
-    grid-template-columns: repeat(5, 1fr);
-  }
-}
-
-@media (min-width: 1281px) {
-  .masonry-grid.density-dense {
     grid-template-columns: repeat(6, 1fr);
   }
 }
 
-/* Card detail hiding based on density */
-.density-compact .card-summary,
-.density-compact .card-ai-button,
-.density-dense .card-summary,
-.density-dense .card-ai-button {
+/* Card detail adjustments for compact mode */
+.density-compact .card-summary {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.density-compact .card-meta {
   display: none;
 }
 
-.density-dense .card-meta,
-.density-dense .card-actions {
+/* Card detail adjustments for dense mode */
+.density-dense .card-summary {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: 0.75rem;
+}
+
+.density-dense .card-meta {
   display: none;
 }
 
-/* Compact card thumbnail sizing */
-.density-compact .card-thumbnail {
-  aspect-ratio: 16 / 9;
+/* Dense mode card padding reduction */
+.density-dense .glass-card .p-4 {
+  padding: 0.75rem;
 }
 
-.density-dense .card-thumbnail {
-  aspect-ratio: 4 / 3;
+/* Dense title styling */
+.density-dense h3 {
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
 }
 
 /* Hide scrollbar but keep functionality */
