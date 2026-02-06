@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Radar - Authentication',
-  description: 'Sign in to your Radar account',
+  title: 'Radar - AI-Powered Content Discovery',
+  description: 'Curate your personalized feed of videos, articles, and insights from across the web. AI summaries, topic filtering, and smart recommendations.',
 };
 
 export default function AuthLayout({
