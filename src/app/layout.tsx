@@ -4,14 +4,20 @@ import AppLayout from '@/components/layout/AppLayout';
 
 export const metadata: Metadata = {
   title: 'Funnelists Radar',
-  description: 'AI-powered intelligence monitoring',
-  manifest: '/manifest.json',
+  description: 'AI-powered intelligence monitoring — What\'s Hot in AI, Agents, and Automation',
   appleWebApp: {
+    capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Radar',
   },
   icons: {
-    apple: '/apple-touch-icon.png',
+    icon: [
+      { url: '/icons/favicon-32x32.ico', sizes: '32x32', type: 'image/x-icon' },
+      { url: '/icons/favicon-16x16.ico', sizes: '16x16', type: 'image/x-icon' },
+    ],
+    apple: [
+      { url: '/icons/apple-touch-icon.ico', sizes: '180x180' },
+    ],
   },
   other: {
     'mobile-web-app-capable': 'yes',
@@ -31,8 +37,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">
+    <html lang="en" style={{ backgroundColor: '#0a0a0f' }}>
+      <body className="antialiased" style={{ backgroundColor: '#0a0a0f', color: 'white' }}>
         <AppLayout>
           {children}
         </AppLayout>
