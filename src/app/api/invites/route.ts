@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
     const { accountId, userId } = await requireAuth();
 
     // Check if user is super admin (required during beta)
-    if (!await isSuperAdmin(userId)) {
+    const superAdmin = await isSuperAdmin(userId);
+    if (!superAdmin) {
       return NextResponse.json(
         { error: 'Only super admins can send invites during beta' },
         { status: 403 }
@@ -99,19 +100,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check invite limit
-    const inviteLimit = await getAppSetting('invite_limit_per_user', 3);
-    const { count } = await supabaseAdmin
-      .from('user_invites')
-      .select('*', { count: 'exact', head: true })
-      .eq('invited_by_user_id', userId)
-      .in('status', ['pending', 'accepted']);
+    // Check invite limit (super admins are unlimited)
+    if (!superAdmin) {
+      const inviteLimit = await getAppSetting('invite_limit_per_user', 3);
+      const { count } = await supabaseAdmin
+        .from('user_invites')
+        .select('*', { count: 'exact', head: true })
+        .eq('invited_by_user_id', userId)
+        .in('status', ['pending', 'accepted']);
 
-    if ((count || 0) >= inviteLimit) {
-      return NextResponse.json(
-        { error: `You have reached your invite limit of ${inviteLimit}` },
-        { status: 400 }
-      );
+      if ((count || 0) >= inviteLimit) {
+        return NextResponse.json(
+          { error: `You have reached your invite limit of ${inviteLimit}` },
+          { status: 400 }
+        );
+      }
     }
 
     // Get inviter's name for the email
