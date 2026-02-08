@@ -57,36 +57,42 @@ export default function VideoModal({ video, isOpen, onClose }: VideoModalProps) 
           <X className="w-5 h-5" />
         </button>
 
-        {/* Video player */}
+        {/* Video player - responsive wrapper for mobile */}
         {video.url ? (
           (() => {
             const youtubeEmbed = getYouTubeEmbedUrl(video.url!);
             if (youtubeEmbed) {
               return (
-                <iframe
-                  src={youtubeEmbed}
-                  className="w-full aspect-video bg-black"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+                <div className="relative w-full bg-black" style={{ paddingBottom: '56.25%' }}>
+                  <iframe
+                    src={youtubeEmbed}
+                    className="absolute inset-0 w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
               );
             }
             return (
-              <video
-                ref={videoRef}
-                src={video.url!}
-                controls
-                autoPlay
-                className="w-full aspect-video bg-black"
-                playsInline
-              />
+              <div className="relative w-full bg-black" style={{ paddingBottom: '56.25%' }}>
+                <video
+                  ref={videoRef}
+                  src={video.url!}
+                  controls
+                  autoPlay
+                  className="absolute inset-0 w-full h-full"
+                  playsInline
+                />
+              </div>
             );
           })()
         ) : (
-          <div className="w-full aspect-video bg-black/50 flex items-center justify-center">
-            <div className="text-center text-white/40">
-              <Play className="w-12 h-12 mx-auto mb-2" />
-              <p className="text-sm">Video coming soon</p>
+          <div className="relative w-full bg-black/50" style={{ paddingBottom: '56.25%' }}>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center text-white/40">
+                <Play className="w-12 h-12 mx-auto mb-2" />
+                <p className="text-sm">Video coming soon</p>
+              </div>
             </div>
           </div>
         )}

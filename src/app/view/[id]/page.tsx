@@ -218,7 +218,7 @@ export default function ContentViewerPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-6">
+      <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
         {/* Topic Badge */}
         {item.topic && (
           <div className="mb-4">
@@ -266,17 +266,17 @@ export default function ContentViewerPage() {
           )}
         </div>
 
-        {/* Content Area */}
-        <div className="glass-panel rounded-xl overflow-hidden">
-          {/* YouTube Embed */}
+        {/* Content Area - reduced rounding on mobile for more space */}
+        <div className="glass-panel rounded-lg sm:rounded-xl overflow-hidden">
+          {/* YouTube Embed - Responsive for mobile portrait/landscape */}
           {isYouTube && youtubeVideoId && (
-            <div className="aspect-video">
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
               <iframe
                 src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=0&rel=0`}
                 title={item.title}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
-                className="w-full h-full"
+                className="absolute inset-0 w-full h-full"
               />
             </div>
           )}

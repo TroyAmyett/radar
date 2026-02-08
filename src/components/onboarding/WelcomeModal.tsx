@@ -101,22 +101,26 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
 
           <div className="rounded-lg overflow-hidden bg-black">
             {getYouTubeEmbedUrl(welcomeVideo.url) ? (
-              <iframe
-                src={getYouTubeEmbedUrl(welcomeVideo.url)!}
-                className="w-full aspect-video"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                <iframe
+                  src={getYouTubeEmbedUrl(welcomeVideo.url)!}
+                  className="absolute inset-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
             ) : (
-              <video
-                ref={videoRef}
-                src={welcomeVideo.url}
-                controls
-                autoPlay
-                playsInline
-                className="w-full aspect-video"
-                onPlay={() => markVideoWatched(welcomeVideo.key)}
-              />
+              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                <video
+                  ref={videoRef}
+                  src={welcomeVideo.url}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="absolute inset-0 w-full h-full"
+                  onPlay={() => markVideoWatched(welcomeVideo.key)}
+                />
+              </div>
             )}
           </div>
         </div>
