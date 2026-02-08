@@ -353,6 +353,76 @@ export interface Database {
           updated_at?: string;
         };
       };
+      user_invites: {
+        Row: {
+          id: string;
+          account_id: string;
+          email: string;
+          name: string | null;
+          invited_by_user_id: string;
+          token: string;
+          token_expires_at: string;
+          status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+          reminder_count: number;
+          last_reminder_at: string | null;
+          accepted_at: string | null;
+          accepted_by_user_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          account_id: string;
+          email: string;
+          name?: string | null;
+          invited_by_user_id: string;
+          token: string;
+          token_expires_at: string;
+          status?: 'pending' | 'accepted' | 'expired' | 'cancelled';
+          reminder_count?: number;
+          last_reminder_at?: string | null;
+          accepted_at?: string | null;
+          accepted_by_user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          account_id?: string;
+          email?: string;
+          name?: string | null;
+          invited_by_user_id?: string;
+          token?: string;
+          token_expires_at?: string;
+          status?: 'pending' | 'accepted' | 'expired' | 'cancelled';
+          reminder_count?: number;
+          last_reminder_at?: string | null;
+          accepted_at?: string | null;
+          accepted_by_user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      app_settings: {
+        Row: {
+          key: string;
+          value: Json;
+          description: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value: Json;
+          description?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          key?: string;
+          value?: Json;
+          description?: string | null;
+          updated_at?: string;
+        };
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -375,6 +445,10 @@ export type ContentItemInsert = Database['public']['Tables']['content_items']['I
 export type ContentInteractionInsert = Database['public']['Tables']['content_interactions']['Insert'];
 export type WhatsHotPostInsert = Database['public']['Tables']['whats_hot_posts']['Insert'];
 export type EmailSubscriberInsert = Database['public']['Tables']['email_subscribers']['Insert'];
+
+export type UserInvite = Database['public']['Tables']['user_invites']['Row'];
+export type UserInviteInsert = Database['public']['Tables']['user_invites']['Insert'];
+export type AppSetting = Database['public']['Tables']['app_settings']['Row'];
 
 // Extended types with relations
 export interface ContentItemWithInteraction extends ContentItem {

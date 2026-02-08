@@ -14,8 +14,10 @@ import {
   Eye,
   EyeOff,
   CheckCircle,
-  Loader2
+  Loader2,
+  Gift,
 } from 'lucide-react';
+import InvitePanel from '@/components/admin/InvitePanel';
 import { getCurrentSubscription, type Subscription } from '@/lib/subscription';
 import { createClient } from '@/lib/supabase/client';
 import { formatDate } from '@/lib/timezone';
@@ -44,13 +46,14 @@ interface TeamMember {
   status: 'active' | 'pending';
 }
 
-type TabId = 'api-keys' | 'connections' | 'team' | 'billing';
+type TabId = 'api-keys' | 'connections' | 'team' | 'billing' | 'invites';
 
-const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
+const baseTabs: { id: TabId; label: string; icon: React.ReactNode; adminOnly?: boolean }[] = [
   { id: 'api-keys', label: 'API Keys', icon: <Key className="w-4 h-4" /> },
   { id: 'connections', label: 'Connections', icon: <Link2 className="w-4 h-4" /> },
   { id: 'team', label: 'Team', icon: <Users className="w-4 h-4" /> },
   { id: 'billing', label: 'Billing', icon: <CreditCard className="w-4 h-4" /> },
+  { id: 'invites', label: 'Invites', icon: <Gift className="w-4 h-4" />, adminOnly: true },
 ];
 
 export default function AccountConfigurationPage() {
@@ -58,6 +61,7 @@ export default function AccountConfigurationPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<{ email: string; id: string } | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -70,6 +74,15 @@ export default function AccountConfigurationPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUser({ email: user.email || '', id: user.id });
+
+        // Check if user is super admin
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('is_super_admin')
+          .eq('id', user.id)
+          .single();
+
+        setIsSuperAdmin(profile?.is_super_admin === true);
       }
       const sub = await getCurrentSubscription();
       setSubscription(sub);
@@ -79,6 +92,9 @@ export default function AccountConfigurationPage() {
       setIsLoading(false);
     }
   };
+
+  // Filter tabs based on admin status
+  const tabs = baseTabs.filter(tab => !tab.adminOnly || isSuperAdmin);
 
   return (
     <ProtectedRoute>
@@ -150,6 +166,7 @@ export default function AccountConfigurationPage() {
                   {activeTab === 'connections' && <ConnectionsTab />}
                   {activeTab === 'team' && <TeamTab />}
                   {activeTab === 'billing' && <BillingTab subscription={subscription} />}
+                  {activeTab === 'invites' && isSuperAdmin && <InvitePanel />}
                 </>
               )}
             </div>

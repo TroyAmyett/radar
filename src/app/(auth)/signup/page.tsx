@@ -1,12 +1,54 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Radio, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
+import { Radio, Mail, Lock, User, ArrowRight, Loader2, Gift } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
+// Map error codes to user-friendly messages
+const errorMessages: Record<string, string> = {
+  missing_token: 'Invalid invite link. Please request a new invitation.',
+  invalid_token: 'This invite link is invalid. Please request a new invitation.',
+  invite_cancelled: 'This invitation has been cancelled.',
+  invite_expired: 'This invitation has expired. Please request a new one.',
+  server_error: 'Something went wrong. Please try again.',
+};
+
+// Loading fallback for Suspense
+function SignupLoading() {
+  return (
+    <div className="w-full max-w-md">
+      <div className="glass-card p-8">
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <Radio className="w-10 h-10 text-accent" />
+          <span className="text-2xl font-bold">Radar</span>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-accent" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Main signup page wrapper with Suspense
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<SignupLoading />}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+// Actual signup form component
+function SignupForm() {
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get('invite');
+  const prefillEmail = searchParams.get('email');
+  const prefillName = searchParams.get('name');
+  const errorCode = searchParams.get('error');
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,6 +58,15 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false);
   const { signUp } = useAuth();
   const router = useRouter();
+
+  // Pre-fill form from invite params
+  useEffect(() => {
+    if (prefillEmail) setEmail(prefillEmail);
+    if (prefillName) setName(prefillName);
+    if (errorCode && errorMessages[errorCode]) {
+      setError(errorMessages[errorCode]);
+    }
+  }, [prefillEmail, prefillName, errorCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,8 +85,21 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const { session } = await signUp({ email, password, name });
+      const { session, user } = await signUp({ email, password, name });
 
+      // Mark invite as accepted if we have a token
+      if (inviteToken && user) {
+        try {
+          await fetch('/api/invites/accept', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: inviteToken, userId: user.id }),
+          });
+        } catch (inviteErr) {
+          console.error('Failed to mark invite as accepted:', inviteErr);
+          // Don't block signup if this fails
+        }
+      }
 
       if (session) {
         // User was auto-confirmed, redirect to dashboard
@@ -91,6 +155,13 @@ export default function SignupPage() {
         <h1 className="text-xl font-semibold text-center mb-2">Create an account</h1>
         <p className="text-white/60 text-center mb-8">Start tracking your intelligence feeds</p>
 
+        {inviteToken && prefillEmail && (
+          <div className="mb-6 p-3 rounded-lg bg-accent/20 border border-accent/30 text-accent flex items-center gap-2">
+            <Gift className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm">You&apos;ve been invited to join Radar!</span>
+          </div>
+        )}
+
         {error && (
           <div className="mb-6 p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm">
             {error}
@@ -126,11 +197,17 @@ export default function SignupPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="glass-input w-full pl-10"
+                className={`glass-input w-full pl-10 ${inviteToken && prefillEmail ? 'bg-white/5 cursor-not-allowed' : ''}`}
                 placeholder="you@example.com"
                 required
+                readOnly={!!(inviteToken && prefillEmail)}
               />
             </div>
+            {inviteToken && prefillEmail && (
+              <p className="mt-1 text-xs text-white/40">
+                This email is linked to your invitation
+              </p>
+            )}
           </div>
 
           <div>
