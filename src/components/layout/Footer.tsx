@@ -16,7 +16,7 @@ export default function Footer() {
           className="flex items-center gap-2 text-white/70 hover:text-white transition-colors group"
         >
           <Image
-            src="/icon-192.png"
+            src="/icons/maskable-192x192.png"
             alt="Funnelists"
             width={20}
             height={20}
