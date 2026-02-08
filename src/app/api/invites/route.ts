@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check invite limit (super admins are unlimited)
+    // Check invite limit (super admins have unlimited invites)
     if (!superAdmin) {
       const inviteLimit = await getAppSetting('invite_limit_per_user', 3);
       const { count } = await supabaseAdmin
