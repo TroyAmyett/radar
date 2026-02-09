@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, LogOut, User, Settings, Radio, LayoutDashboard, Rss, Bookmark, Flame, Play } from 'lucide-react';
+import { Search, LogOut, User, Settings, Radio, LayoutDashboard, Rss, Bookmark, Flame, Play, TrendingUp } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,6 +16,7 @@ const isEmbedded = process.env.NEXT_PUBLIC_RADAR_MODE === 'embedded';
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
   { href: '/whats-hot', label: 'Hot', icon: Flame, adminOnly: true },
+  { href: '/admin/adoption', label: 'Adoption', icon: TrendingUp, adminOnly: true },
   { href: '/sources', label: 'Sources', icon: Rss, adminOnly: false },
   { href: '/saved', label: 'Saved', icon: Bookmark, adminOnly: false },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: false },

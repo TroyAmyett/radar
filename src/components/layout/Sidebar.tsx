@@ -10,6 +10,7 @@ import {
   Settings,
   Radio,
   Flame,
+  TrendingUp,
   Menu,
   X,
   Play,
@@ -19,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
   { href: '/whats-hot', label: 'Hot', icon: Flame, adminOnly: true },
+  { href: '/admin/adoption', label: 'Adoption', icon: TrendingUp, adminOnly: true },
   { href: '/sources', label: 'Sources', icon: Rss, adminOnly: false },
   { href: '/saved', label: 'Saved', icon: Bookmark, adminOnly: false },
   { href: '/settings', label: 'Settings', icon: Settings, adminOnly: false },
