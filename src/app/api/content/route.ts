@@ -55,10 +55,14 @@ export async function GET(request: NextRequest) {
         : item.interaction,
     }));
 
-    // Filter out dismissed items and filter by saved if needed
-    let filteredData = transformedData?.filter(
-      (item) => !item.interaction?.is_dismissed
-    );
+    // Filter out dismissed items, expired predictions, and filter by saved if needed
+    const now = new Date().toISOString();
+    let filteredData = transformedData?.filter((item) => {
+      if (item.interaction?.is_dismissed) return false;
+      // Hide expired Polymarket contracts
+      if (item.type === 'prediction' && item.metadata?.endDate && item.metadata.endDate < now) return false;
+      return true;
+    });
 
     if (savedOnly) {
       filteredData = filteredData?.filter(

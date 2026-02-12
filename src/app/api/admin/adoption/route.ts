@@ -36,73 +36,59 @@ export async function GET(request: NextRequest) {
     const authUsers = authData?.users || [];
     const userIds = authUsers.map(u => u.id);
 
-    // 2. Fetch user profiles (name, is_super_admin)
-    const { data: profiles } = await supabaseAdmin
-      .from('user_profiles')
-      .select('id, name, is_super_admin')
-      .in('id', userIds);
+    // 2-3. Fetch profiles + accounts in parallel
+    const [{ data: profiles }, { data: userAccounts }] = await Promise.all([
+      supabaseAdmin.from('user_profiles').select('id, name, is_super_admin').in('id', userIds),
+      supabaseAdmin.from('user_accounts').select('user_id, account_id').in('user_id', userIds),
+    ]);
 
     const profileMap = new Map(
       (profiles || []).map(p => [p.id, p])
     );
 
-    // 3. Fetch user_accounts mapping (user_id → account_id)
-    const { data: userAccounts } = await supabaseAdmin
-      .from('user_accounts')
-      .select('user_id, account_id')
-      .in('user_id', userIds);
-
     const userToAccountMap = new Map<string, string>();
-    const accountToUserMap = new Map<string, string>();
     for (const ua of userAccounts || []) {
       userToAccountMap.set(ua.user_id, ua.account_id);
-      accountToUserMap.set(ua.account_id, ua.user_id);
     }
 
     const accountIds = Array.from(new Set((userAccounts || []).map(ua => ua.account_id)));
 
-    // 4. Fetch per-account source counts
+    // 4-7. Fetch sources, interactions, invites, content count ALL in parallel
+    const [sourcesResult, interactionsResult, invitesResult, contentCountResult] = await Promise.all([
+      accountIds.length > 0
+        ? supabaseAdmin.from('sources').select('account_id').in('account_id', accountIds)
+        : Promise.resolve({ data: [] }),
+      accountIds.length > 0
+        ? supabaseAdmin.from('content_interactions').select('account_id, is_liked, is_saved').in('account_id', accountIds)
+        : Promise.resolve({ data: [] }),
+      supabaseAdmin.from('user_invites').select('invited_by_user_id, status'),
+      supabaseAdmin.from('content_items').select('*', { count: 'exact', head: true }),
+    ]);
+
+    // Process source counts
     const sourceCounts = new Map<string, number>();
-    if (accountIds.length > 0) {
-      const { data: sources } = await supabaseAdmin
-        .from('sources')
-        .select('account_id')
-        .in('account_id', accountIds);
-
-      for (const s of sources || []) {
-        sourceCounts.set(s.account_id, (sourceCounts.get(s.account_id) || 0) + 1);
-      }
+    for (const s of (sourcesResult.data as { account_id: string }[]) || []) {
+      sourceCounts.set(s.account_id, (sourceCounts.get(s.account_id) || 0) + 1);
     }
 
-    // 5. Fetch per-account interaction counts (with like/save breakdown)
+    // Process interaction counts
     const interactionCounts = new Map<string, { total: number; likes: number; saves: number }>();
-    if (accountIds.length > 0) {
-      const { data: interactions } = await supabaseAdmin
-        .from('content_interactions')
-        .select('account_id, is_liked, is_saved')
-        .in('account_id', accountIds);
-
-      for (const i of interactions || []) {
-        const existing = interactionCounts.get(i.account_id) || { total: 0, likes: 0, saves: 0 };
-        existing.total += 1;
-        if (i.is_liked) existing.likes += 1;
-        if (i.is_saved) existing.saves += 1;
-        interactionCounts.set(i.account_id, existing);
-      }
+    for (const i of (interactionsResult.data as { account_id: string; is_liked: boolean; is_saved: boolean }[]) || []) {
+      const existing = interactionCounts.get(i.account_id) || { total: 0, likes: 0, saves: 0 };
+      existing.total += 1;
+      if (i.is_liked) existing.likes += 1;
+      if (i.is_saved) existing.saves += 1;
+      interactionCounts.set(i.account_id, existing);
     }
 
-    // 6. Fetch per-user invite counts
+    // Process invite counts
     const inviteCounts = new Map<string, number>();
-    const { data: invites } = await supabaseAdmin
-      .from('user_invites')
-      .select('invited_by_user_id, status');
-
     let invitesPending = 0;
     let invitesAccepted = 0;
     let invitesExpired = 0;
     let invitesTotal = 0;
 
-    for (const inv of invites || []) {
+    for (const inv of (invitesResult.data as { invited_by_user_id: string; status: string }[]) || []) {
       invitesTotal++;
       if (inv.status === 'pending') invitesPending++;
       if (inv.status === 'accepted') invitesAccepted++;
@@ -113,10 +99,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 7. Fetch total content items count
-    const { count: totalContentItems } = await supabaseAdmin
-      .from('content_items')
-      .select('*', { count: 'exact', head: true });
+    const totalContentItems = (contentCountResult as { count: number | null }).count;
 
     // 8. Compute time boundaries
     const now = new Date();
@@ -143,7 +126,7 @@ export async function GET(request: NextRequest) {
       return {
         id: u.id,
         email: u.email || '',
-        name: profile?.name || null,
+        name: profile?.name || u.user_metadata?.name || u.email?.split('@')[0] || null,
         status,
         is_super_admin: profile?.is_super_admin || false,
         created_at: u.created_at,

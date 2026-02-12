@@ -63,6 +63,7 @@ export default function EditSourceModal({
   const [polymarketKeywords, setPolymarketKeywords] = useState('');
   const [polymarketExcludeSports, setPolymarketExcludeSports] = useState(true);
   const [polymarketCategories, setPolymarketCategories] = useState<string[]>([]);
+  const [polymarketMaxPerTag, setPolymarketMaxPerTag] = useState(3);
 
   // Reset form when source changes
   useEffect(() => {
@@ -78,16 +79,19 @@ export default function EditSourceModal({
         polymarketKeywords?: string[];
         polymarketExcludeSports?: boolean;
         polymarketCategories?: string[];
+        polymarketMaxPerTag?: number;
       } | null;
 
       if (metadata) {
         setPolymarketKeywords(metadata.polymarketKeywords?.join(', ') || '');
         setPolymarketExcludeSports(metadata.polymarketExcludeSports !== false);
         setPolymarketCategories(metadata.polymarketCategories || []);
+        setPolymarketMaxPerTag(metadata.polymarketMaxPerTag ?? 3);
       } else {
         setPolymarketKeywords('');
         setPolymarketExcludeSports(true);
         setPolymarketCategories([]);
+        setPolymarketMaxPerTag(3);
       }
     }
   }, [source]);
@@ -117,6 +121,7 @@ export default function EditSourceModal({
           polymarketCategories: polymarketCategories.length > 0 ? polymarketCategories : undefined,
           polymarketKeywords: keywords.length > 0 ? keywords : undefined,
           polymarketExcludeSports: polymarketExcludeSports,
+          polymarketMaxPerTag: polymarketMaxPerTag,
         } : source.metadata,
       });
       onClose();
@@ -235,6 +240,27 @@ export default function EditSourceModal({
                 <label htmlFor="excludeSports" className="text-sm text-white/80">
                   Exclude sports markets
                 </label>
+              </div>
+
+              {/* Max per tag (diversity) */}
+              <div>
+                <label className="block text-sm text-white/60 mb-2">
+                  Max contracts per category
+                </label>
+                <select
+                  value={polymarketMaxPerTag}
+                  onChange={(e) => setPolymarketMaxPerTag(parseInt(e.target.value))}
+                  className="glass-input w-full"
+                >
+                  <option value={1}>1 per category (most diverse)</option>
+                  <option value={2}>2 per category</option>
+                  <option value={3}>3 per category (default)</option>
+                  <option value={5}>5 per category</option>
+                  <option value={0}>Unlimited</option>
+                </select>
+                <p className="text-xs text-white/40 mt-1">
+                  Limits contracts per tag to prevent one topic from dominating
+                </p>
               </div>
 
               {/* Categories */}

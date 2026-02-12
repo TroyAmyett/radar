@@ -180,6 +180,7 @@ export async function POST(request: NextRequest) {
           polymarketKeywords?: string[];
           polymarketExcludeKeywords?: string[];
           polymarketCategories?: string[];
+          polymarketMaxPerTag?: number;
         } | null;
 
         const excludeSports = metadata?.polymarketExcludeSports !== false;
@@ -248,6 +249,20 @@ export async function POST(request: NextRequest) {
         };
 
         console.log(`[fetch-polymarket] After filtering: ${filteredEvents.length} events (excludeSports=${excludeSports}, keywords=${keywords.length}, categories=${categories.length})`);
+
+        // Diversity: limit events per tag so one topic (e.g. Bitcoin) doesn't dominate
+        const maxPerTag = metadata?.polymarketMaxPerTag ?? 3;
+        if (maxPerTag > 0) {
+          const tagCounts = new Map<string, number>();
+          filteredEvents = filteredEvents.filter(event => {
+            const primaryTag = event.tags?.[0]?.slug || 'uncategorized';
+            const count = tagCounts.get(primaryTag) || 0;
+            if (count >= maxPerTag) return false;
+            tagCounts.set(primaryTag, count + 1);
+            return true;
+          });
+          console.log(`[fetch-polymarket] After diversity limit (max ${maxPerTag}/tag): ${filteredEvents.length} events`);
+        }
 
         let loopIterations = 0;
         let checkErrorCount = 0;
