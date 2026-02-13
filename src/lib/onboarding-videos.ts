@@ -88,7 +88,7 @@ export function getYouTubeId(url: string): string | null {
 /** Get YouTube embed URL from any YouTube URL format */
 export function getYouTubeEmbedUrl(url: string): string | null {
   const id = getYouTubeId(url)
-  return id ? `https://www.youtube.com/embed/${id}?autoplay=1&rel=0` : null
+  return id ? `https://www.youtube.com/embed/${id}?autoplay=0&rel=0` : null
 }
 
 /** Get YouTube thumbnail URL */

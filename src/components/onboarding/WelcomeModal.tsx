@@ -115,7 +115,6 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
                   ref={videoRef}
                   src={welcomeVideo.url}
                   controls
-                  autoPlay
                   playsInline
                   className="absolute inset-0 w-full h-full"
                   onPlay={() => markVideoWatched(welcomeVideo.key)}

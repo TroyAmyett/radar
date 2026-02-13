@@ -79,7 +79,6 @@ export default function VideoModal({ video, isOpen, onClose }: VideoModalProps) 
                   ref={videoRef}
                   src={video.url!}
                   controls
-                  autoPlay
                   className="absolute inset-0 w-full h-full"
                   playsInline
                 />
