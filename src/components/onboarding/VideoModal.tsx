@@ -48,7 +48,7 @@ export default function VideoModal({ video, isOpen, onClose }: VideoModalProps) 
       />
 
       {/* Modal */}
-      <div className="relative glass-card w-full max-w-5xl mx-4 overflow-hidden">
+      <div className="relative glass-card w-full max-w-5xl mx-4 overflow-hidden max-h-[calc(100dvh-2rem)] flex flex-col">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -63,10 +63,10 @@ export default function VideoModal({ video, isOpen, onClose }: VideoModalProps) 
             const youtubeEmbed = getYouTubeEmbedUrl(video.url!);
             if (youtubeEmbed) {
               return (
-                <div className="relative w-full bg-black" style={{ paddingBottom: '56.25%' }}>
+                <div className="w-full bg-black aspect-video shrink min-h-0">
                   <iframe
                     src={youtubeEmbed}
-                    className="absolute inset-0 w-full h-full"
+                    className="w-full h-full"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   />
@@ -74,30 +74,28 @@ export default function VideoModal({ video, isOpen, onClose }: VideoModalProps) 
               );
             }
             return (
-              <div className="relative w-full bg-black" style={{ paddingBottom: '56.25%' }}>
+              <div className="w-full bg-black aspect-video shrink min-h-0">
                 <video
                   ref={videoRef}
                   src={video.url!}
                   controls
-                  className="absolute inset-0 w-full h-full"
+                  className="w-full h-full object-contain"
                   playsInline
                 />
               </div>
             );
           })()
         ) : (
-          <div className="relative w-full bg-black/50" style={{ paddingBottom: '56.25%' }}>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-white/40">
-                <Play className="w-12 h-12 mx-auto mb-2" />
-                <p className="text-sm">Video coming soon</p>
-              </div>
+          <div className="w-full bg-black/50 aspect-video shrink min-h-0 flex items-center justify-center">
+            <div className="text-center text-white/40">
+              <Play className="w-12 h-12 mx-auto mb-2" />
+              <p className="text-sm">Video coming soon</p>
             </div>
           </div>
         )}
 
         {/* Info */}
-        <div className="p-4">
+        <div className="p-4 shrink-0">
           <h3 className="font-semibold text-white mb-1">{video.title}</h3>
           <p className="text-sm text-white/60">{video.description}</p>
         </div>

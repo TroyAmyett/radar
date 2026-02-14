@@ -72,7 +72,7 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="glass-card w-full mx-4 p-8 max-w-5xl transition-all duration-300">
+      <div className="glass-card w-full mx-4 p-8 max-w-5xl transition-all duration-300 max-h-[calc(100dvh-2rem)] overflow-y-auto">
         {/* Logo and Welcome */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -101,22 +101,22 @@ export default function WelcomeModal({ onComplete }: WelcomeModalProps) {
 
           <div className="rounded-lg overflow-hidden bg-black">
             {getYouTubeEmbedUrl(welcomeVideo.url) ? (
-              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <div className="w-full aspect-video">
                 <iframe
                   src={getYouTubeEmbedUrl(welcomeVideo.url)!}
-                  className="absolute inset-0 w-full h-full"
+                  className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
               </div>
             ) : (
-              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <div className="w-full aspect-video">
                 <video
                   ref={videoRef}
                   src={welcomeVideo.url}
                   controls
                   playsInline
-                  className="absolute inset-0 w-full h-full"
+                  className="w-full h-full object-contain"
                   onPlay={() => markVideoWatched(welcomeVideo.key)}
                 />
               </div>
