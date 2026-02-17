@@ -5,6 +5,8 @@ import { NextResponse } from 'next/server';
 export interface AuthResult {
   accountId: string;
   userId: string;
+  email?: string;
+  name?: string;
 }
 
 export class AuthError extends Error {
@@ -53,7 +55,7 @@ export async function resolveAuth(): Promise<AuthResult | null> {
 
   if (userAccounts && userAccounts.length > 0) {
     const account = userAccounts.find((a: { is_primary: boolean }) => a.is_primary) || userAccounts[0];
-    return { accountId: account.account_id, userId: user.id };
+    return { accountId: account.account_id, userId: user.id, email: user.email, name: user.user_metadata?.name };
   }
 
   // No account found — auto-provision for new Radar signups
@@ -77,27 +79,27 @@ export async function resolveAuth(): Promise<AuthResult | null> {
     return null;
   }
 
-  // Link user to the new account
-  await adminClient
-    .from('user_accounts')
-    .insert({
-      user_id: user.id,
-      account_id: newAccount.id,
-      is_primary: true,
-      role: 'owner',
-    });
+  // Link user to account + create subscription in parallel (both depend on newAccount.id only)
+  await Promise.all([
+    adminClient
+      .from('user_accounts')
+      .insert({
+        user_id: user.id,
+        account_id: newAccount.id,
+        is_primary: true,
+        role: 'owner',
+      }),
+    adminClient
+      .from('subscriptions')
+      .insert({
+        account_id: newAccount.id,
+        tier: 'beta',
+        status: 'active',
+        current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      }),
+  ]);
 
-  // Create beta subscription for early access
-  await adminClient
-    .from('subscriptions')
-    .insert({
-      account_id: newAccount.id,
-      tier: 'beta',
-      status: 'active',
-      current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-    });
-
-  return { accountId: newAccount.id, userId: user.id };
+  return { accountId: newAccount.id, userId: user.id, email: user.email, name: user.user_metadata?.name };
 }
 
 /**

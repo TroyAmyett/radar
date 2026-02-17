@@ -4,22 +4,21 @@ import { requireAuth, AuthError, unauthorizedResponse } from '@/lib/auth';
 
 export async function GET() {
   try {
-    const { userId } = await requireAuth();
+    const auth = await requireAuth();
 
     // Fetch user profile
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('user_profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('id', auth.userId)
       .single();
 
     if (profileError) {
-      // Profile might not exist yet, return default values
-      const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(userId);
+      // Profile doesn't exist yet — use metadata from JWT (already resolved by requireAuth)
       return NextResponse.json({
-        id: userId,
-        email: user?.email || null,
-        name: user?.user_metadata?.name || null,
+        id: auth.userId,
+        email: auth.email || null,
+        name: auth.name || null,
         is_super_admin: false,
       });
     }

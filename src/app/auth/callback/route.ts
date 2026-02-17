@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { resolveAuth } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -71,6 +72,9 @@ export async function GET(request: NextRequest) {
         maxAge: 60 * 60 * 24 * 7,
         sameSite: 'lax',
       });
+
+      // Pre-provision account so the first page load doesn't have to wait for it
+      await resolveAuth().catch(() => {});
     }
 
   }

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from './useAuth';
 
 export function useRequireAuth(redirectTo: string = '/login') {
-  const { user, loading } = useAuth();
+  const { user, session, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -17,5 +17,5 @@ export function useRequireAuth(redirectTo: string = '/login') {
     }
   }, [user, loading, router, redirectTo]);
 
-  return { user, loading };
+  return { user, session, loading };
 }
