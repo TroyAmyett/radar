@@ -134,7 +134,7 @@ export default function SavedPage() {
       <div className="flex flex-col h-screen">
         <Header onSearch={setSearchQuery} />
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-3 md:p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold">Saved Items</h1>
             <p className="text-white/60 mt-1">

@@ -408,16 +408,16 @@ export default function SettingsPage() {
       <div className="flex flex-col h-screen">
         <Header />
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-3 md:p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold">Settings</h1>
             <p className="text-white/60 mt-1">Manage your topics and preferences</p>
           </div>
 
           {/* 3-column layout: Topics, Email Digests, Preferences */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             {/* Topics Section */}
-            <section className="glass-card p-6">
+            <section className="glass-card p-4 md:p-6">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 rounded-lg bg-accent/20">
                   <Palette className="w-5 h-5 text-accent" />
@@ -619,7 +619,7 @@ export default function SettingsPage() {
           </section>
 
           {/* Email Digest Section */}
-          <section className="glass-card p-6">
+          <section className="glass-card p-4 md:p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 rounded-lg bg-purple-500/20">
                 <Mail className="w-5 h-5 text-purple-400" />
@@ -742,7 +742,7 @@ export default function SettingsPage() {
           </section>
 
           {/* Preferences Section */}
-          <section className="glass-card p-6">
+          <section className="glass-card p-4 md:p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 rounded-lg bg-accent/20">
                 <Settings className="w-5 h-5 text-accent" />
@@ -794,7 +794,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Customize Your Briefing Section */}
-          <section className="glass-card p-6 mt-6">
+          <section className="glass-card p-4 md:p-6 mt-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 rounded-lg bg-sky-500/20">
                 <MessageCircle className="w-5 h-5 text-sky-400" />
@@ -879,7 +879,7 @@ export default function SettingsPage() {
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleChatSend()}
                 placeholder="e.g., Focus on AI and Salesforce news, skip crypto, keep it to 3 bullet points"
-                className="glass-input flex-1"
+                className="glass-input flex-1 min-w-0"
                 disabled={isChatLoading}
               />
               <button
