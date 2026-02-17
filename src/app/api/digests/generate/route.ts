@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { resolveAuth, unauthorizedResponse } from '@/lib/auth';
 import { generateDigestInsight } from '@/lib/ai/summarize';
 import { render } from '@react-email/components';
@@ -79,22 +79,35 @@ Respond in JSON format only:
   }
 }
 
+async function getCustomDigestPrompt(accountId: string): Promise<string | null> {
+  const { data } = await supabaseAdmin
+    .from('user_preferences')
+    .select('digest_prompt')
+    .eq('account_id', accountId)
+    .single();
+  return data?.digest_prompt || null;
+}
+
 async function generateMorningDigest(accountId: string) {
   const today = new Date();
   const yesterday = subDays(today, 1);
 
-  // Get top content from last 24 hours
-  const { data: content } = await supabase
-    .from('content_items')
-    .select(`
-      *,
-      topic:topics(*)
-    `)
-    .eq('account_id', accountId)
-    .gte('published_at', startOfDay(yesterday).toISOString())
-    .lte('published_at', endOfDay(today).toISOString())
-    .order('published_at', { ascending: false })
-    .limit(5);
+  // Get top content and custom prompt in parallel
+  const [contentResult, customPrompt] = await Promise.all([
+    supabase
+      .from('content_items')
+      .select(`
+        *,
+        topic:topics(*)
+      `)
+      .eq('account_id', accountId)
+      .gte('published_at', startOfDay(yesterday).toISOString())
+      .lte('published_at', endOfDay(today).toISOString())
+      .order('published_at', { ascending: false })
+      .limit(5),
+    getCustomDigestPrompt(accountId),
+  ]);
+  const content = contentResult.data;
 
   // Generate AI insight
   const summaries = (content || []).map((item: { title: string; summary?: string; topic?: { name: string } }) => ({
@@ -102,7 +115,7 @@ async function generateMorningDigest(accountId: string) {
     summary: item.summary || '',
     topic: item.topic?.name,
   }));
-  const aiInsight = await generateDigestInsight(summaries);
+  const aiInsight = await generateDigestInsight(summaries, customPrompt);
 
   // Get base URL for viewer links
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://radar.funnelists.com';
@@ -180,25 +193,28 @@ async function generateWeeklyDigest(accountId: string) {
   const weekStart = startOfWeek(today);
   const weekEnd = endOfWeek(today);
 
-  // Get content from this week
-  const { data: content } = await supabase
-    .from('content_items')
-    .select(`
-      *,
-      topic:topics(*)
-    `)
-    .eq('account_id', accountId)
-    .gte('published_at', weekStart.toISOString())
-    .lte('published_at', weekEnd.toISOString())
-    .order('published_at', { ascending: false });
-
-  // Get saved items count
-  const { count: savedCount } = await supabase
-    .from('content_interactions')
-    .select('*', { count: 'exact', head: true })
-    .eq('account_id', accountId)
-    .eq('is_saved', true)
-    .gte('created_at', weekStart.toISOString());
+  // Get content, saved count, and custom prompt in parallel
+  const [contentResult, savedResult, customPrompt] = await Promise.all([
+    supabase
+      .from('content_items')
+      .select(`
+        *,
+        topic:topics(*)
+      `)
+      .eq('account_id', accountId)
+      .gte('published_at', weekStart.toISOString())
+      .lte('published_at', weekEnd.toISOString())
+      .order('published_at', { ascending: false }),
+    supabase
+      .from('content_interactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('account_id', accountId)
+      .eq('is_saved', true)
+      .gte('created_at', weekStart.toISOString()),
+    getCustomDigestPrompt(accountId),
+  ]);
+  const content = contentResult.data;
+  const savedCount = savedResult.count;
 
   // Calculate trends by topic
   const topicCounts: Record<string, { count: number; color: string }> = {};
@@ -226,7 +242,7 @@ async function generateWeeklyDigest(accountId: string) {
     summary: item.summary || '',
     topic: item.topic?.name,
   }));
-  const weekSummary = await generateDigestInsight(summaries);
+  const weekSummary = await generateDigestInsight(summaries, customPrompt);
 
   // Get base URL for viewer links
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://radar.funnelists.com';

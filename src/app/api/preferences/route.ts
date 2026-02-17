@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
       if ('digest_timezone' in body) updateFields.digest_timezone = body.digest_timezone;
       if ('digest_topics' in body) updateFields.digest_topics = body.digest_topics;
       if ('email_address' in body) updateFields.email_address = body.email_address;
+      if ('digest_prompt' in body) updateFields.digest_prompt = body.digest_prompt;
 
       const { data, error } = await supabaseAdmin
         .from('user_preferences')
@@ -88,6 +89,7 @@ export async function POST(request: NextRequest) {
           digest_timezone: body.digest_timezone,
           digest_topics: body.digest_topics,
           email_address: body.email_address,
+          digest_prompt: body.digest_prompt || null,
         })
         .select()
         .single();

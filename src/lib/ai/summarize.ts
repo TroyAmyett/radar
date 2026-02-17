@@ -184,24 +184,32 @@ Respond only with valid JSON, no other text.`,
 }
 
 export async function generateDigestInsight(
-  contentSummaries: Array<{ title: string; summary: string; topic?: string }>
+  contentSummaries: Array<{ title: string; summary: string; topic?: string }>,
+  customPrompt?: string | null
 ): Promise<string> {
   try {
     // Get API key dynamically based on user's tier
     const apiKey = await getApiKey('anthropic');
     const anthropic = new Anthropic({ apiKey });
 
+    const contentList = contentSummaries.map((c, i) => `${i + 1}. ${c.title}: ${c.summary}`).join('\n');
+
+    const systemPrompt = customPrompt
+      ? `You are a briefing assistant. The user has customized their digest with these instructions:\n\n${customPrompt}\n\nFollow these instructions when generating the insight.`
+      : undefined;
+
+    const userPrompt = customPrompt
+      ? `Based on these content summaries from today, generate a briefing following the user's custom instructions:\n\n${contentList}\n\nWrite a natural, engaging insight. No JSON, just the text.`
+      : `Based on these content summaries from today, generate a single insightful paragraph (2-3 sentences) about the key trends or themes:\n\n${contentList}\n\nWrite a natural, engaging insight paragraph. No JSON, just the text.`;
+
     const message = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 300,
+      ...(systemPrompt ? { system: systemPrompt } : {}),
       messages: [
         {
           role: 'user',
-          content: `Based on these content summaries from today, generate a single insightful paragraph (2-3 sentences) about the key trends or themes:
-
-${contentSummaries.map((c, i) => `${i + 1}. ${c.title}: ${c.summary}`).join('\n')}
-
-Write a natural, engaging insight paragraph. No JSON, just the text.`,
+          content: userPrompt,
         },
       ],
     });

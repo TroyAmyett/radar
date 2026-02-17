@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic } from '@/types/database';
-import { Settings, Plus, Palette, Mail, Clock, Save, Pencil, Trash2 } from 'lucide-react';
+import { Settings, Plus, Palette, Mail, Clock, Save, Pencil, Trash2, MessageCircle, Send, RotateCcw, Loader2, Check } from 'lucide-react';
 import { setUserTimezone, getUserTimezone } from '@/lib/timezone';
 import { authFetch } from '@/lib/api';
 import VideoHelpButton from '@/components/onboarding/VideoHelpButton';
@@ -169,6 +169,15 @@ export default function SettingsPage() {
   const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [prefsSaved, setPrefsSaved] = useState(false);
 
+  // Briefing customization chat state
+  const [digestPrompt, setDigestPrompt] = useState<string | null>(null);
+  const [chatInput, setChatInput] = useState('');
+  const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string; prompt?: string }>>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
+  const [isSavingPrompt, setIsSavingPrompt] = useState(false);
+  const [promptSaved, setPromptSaved] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -197,11 +206,81 @@ export default function SettingsPage() {
         if (prefsData.digest_timezone) {
           setUserTimezone(prefsData.digest_timezone);
         }
+        // Load custom digest prompt
+        setDigestPrompt(prefsData.digest_prompt || null);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleChatSend = async () => {
+    const msg = chatInput.trim();
+    if (!msg || isChatLoading) return;
+
+    setChatInput('');
+    setChatHistory((prev) => [...prev, { role: 'user', content: msg }]);
+    setIsChatLoading(true);
+
+    try {
+      const res = await authFetch('/api/digest-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: msg,
+          currentPrompt: pendingPrompt || digestPrompt || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.prompt) {
+        setPendingPrompt(data.prompt);
+        setChatHistory((prev) => [...prev, { role: 'assistant', content: data.explanation, prompt: data.prompt }]);
+      } else {
+        setChatHistory((prev) => [...prev, { role: 'assistant', content: data.error || 'Something went wrong. Try again.' }]);
+      }
+    } catch {
+      setChatHistory((prev) => [...prev, { role: 'assistant', content: 'Failed to connect. Please try again.' }]);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  const handleSavePrompt = async (prompt: string) => {
+    setIsSavingPrompt(true);
+    try {
+      await authFetch('/api/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ digest_prompt: prompt }),
+      });
+      setDigestPrompt(prompt);
+      setPendingPrompt(null);
+      setPromptSaved(true);
+      setTimeout(() => setPromptSaved(false), 3000);
+    } catch {
+      console.error('Failed to save digest prompt');
+    } finally {
+      setIsSavingPrompt(false);
+    }
+  };
+
+  const handleResetPrompt = async () => {
+    setIsSavingPrompt(true);
+    try {
+      await authFetch('/api/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ digest_prompt: null }),
+      });
+      setDigestPrompt(null);
+      setPendingPrompt(null);
+      setChatHistory([]);
+    } catch {
+      console.error('Failed to reset digest prompt');
+    } finally {
+      setIsSavingPrompt(false);
     }
   };
 
@@ -713,6 +792,108 @@ export default function SettingsPage() {
               </div>
             </section>
           </div>
+
+          {/* Customize Your Briefing Section */}
+          <section className="glass-card p-6 mt-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-sky-500/20">
+                <MessageCircle className="w-5 h-5 text-sky-400" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-semibold">Customize Your Briefing</h2>
+                <p className="text-white/60 text-sm">
+                  Chat with AI to customize how your daily digest is written
+                </p>
+              </div>
+            </div>
+
+            {/* Current Prompt Display */}
+            <div className="mb-4 p-4 rounded-lg bg-white/5 border border-white/10">
+              <p className="text-xs text-white/40 uppercase tracking-wider mb-2">Current Instructions</p>
+              {digestPrompt ? (
+                <p className="text-white/80 text-sm leading-relaxed">{digestPrompt}</p>
+              ) : (
+                <p className="text-white/40 text-sm italic">Using default — your digest includes a general summary of trending content.</p>
+              )}
+              {digestPrompt && (
+                <button
+                  onClick={handleResetPrompt}
+                  disabled={isSavingPrompt}
+                  className="mt-2 text-xs text-white/40 hover:text-white/60 flex items-center gap-1 transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Reset to default
+                </button>
+              )}
+            </div>
+
+            {/* Chat History */}
+            {chatHistory.length > 0 && (
+              <div className="mb-4 space-y-3 max-h-64 overflow-y-auto">
+                {chatHistory.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] rounded-lg px-4 py-2 text-sm ${
+                      msg.role === 'user'
+                        ? 'bg-sky-500/20 text-sky-100'
+                        : 'bg-white/10 text-white/80'
+                    }`}>
+                      <p>{msg.content}</p>
+                      {msg.prompt && (
+                        <div className="mt-2 p-2 rounded bg-white/5 border border-white/10">
+                          <p className="text-xs text-white/40 mb-1">Suggested prompt:</p>
+                          <p className="text-xs text-white/60">{msg.prompt}</p>
+                          <button
+                            onClick={() => handleSavePrompt(msg.prompt!)}
+                            disabled={isSavingPrompt}
+                            className="mt-2 px-3 py-1 text-xs bg-accent text-white rounded hover:bg-accent/80 disabled:opacity-50 flex items-center gap-1"
+                          >
+                            {isSavingPrompt ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : promptSaved ? (
+                              <Check className="w-3 h-3" />
+                            ) : (
+                              <Check className="w-3 h-3" />
+                            )}
+                            {isSavingPrompt ? 'Saving...' : promptSaved ? 'Saved!' : 'Use This Prompt'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {isChatLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-white/10 rounded-lg px-4 py-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-white/40" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Chat Input */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleChatSend()}
+                placeholder="e.g., Focus on AI and Salesforce news, skip crypto, keep it to 3 bullet points"
+                className="glass-input flex-1"
+                disabled={isChatLoading}
+              />
+              <button
+                onClick={handleChatSend}
+                disabled={isChatLoading || !chatInput.trim()}
+                className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-400 disabled:opacity-50 transition-colors flex items-center gap-2"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-white/30 text-xs mt-2">
+              Describe what you want in your briefing. AI will generate custom instructions for your digest.
+            </p>
+          </section>
         </div>
       </div>
     </ProtectedRoute>
