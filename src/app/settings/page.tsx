@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/layout/Header';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Topic } from '@/types/database';
@@ -154,6 +154,14 @@ export default function SettingsPage() {
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const [isSavingPrompt, setIsSavingPrompt] = useState(false);
   const [promptSaved, setPromptSaved] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll chat to latest message
+  useEffect(() => {
+    if (chatHistory.length > 0 || isChatLoading) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatHistory, isChatLoading]);
 
   useEffect(() => {
     fetchData();
@@ -752,9 +760,39 @@ export default function SettingsPage() {
                 )}
               </div>
 
+              {/* Chat Input — textarea first so it's always visible */}
+              <div className="mb-3">
+                <div className="relative">
+                  <textarea
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleChatSend();
+                      }
+                    }}
+                    placeholder="Describe how you want your briefing customized. e.g., Focus on AI and Salesforce news, skip crypto, use 3 bullet points with action items..."
+                    className="glass-input w-full min-h-[100px] resize-y pr-12"
+                    rows={4}
+                    disabled={isChatLoading}
+                  />
+                  <button
+                    onClick={handleChatSend}
+                    disabled={isChatLoading || !chatInput.trim()}
+                    className="absolute bottom-3 right-3 p-2 bg-sky-500 text-white rounded-lg hover:bg-sky-400 disabled:opacity-50 transition-colors"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-white/30 text-xs mt-1.5">
+                  Press Enter to send, Shift+Enter for new line
+                </p>
+              </div>
+
               {/* Chat History */}
               {chatHistory.length > 0 && (
-                <div className="mb-3 space-y-2 max-h-48 overflow-y-auto">
+                <div className="space-y-2 max-h-64 overflow-y-auto">
                   {chatHistory.map((msg, i) => (
                     <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
@@ -791,31 +829,9 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   )}
+                  <div ref={chatEndRef} />
                 </div>
               )}
-
-              {/* Chat Input */}
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleChatSend()}
-                  placeholder="e.g., Focus on AI news, 3 bullet points"
-                  className="glass-input flex-1 min-w-0"
-                  disabled={isChatLoading}
-                />
-                <button
-                  onClick={handleChatSend}
-                  disabled={isChatLoading || !chatInput.trim()}
-                  className="px-3 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-400 disabled:opacity-50 transition-colors"
-                >
-                  <Send className="w-4 h-4" />
-                </button>
-              </div>
-              <p className="text-white/30 text-xs mt-1.5">
-                Describe what you want. AI will generate custom instructions for your digest.
-              </p>
             </section>
           </div>
         </div>

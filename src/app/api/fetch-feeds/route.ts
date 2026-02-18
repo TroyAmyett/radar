@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Check if item already exists
+        // Check if item already exists (by external_id or URL to prevent cross-source duplicates)
         const externalId = item.guid || item.link;
         const { data: existing } = await supabaseAdmin
           .from('content_items')
@@ -142,6 +142,19 @@ export async function POST(request: NextRequest) {
           .eq('account_id', accountId)
           .eq('external_id', externalId)
           .single();
+
+        // Also check by URL — catches duplicates when the same article appears
+        // in multiple feeds with different guids (e.g., main feed vs category feed)
+        let existingByUrl = null;
+        if (!existing && item.link) {
+          const { data } = await supabaseAdmin
+            .from('content_items')
+            .select('id, thumbnail_url')
+            .eq('account_id', accountId)
+            .eq('url', item.link)
+            .single();
+          existingByUrl = data;
+        }
 
         // Extract thumbnail from various RSS formats
         let thumbnailUrl = extractThumbnail(item);
@@ -151,13 +164,14 @@ export async function POST(request: NextRequest) {
           thumbnailUrl = await fetchOgImage(item.link);
         }
 
-        if (existing) {
+        const duplicate = existing || existingByUrl;
+        if (duplicate) {
           // Update thumbnail if missing
-          if (!existing.thumbnail_url && thumbnailUrl) {
+          if (!duplicate.thumbnail_url && thumbnailUrl) {
             await supabaseAdmin
               .from('content_items')
               .update({ thumbnail_url: thumbnailUrl })
-              .eq('id', existing.id);
+              .eq('id', duplicate.id);
           }
           continue;
         }
