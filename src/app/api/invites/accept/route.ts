@@ -111,9 +111,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Auto-confirm invited users so they skip the email confirmation step
+    let autoConfirmed = false;
+    if (userId) {
+      const { error: confirmError } = await supabaseAdmin.auth.admin.updateUserById(
+        userId,
+        { email_confirm: true }
+      );
+      if (confirmError) {
+        console.error('Failed to auto-confirm invited user:', confirmError);
+      } else {
+        autoConfirmed = true;
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Invite accepted',
+      autoConfirmed,
     });
   } catch (e) {
     console.error('Error in invite accept POST:', e);

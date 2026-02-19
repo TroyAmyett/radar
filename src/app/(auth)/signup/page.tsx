@@ -3,8 +3,9 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Radio, Mail, Lock, User, ArrowRight, Loader2, Gift } from 'lucide-react';
+import { Radio, Mail, Lock, User, ArrowRight, Loader2, Gift, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 
 // Map error codes to user-friendly messages
 const errorMessages: Record<string, string> = {
@@ -87,14 +88,24 @@ function SignupForm() {
     try {
       const { session, user } = await signUp({ email, password, name });
 
-      // Mark invite as accepted if we have a token
+      // Mark invite as accepted and auto-confirm the user
       if (inviteToken && user) {
         try {
-          await fetch('/api/invites/accept', {
+          const acceptRes = await fetch('/api/invites/accept', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: inviteToken, userId: user.id }),
           });
+          const acceptData = await acceptRes.json();
+
+          if (acceptData.autoConfirmed) {
+            // Invited user was auto-confirmed — sign them in and go to dashboard
+            const { data: signInData } = await supabase.auth.signInWithPassword({ email, password });
+            if (signInData?.session) {
+              router.push('/');
+              return;
+            }
+          }
         } catch (inviteErr) {
           console.error('Failed to mark invite as accepted:', inviteErr);
           // Don't block signup if this fails
@@ -129,9 +140,23 @@ function SignupForm() {
           </div>
 
           <h1 className="text-xl font-semibold mb-2">Check your email</h1>
-          <p className="text-white/60 mb-6">
+          <p className="text-white/60 mb-4">
             We&apos;ve sent a confirmation link to <strong className="text-white">{email}</strong>
           </p>
+
+          <div className="mb-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-left">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-white/70 space-y-2">
+                <p className="font-medium text-amber-300">Can&apos;t find the email?</p>
+                <ul className="list-disc list-inside space-y-1 text-white/50">
+                  <li>Check your <strong className="text-white/70">Spam</strong> or <strong className="text-white/70">Junk</strong> folder</li>
+                  <li>If it&apos;s in spam, mark it as <strong className="text-white/70">&ldquo;Not Spam&rdquo;</strong> and add <strong className="text-white/70">noreply@go.funnelists.com</strong> to your contacts</li>
+                  <li>The link expires in 24 hours — if it&apos;s expired, sign in below to resend</li>
+                </ul>
+              </div>
+            </div>
+          </div>
 
           <Link
             href="/login"
