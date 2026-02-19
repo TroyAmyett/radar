@@ -3,6 +3,7 @@
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 import { SidebarProvider } from './SidebarContext';
+import IOSInstallPrompt from '@/components/pwa/IOSInstallPrompt';
 
 interface StandaloneLayoutProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ function StandaloneLayoutContent({ children }: StandaloneLayoutProps) {
         </main>
         <Footer />
       </div>
+      <IOSInstallPrompt />
     </>
   );
 }
