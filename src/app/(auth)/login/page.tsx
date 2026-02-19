@@ -17,6 +17,11 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Where to go after login — supports ?next=/view/123 from unauthenticated redirects
+  const nextUrl = searchParams.get('next') || '/';
+  // Validate redirect to prevent open redirect
+  const safeNext = nextUrl.startsWith('/') && !nextUrl.startsWith('//') ? nextUrl : '/';
+
   // Check for error from auth callback
   useEffect(() => {
     const errorParam = searchParams.get('error');
@@ -28,9 +33,9 @@ function LoginForm() {
   // Redirect if already authenticated (session sharing from AgentPM)
   useEffect(() => {
     if (!authLoading && user) {
-      router.push('/');
+      router.push(safeNext);
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, safeNext]);
 
   // Show loading while checking auth
   if (authLoading) {
@@ -58,7 +63,7 @@ function LoginForm() {
 
     try {
       await signIn({ email, password });
-      router.push('/');
+      router.push(safeNext);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign in');
     } finally {

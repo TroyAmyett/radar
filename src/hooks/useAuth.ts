@@ -74,10 +74,15 @@ export function useAuth() {
         if (match) {
           const tokens = JSON.parse(decodeURIComponent(match[1]));
           if (tokens?.access_token && tokens?.refresh_token) {
-            supabase.auth.setSession({
+            // Race against a 3-second timeout to prevent slow bootstrap from blocking login
+            const bootstrapPromise = supabase.auth.setSession({
               access_token: tokens.access_token,
               refresh_token: tokens.refresh_token,
-            }).then(({ data: { session: bootstrapped } }) => {
+            });
+            const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
+
+            Promise.race([bootstrapPromise, timeoutPromise]).then((result) => {
+              const bootstrapped = result && 'data' in result ? result.data.session : null;
               setState((prev) => ({
                 ...prev,
                 user: bootstrapped?.user ?? null,

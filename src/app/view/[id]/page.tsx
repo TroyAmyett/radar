@@ -30,6 +30,11 @@ export default function ContentViewerPage() {
       try {
         const res = await fetch(`/api/content/${id}`);
         if (!res.ok) {
+          if (res.status === 401) {
+            // Not authenticated — redirect to login with return URL
+            window.location.href = `/login?next=${encodeURIComponent(`/view/${id}`)}`;
+            return;
+          }
           if (res.status === 404) {
             setError('Content not found');
           } else {
